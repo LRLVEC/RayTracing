@@ -176,9 +176,9 @@ namespace OpenGL
 
 int main()
 {
-	File file("./");
-	STL star(file.readSTL("star.stl"));
-	star.printInfo();
+	//File file("./");
+	//STL star(file.readSTL("star.stl"));
+	//star.printInfo();
 
 	OpenGL::OpenGLInit init(4, 5);
 	Window::Window::Data winParameters
