@@ -176,6 +176,7 @@ namespace OpenGL
 
 int main()
 {
+	//This is just a comment...
 	OpenGL::OpenGLInit init(4, 5);
 	Window::Window::Data winParameters
 	{
