@@ -177,6 +177,7 @@ namespace OpenGL
 int main()
 {
 	//This is just a comment...
+	//lrlvec's change
 	OpenGL::OpenGLInit init(4, 5);
 	Window::Window::Data winParameters
 	{
