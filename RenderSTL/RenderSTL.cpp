@@ -1,6 +1,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <GL/_OpenGL.h>
+#include <_STL.h>
 #include <GL/_Window.h>
 #include <_Math.h>
 #include <_Time.h>
@@ -9,34 +10,13 @@
 
 namespace OpenGL
 {
+
+
 	struct RenderSTL :OpenGL
 	{
 		struct Renderer :Program
 		{
-			struct TriangleData :Buffer<ArrayBuffer>::Data
-			{
-				using Position = Math::vec3<float>;
-				using Color = Math::vec3<float>;
-				struct Vertex
-				{
-					Position pos;
-					Color color;
-				};
-				using Triangle = Array<Vertex, 3>;
-
-				Vector<Triangle> triangles;
-				TriangleData();
-				virtual void* pointer()override
-				{
-					return (void*)triangles.data;
-				}
-				virtual unsigned int size()override
-				{
-					return sizeof(Triangle)* triangles.length;
-				}
-			};
-
-			TriangleData triangles;
+			STLData model;
 			Transform trans;
 			Buffer<ArrayBuffer> buffer;
 			Buffer<UniformBuffer> transformBuffer;
@@ -144,14 +124,14 @@ namespace OpenGL
 	RenderSTL::Renderer::Renderer(SourceManager * _sourceManage)
 		:
 		Program(_sourceManage, "Triangle", Vector<VertexAttrib*>{&positions, & colors}),
-		triangles(),
+		model(),
 		trans({ {60.0,0.1,100},{0.05,0.8,0.05},{0.03},500.0 }),
 		transformBuffer(&trans.bufferData, 0),
-		buffer(&triangles),
+		buffer(&model),
 		positions(&buffer, 0, VertexAttrib::three,
-			VertexAttrib::Float, false, sizeof(TriangleData::Vertex), 0),
+			VertexAttrib::Float, false, 10, 0),
 		colors(&buffer, 1, VertexAttrib::three,
-			VertexAttrib::Float, false, sizeof(TriangleData::Vertex), sizeof(TriangleData::Position))
+			VertexAttrib::Float, false, 10, 5)
 	{
 		init();
 	}
@@ -164,21 +144,14 @@ namespace OpenGL
 			trans.updated = false;
 		}
 	}
-
-	RenderSTL::Renderer::TriangleData::TriangleData()
-		:
-		Data(StaticDraw),
-		triangles({ {{0.5f,-0.5f,-1.0},{1.0f,0,0}},{{-0.5f,-0.5f,-1.0},{0,1.0f,0}},{{0,0.5f,-1.0},{0,0,1.0f}} })
-	{
-	}
 }
 
 
 int main()
 {
-	//File file("./");
-	//STL star(file.readSTL("star.stl"));
-	//star.printInfo();
+	File file("./");
+	STL star(file.readSTL("star.stl"));
+	star.printInfo();
 
 	OpenGL::OpenGLInit init(4, 5);
 	Window::Window::Data winParameters
