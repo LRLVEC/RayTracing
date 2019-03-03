@@ -153,7 +153,7 @@ int main()
 	STL star(file.readSTL("star.stl"));
 	star.printInfo();
 
-	OpenGL::OpenGLInit init(4, 5);
+	OpenGL::OpenGLInit init(4, 4);
 	Window::Window::Data winParameters
 	{
 		"Ahh",
