@@ -33,6 +33,7 @@ char const* fragmentSource =
 ;
 void keyCallback(GLFWwindow* _window, int _key, int _scancode, int _action, int _mods)
 {
+
 	switch (_key)
 	{
 		case GLFW_KEY_ESCAPE:
