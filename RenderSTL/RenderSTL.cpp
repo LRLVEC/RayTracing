@@ -1,17 +1,15 @@
 #include <cstdio>
 #include <cstdlib>
 #include <GL/_OpenGL.h>
-#include <_STL.h>
 #include <GL/_Window.h>
 #include <_Math.h>
 #include <_Time.h>
 #include <_Array.h>
 #include <_Pair.h>
+#include <_STL.h>
 
 namespace OpenGL
 {
-
-
 	struct RenderSTL :OpenGL
 	{
 		struct Renderer :Program
@@ -21,7 +19,6 @@ namespace OpenGL
 			Buffer<ArrayBuffer> buffer;
 			Buffer<UniformBuffer> transformBuffer;
 			VertexAttrib positions;
-			VertexAttrib colors;
 
 			Renderer(SourceManager*);
 			void refreshBuffer();
@@ -30,9 +27,9 @@ namespace OpenGL
 			}
 			virtual void run() override
 			{
-				glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-				glClear(GL_COLOR_BUFFER_BIT);
-				glDrawArrays(GL_TRIANGLES, 0, 3);
+				glClearColor(0.1f, 0.1f, 0.1f, 0.0f);
+				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+				glDrawArrays(GL_TRIANGLES, 0, model.stl.verticesRepeated.length);
 			}
 			virtual void resize(int _w, int _h)override
 			{
@@ -65,6 +62,7 @@ namespace OpenGL
 	inline void RenderSTL::init(FrameScale const& _size)
 	{
 		glViewport(0, 0, _size.w, _size.h);
+		glEnable(GL_DEPTH_TEST);
 		renderer.trans.init(_size);
 		renderer.transformBuffer.dataStore();
 		renderer.buffer.dataStore();
@@ -123,16 +121,15 @@ namespace OpenGL
 
 	RenderSTL::Renderer::Renderer(SourceManager * _sourceManage)
 		:
-		Program(_sourceManage, "Triangle", Vector<VertexAttrib*>{&positions, & colors}),
-		model(),
-		trans({ {60.0,0.1,100},{0.05,0.8,0.05},{0.03},500.0 }),
+		Program(_sourceManage, "Triangle", Vector<VertexAttrib*>{&positions}),
+		model(_sourceManage->folder.find("resources/star.stl").readSTL()),
+		trans({ {80.0,0.1,200},{0.5,0.8,0.05},{2},500.0 }),
 		transformBuffer(&trans.bufferData, 0),
 		buffer(&model),
-		positions(&buffer, 0, VertexAttrib::three,
-			VertexAttrib::Float, false, 10, 0),
-		colors(&buffer, 1, VertexAttrib::three,
-			VertexAttrib::Float, false, 10, 5)
+		positions(&buffer, 0, VertexAttrib::three, VertexAttrib::Float, false, sizeof(Math::vec3<float>), 0)
 	{
+		model.stl.removeUseless();
+		model.stl.getVerticesRepeated();
 		init();
 	}
 	void RenderSTL::Renderer::refreshBuffer()
@@ -144,16 +141,21 @@ namespace OpenGL
 			trans.updated = false;
 		}
 	}
+
 }
 
 
 int main()
 {
+<<<<<<< HEAD
 	File file("./");
 	STL star(file.readSTL("star.stl"));
 	star.printInfo();
 
 	OpenGL::OpenGLInit init(4, 4);
+=======
+	OpenGL::OpenGLInit init(4, 5);
+>>>>>>> master
 	Window::Window::Data winParameters
 	{
 		"Ahh",
@@ -165,7 +167,7 @@ int main()
 	Window::WindowManager wm(winParameters);
 	OpenGL::RenderSTL test;
 	wm.init(0, &test);
-	glfwSwapInterval(1);
+	glfwSwapInterval(0);
 	FPS fps;
 	fps.refresh();
 	while (!wm.close())
@@ -173,8 +175,8 @@ int main()
 		wm.pullEvents();
 		wm.render();
 		wm.swapBuffers();
-		//fps.refresh();
-		//fps.printFPS(1);
+		fps.refresh();
+		fps.printFPS(1);
 	}
 	return 0;
 }
