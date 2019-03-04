@@ -26,5 +26,8 @@
     <ClInclude Include="..\..\..\include\GL\_OpenGL.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\include\_File.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
