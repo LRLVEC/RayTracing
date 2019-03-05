@@ -14,10 +14,41 @@ namespace OpenGL
 	{
 		struct Renderer :Program
 		{
-			STLData model;
+			struct Light :Buffer<UniformBuffer>::Data
+			{
+				Math::vec4<float> normal;
+				Light()
+					:
+					normal(Math::vec4<float>{ 1, 2, 3, 0 }.normaliaze())
+				{
+				}
+				Light(Math::vec3<float>const& a)
+					:
+					normal(a)
+				{
+				}
+				virtual void* pointer()override
+				{
+					return normal.data;
+				}
+				virtual unsigned int size()override
+				{
+					return sizeof(Math::vec4<float>);
+				}
+			};
+
+			STL model;
+
+			STLVertices modelPostions;
+			STLNormals modelNormals;
 			Transform trans;
-			Buffer<ArrayBuffer> buffer;
+			Light light;
+
+			Buffer<ArrayBuffer> positionBuffer;
 			Buffer<UniformBuffer> transformBuffer;
+			Buffer<UniformBuffer> lightBuffer;
+			Buffer<ShaderStorageBuffer> normalBuffer;
+
 			VertexAttrib positions;
 
 			Renderer(SourceManager*);
@@ -27,9 +58,9 @@ namespace OpenGL
 			}
 			virtual void run() override
 			{
-				glClearColor(0.1f, 0.1f, 0.1f, 0.0f);
+				glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-				glDrawArrays(GL_TRIANGLES, 0, model.stl.verticesRepeated.length);
+				glDrawArrays(GL_TRIANGLES, 0, 3 * model.triangles.length);
 			}
 			virtual void resize(int _w, int _h)override
 			{
@@ -65,7 +96,10 @@ namespace OpenGL
 		glEnable(GL_DEPTH_TEST);
 		renderer.trans.init(_size);
 		renderer.transformBuffer.dataStore();
-		renderer.buffer.dataStore();
+		renderer.lightBuffer.dataStore();
+		renderer.normalBuffer.dataStore();
+
+		renderer.positionBuffer.dataStore();
 	}
 	inline void RenderSTL::run()
 	{
@@ -122,14 +156,22 @@ namespace OpenGL
 	RenderSTL::Renderer::Renderer(SourceManager * _sourceManage)
 		:
 		Program(_sourceManage, "Triangle", Vector<VertexAttrib*>{&positions}),
-		model(_sourceManage->folder.find("resources/star.stl").readSTL()),
+		model(_sourceManage->folder.find("resources/starAgain.stl").readSTL()),
+		modelPostions(&model),
+		modelNormals(&model),
 		trans({ {80.0,0.1,200},{0.5,0.8,0.05},{2},500.0 }),
+		light(),
+		positionBuffer(&modelPostions),
 		transformBuffer(&trans.bufferData, 0),
-		buffer(&model),
-		positions(&buffer, 0, VertexAttrib::three, VertexAttrib::Float, false, sizeof(Math::vec3<float>), 0)
+		lightBuffer(&light, 1),
+		normalBuffer(&modelNormals, 2),
+		positions(&positionBuffer, 1, VertexAttrib::three, VertexAttrib::Float, false,
+			sizeof(Math::vec3<float>), 0, 0)
 	{
-		model.stl.removeUseless();
-		model.stl.getVerticesRepeated();
+		//model.printInfo();
+		model.removeUseless();
+		model.getVerticesRepeated();
+		model.getNormals();
 		init();
 	}
 	void RenderSTL::Renderer::refreshBuffer()
@@ -152,14 +194,14 @@ int main()
 	{
 		"Ahh",
 		{
-			{400,400},
-			true,false
+			{3840,2160},
+			true,true
 		}
 	};
 	Window::WindowManager wm(winParameters);
 	OpenGL::RenderSTL test;
 	wm.init(0, &test);
-	glfwSwapInterval(0);
+	glfwSwapInterval(1);
 	FPS fps;
 	fps.refresh();
 	while (!wm.close())
@@ -167,8 +209,8 @@ int main()
 		wm.pullEvents();
 		wm.render();
 		wm.swapBuffers();
-		fps.refresh();
-		fps.printFPS(1);
+		//fps.refresh();
+		//fps.printFPS(1);
 	}
 	return 0;
 }
