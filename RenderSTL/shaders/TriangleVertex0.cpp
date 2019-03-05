@@ -18,9 +18,8 @@ void main()
 	gl_Position = trans * vec4(position, 1);
 	float k = max(dot(light, normal[gl_VertexID / 3]), 0);
 	in_color =
-		vec4(k * vec3(
+		vec4((k + 0.1) * vec3(
 			0.5 * (atan(position.x / 10) + 1),
 			0.5 * (atan(position.y / 10) + 1),
-			0.5 * (atan(position.z / 10) + 1)) +
-			vec3(0.1, 0.1, 0.1), 1);
+			0.5 * (atan(position.z / 10) + 1)), 1);
 }

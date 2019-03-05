@@ -16,10 +16,12 @@ namespace OpenGL
 		{
 			struct Light :Buffer<UniformBuffer>::Data
 			{
-				Math::vec4<float> normal;
+				Math::vec3<float>eularAngle;
+				Math::vec4<float>normal;
 				Light()
 					:
-					normal(Math::vec4<float>{ 1, 2, 3, 0 }.normaliaze())
+					eularAngle({ 0, 1, 0 }),
+					normal(Math::vec4<float>(Math::eulerAngle(eularAngle)))
 				{
 				}
 				Light(Math::vec3<float>const& a)
@@ -34,6 +36,10 @@ namespace OpenGL
 				virtual unsigned int size()override
 				{
 					return sizeof(Math::vec4<float>);
+				}
+				void refresh()
+				{
+					normal = Math::eulerAngle(eularAngle);
 				}
 			};
 
@@ -156,7 +162,7 @@ namespace OpenGL
 	RenderSTL::Renderer::Renderer(SourceManager * _sourceManage)
 		:
 		Program(_sourceManage, "Triangle", Vector<VertexAttrib*>{&positions}),
-		model(_sourceManage->folder.find("resources/starAgain.stl").readSTL()),
+		model(_sourceManage->folder.find("resources/star.stl").readSTL()),
 		modelPostions(&model),
 		modelNormals(&model),
 		trans({ {80.0,0.1,200},{0.5,0.8,0.05},{2},500.0 }),
@@ -182,6 +188,9 @@ namespace OpenGL
 			transformBuffer.refreshData();
 			trans.updated = false;
 		}
+		light.eularAngle[2] += 0.01;
+		light.refresh();
+		lightBuffer.refreshData();
 	}
 
 }
