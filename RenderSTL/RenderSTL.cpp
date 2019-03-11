@@ -14,7 +14,7 @@ namespace OpenGL
 	{
 		struct Renderer :Program
 		{
-			struct Light :Buffer<UniformBuffer>::Data
+			struct Light :Buffer::Data
 			{
 				Math::vec3<float>eularAngle;
 				Math::vec4<float>normal;
@@ -31,7 +31,7 @@ namespace OpenGL
 				}
 				virtual void* pointer()override
 				{
-					return normal.data;
+					return (void*)normal.data;
 				}
 				virtual unsigned int size()override
 				{
@@ -50,16 +50,62 @@ namespace OpenGL
 			Transform trans;
 			Light light;
 
-			Buffer<ArrayBuffer> positionBuffer;
-			Buffer<UniformBuffer> transformBuffer;
-			Buffer<UniformBuffer> lightBuffer;
-			Buffer<ShaderStorageBuffer> normalBuffer;
+			Buffer positionBuffer;
+			Buffer transformBuffer;
+			Buffer lightBuffer;
+			Buffer normalBuffer;
+
+			BufferConfig positionArray;
+			BufferConfig transformUniform;
+			BufferConfig lightUniform;
+			BufferConfig normalShader;
 
 			VertexAttrib positions;
 
-			Renderer(SourceManager*);
-			void refreshBuffer();
-			virtual void setBufferData()override
+			Renderer(SourceManager* _sourceManage)
+				:
+				Program(_sourceManage, "Triangle", Vector<VertexAttrib*>{&positions}),
+				model(_sourceManage->folder.find("resources/star.stl").readSTL()),
+
+				modelPostions(&model),
+				modelNormals(&model),
+
+				trans({ {80.0,0.1,200},{0.5,0.8,0.05},{2},500.0 }),
+				light(),
+
+				positionBuffer(&modelPostions),
+				transformBuffer(&trans.bufferData),
+				lightBuffer(&light),
+				normalBuffer(&modelNormals),
+
+				positionArray(&positionBuffer,ArrayBuffer),
+				transformUniform(&transformBuffer, UniformBuffer, 0),
+				lightUniform(&lightBuffer, UniformBuffer, 1),
+				normalShader(&normalBuffer, ShaderStorageBuffer, 2),
+
+				positions(&positionArray, 1, VertexAttrib::three, VertexAttrib::Float, false,
+					sizeof(Math::vec3<float>), 0, 0)
+			{
+				//model.printInfo();
+				model.removeUseless();
+				model.getVerticesRepeated();
+				model.getNormals();
+				init();
+			}
+			void refreshBuffer()
+			{
+				trans.operate();
+				if (trans.updated)
+				{
+					//trans.bufferData.ans.print();
+					transformUniform.refreshData();
+					trans.updated = false;
+				}
+				light.eularAngle[2] += 0.01;
+				light.refresh();
+				lightUniform.refreshData();
+			}
+			virtual void initBufferData()override
 			{
 			}
 			virtual void run() override
@@ -68,10 +114,10 @@ namespace OpenGL
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 				glDrawArrays(GL_TRIANGLES, 0, 3 * model.triangles.length);
 			}
-			virtual void resize(int _w, int _h)override
+			void resize(int _w, int _h)
 			{
-				trans.resize(_w, _h);
 				glViewport(0, 0, _w, _h);
+				trans.resize(_w, _h);
 			}
 		};
 
@@ -101,11 +147,11 @@ namespace OpenGL
 		glViewport(0, 0, _size.w, _size.h);
 		glEnable(GL_DEPTH_TEST);
 		renderer.trans.init(_size);
-		renderer.transformBuffer.dataStore();
-		renderer.lightBuffer.dataStore();
-		renderer.normalBuffer.dataStore();
+		renderer.transformUniform.dataInit();
+		renderer.lightUniform.dataInit();
+		renderer.normalShader.dataInit();
 
-		renderer.positionBuffer.dataStore();
+		renderer.positionArray.dataInit();
 	}
 	inline void RenderSTL::run()
 	{
@@ -159,39 +205,7 @@ namespace OpenGL
 		}
 	}
 
-	RenderSTL::Renderer::Renderer(SourceManager * _sourceManage)
-		:
-		Program(_sourceManage, "Triangle", Vector<VertexAttrib*>{&positions}),
-		model(_sourceManage->folder.find("resources/star.stl").readSTL()),
-		modelPostions(&model),
-		modelNormals(&model),
-		trans({ {80.0,0.1,200},{0.5,0.8,0.05},{2},500.0 }),
-		light(),
-		positionBuffer(&modelPostions),
-		transformBuffer(&trans.bufferData, 0),
-		lightBuffer(&light, 1),
-		normalBuffer(&modelNormals, 2),
-		positions(&positionBuffer, 1, VertexAttrib::three, VertexAttrib::Float, false,
-			sizeof(Math::vec3<float>), 0, 0)
-	{
-		//model.printInfo();
-		model.removeUseless();
-		model.getVerticesRepeated();
-		model.getNormals();
-		init();
-	}
-	void RenderSTL::Renderer::refreshBuffer()
-	{
-		trans.operate();
-		if (trans.updated)
-		{
-			transformBuffer.refreshData();
-			trans.updated = false;
-		}
-		light.eularAngle[2] += 0.01;
-		light.refresh();
-		lightBuffer.refreshData();
-	}
+
 
 }
 
@@ -203,8 +217,8 @@ int main()
 	{
 		"Ahh",
 		{
-			{3840,2160},
-			true,true
+			{800,800},
+			true,false
 		}
 	};
 	Window::WindowManager wm(winParameters);

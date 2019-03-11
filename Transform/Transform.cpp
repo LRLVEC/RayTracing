@@ -13,7 +13,7 @@ namespace OpenGL
 	{
 		struct Renderer :Program
 		{
-			struct TriangleData :Buffer<ArrayBuffer>::Data
+			struct TriangleData :Buffer::Data
 			{
 				using Position = Math::vec3<float>;
 				using Color = Math::vec3<float>;
@@ -37,15 +37,43 @@ namespace OpenGL
 			};
 
 			TriangleData triangles;
+
 			Transform trans;
-			Buffer<ArrayBuffer> buffer;
-			Buffer<UniformBuffer> transformBuffer;
+			Buffer buffer;
+			Buffer transformBuffer;
+
+			BufferConfig bufferArray;
+			BufferConfig transformUnifrom;
+
 			VertexAttrib positions;
 			VertexAttrib colors;
 
-			Renderer(SourceManager*);
-			void refreshBuffer();
-			virtual void setBufferData()override
+			Renderer(SourceManager* _sourceManage)
+				:
+				Program(_sourceManage, "Triangle", Vector<VertexAttrib*>{&positions, & colors}),
+				triangles(),
+				trans({ {60.0,0.1,100},{0.05,0.8,0.05},{0.03},500.0 }),
+				buffer(&triangles),
+				transformBuffer(&trans.bufferData),
+				bufferArray(&buffer, ArrayBuffer),
+				transformUnifrom(&transformBuffer, UniformBuffer, 0),
+				positions(&bufferArray, 0, VertexAttrib::three,
+					VertexAttrib::Float, false, sizeof(TriangleData::Vertex), 0, 0),
+				colors(&bufferArray, 1, VertexAttrib::three,
+					VertexAttrib::Float, false, sizeof(TriangleData::Vertex), sizeof(TriangleData::Position), 0)
+			{
+				init();
+			}
+			void refreshBuffer()
+			{
+				trans.operate();
+				if (trans.updated)
+				{
+					transformUnifrom.refreshData();
+					trans.updated = false;
+				}
+			}
+			virtual void initBufferData()override
 			{
 			}
 			virtual void run() override
@@ -54,7 +82,7 @@ namespace OpenGL
 				glClear(GL_COLOR_BUFFER_BIT);
 				glDrawArrays(GL_TRIANGLES, 0, 3);
 			}
-			virtual void resize(int _w, int _h)override
+			void resize(int _w, int _h)
 			{
 				trans.resize(_w, _h);
 				glViewport(0, 0, _w, _h);
@@ -86,8 +114,8 @@ namespace OpenGL
 	{
 		glViewport(0, 0, _size.w, _size.h);
 		renderer.trans.init(_size);
-		renderer.transformBuffer.dataStore();
-		renderer.buffer.dataStore();
+		renderer.transformUnifrom.dataInit();
+		renderer.bufferArray.dataInit();
 	}
 	inline void GLMathTest::run()
 	{
@@ -138,30 +166,6 @@ namespace OpenGL
 			case GLFW_KEY_D:renderer.trans.key.refresh(1, _action); break;
 			case GLFW_KEY_W:renderer.trans.key.refresh(2, _action); break;
 			case GLFW_KEY_S:renderer.trans.key.refresh(3, _action); break;
-		}
-	}
-
-	GLMathTest::Renderer::Renderer(SourceManager * _sourceManage)
-		:
-		Program(_sourceManage, "Triangle", Vector<VertexAttrib*>{&positions, & colors}),
-		triangles(),
-		trans({ {60.0,0.1,100},{0.05,0.8,0.05},{0.03},500.0 }),
-		transformBuffer(&trans.bufferData, 0),
-		buffer(&triangles),
-		positions(&buffer, 0, VertexAttrib::three,
-			VertexAttrib::Float, false, sizeof(TriangleData::Vertex), 0),
-		colors(&buffer, 1, VertexAttrib::three,
-			VertexAttrib::Float, false, sizeof(TriangleData::Vertex), sizeof(TriangleData::Position))
-	{
-		init();
-	}
-	void GLMathTest::Renderer::refreshBuffer()
-	{
-		trans.operate();
-		if (trans.updated)
-		{
-			transformBuffer.refreshData();
-			trans.updated = false;
 		}
 	}
 
