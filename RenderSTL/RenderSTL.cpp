@@ -147,15 +147,7 @@ namespace OpenGL
 
 int main()
 {
-<<<<<<< HEAD
-	File file("./");
-	STL star(file.readSTL("star.stl"));
-	star.printInfo();
-
 	OpenGL::OpenGLInit init(4, 4);
-=======
-	OpenGL::OpenGLInit init(4, 5);
->>>>>>> master
 	Window::Window::Data winParameters
 	{
 		"Ahh",
@@ -167,7 +159,7 @@ int main()
 	Window::WindowManager wm(winParameters);
 	OpenGL::RenderSTL test;
 	wm.init(0, &test);
-	glfwSwapInterval(0);
+	glfwSwapInterval(1);
 	FPS fps;
 	fps.refresh();
 	while (!wm.close())
