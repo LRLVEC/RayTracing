@@ -14,27 +14,110 @@ namespace OpenGL
 	{
 		struct Renderer :Program
 		{
-			STLData model;
+			struct Light :Buffer::Data
+			{
+				Math::vec3<float>eularAngle;
+				Math::vec4<float>normal;
+				Light()
+					:
+					eularAngle({ 0, 1, 0 }),
+					normal(Math::vec4<float>(Math::eulerAngle(eularAngle)))
+				{
+				}
+				Light(Math::vec3<float>const& a)
+					:
+					normal(a)
+				{
+				}
+				virtual void* pointer()override
+				{
+					return (void*)normal.data;
+				}
+				virtual unsigned int size()override
+				{
+					return sizeof(Math::vec4<float>);
+				}
+				void refresh()
+				{
+					normal = Math::eulerAngle(eularAngle);
+				}
+			};
+
+			STL model;
+
+			STLVertices modelPostions;
+			STLNormals modelNormals;
 			Transform trans;
-			Buffer<ArrayBuffer> buffer;
-			Buffer<UniformBuffer> transformBuffer;
+			Light light;
+
+			Buffer positionBuffer;
+			Buffer transformBuffer;
+			Buffer lightBuffer;
+			Buffer normalBuffer;
+
+			BufferConfig positionArray;
+			BufferConfig transformUniform;
+			BufferConfig lightUniform;
+			BufferConfig normalShader;
+
 			VertexAttrib positions;
 
-			Renderer(SourceManager*);
-			void refreshBuffer();
-			virtual void setBufferData()override
+			Renderer(SourceManager* _sourceManage)
+				:
+				Program(_sourceManage, "Triangle", Vector<VertexAttrib*>{&positions}),
+				model(_sourceManage->folder.find("resources/star.stl").readSTL()),
+
+				modelPostions(&model),
+				modelNormals(&model),
+
+				trans({ {80.0,0.1,200},{0.5,0.8,0.05},{2},500.0 }),
+				light(),
+
+				positionBuffer(&modelPostions),
+				transformBuffer(&trans.bufferData),
+				lightBuffer(&light),
+				normalBuffer(&modelNormals),
+
+				positionArray(&positionBuffer,ArrayBuffer),
+				transformUniform(&transformBuffer, UniformBuffer, 0),
+				lightUniform(&lightBuffer, UniformBuffer, 1),
+				normalShader(&normalBuffer, ShaderStorageBuffer, 2),
+
+				positions(&positionArray, 1, VertexAttrib::three, VertexAttrib::Float, false,
+					sizeof(Math::vec3<float>), 0, 0)
+			{
+				//model.printInfo();
+				model.removeUseless();
+				model.getVerticesRepeated();
+				model.getNormals();
+				init();
+			}
+			void refreshBuffer()
+			{
+				trans.operate();
+				if (trans.updated)
+				{
+					//trans.bufferData.ans.print();
+					transformUniform.refreshData();
+					trans.updated = false;
+				}
+				light.eularAngle[2] += 0.01;
+				light.refresh();
+				lightUniform.refreshData();
+			}
+			virtual void initBufferData()override
 			{
 			}
 			virtual void run() override
 			{
-				glClearColor(0.1f, 0.1f, 0.1f, 0.0f);
+				glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-				glDrawArrays(GL_TRIANGLES, 0, model.stl.verticesRepeated.length);
+				glDrawArrays(GL_TRIANGLES, 0, 3 * model.triangles.length);
 			}
-			virtual void resize(int _w, int _h)override
+			void resize(int _w, int _h)
 			{
-				trans.resize(_w, _h);
 				glViewport(0, 0, _w, _h);
+				trans.resize(_w, _h);
 			}
 		};
 
@@ -64,8 +147,11 @@ namespace OpenGL
 		glViewport(0, 0, _size.w, _size.h);
 		glEnable(GL_DEPTH_TEST);
 		renderer.trans.init(_size);
-		renderer.transformBuffer.dataStore();
-		renderer.buffer.dataStore();
+		renderer.transformUniform.dataInit();
+		renderer.lightUniform.dataInit();
+		renderer.normalShader.dataInit();
+
+		renderer.positionArray.dataInit();
 	}
 	inline void RenderSTL::run()
 	{
@@ -119,28 +205,7 @@ namespace OpenGL
 		}
 	}
 
-	RenderSTL::Renderer::Renderer(SourceManager * _sourceManage)
-		:
-		Program(_sourceManage, "Triangle", Vector<VertexAttrib*>{&positions}),
-		model(_sourceManage->folder.find("resources/star.stl").readSTL()),
-		trans({ {80.0,0.1,200},{0.5,0.8,0.05},{2},500.0 }),
-		transformBuffer(&trans.bufferData, 0),
-		buffer(&model),
-		positions(&buffer, 0, VertexAttrib::three, VertexAttrib::Float, false, sizeof(Math::vec3<float>), 0)
-	{
-		model.stl.removeUseless();
-		model.stl.getVerticesRepeated();
-		init();
-	}
-	void RenderSTL::Renderer::refreshBuffer()
-	{
-		trans.operate();
-		if (trans.updated)
-		{
-			transformBuffer.refreshData();
-			trans.updated = false;
-		}
-	}
+
 
 }
 
@@ -152,7 +217,7 @@ int main()
 	{
 		"Ahh",
 		{
-			{400,400},
+			{800,800},
 			true,false
 		}
 	};
@@ -167,8 +232,8 @@ int main()
 		wm.pullEvents();
 		wm.render();
 		wm.swapBuffers();
-		fps.refresh();
-		fps.printFPS(1);
+		//fps.refresh();
+		//fps.printFPS(1);
 	}
 	return 0;
 }
