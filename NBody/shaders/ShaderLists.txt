@@ -3,7 +3,7 @@ Program:	Renderer
 	Vertex		0
 	Fragment	0
 }
-Program:	Computer
+Program:	AccelerationCalculation
 {
 	Compute		0
 }

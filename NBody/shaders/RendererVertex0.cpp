@@ -9,6 +9,6 @@ out vec4 fragColor;
 void main()
 {
 	gl_Position = trans * vec4(position, 1);
-	float k = tanh(length(velocity)/2.0);
-	fragColor = vec4(1 - k, 0, k, 1);
+	float k = tanh(length(velocity) / 3.0);
+	fragColor = vec4(0, 1 - k, k, 1);
 }
