@@ -7,3 +7,7 @@ Program:	AccelerationCalculation
 {
 	Compute		0
 }
+Program:	PositionCalculation
+{
+	Compute		0
+}
