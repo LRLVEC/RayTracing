@@ -29,20 +29,33 @@ namespace OpenGL
 			{
 				std::mt19937 mt;
 				std::uniform_real_distribution<float>randReal(0, 1);
-				unsigned int _num(num);
+				unsigned int _num(num - 1);
 				while (_num--)
 				{
-					float theta(2 * Math::Pi * randReal(mt));
-					float r(randReal(mt));
+					float theta(Math::Pi * randReal(mt));
+					float r(3 * randReal(mt) + 1);
+					float phi(2 * Math::Pi * randReal(mt));
+					r = r * r * r;
+					theta = (1 + cos(theta)) * Math::Pi / 2;
+					float vk(4.1f);
+					float rn(0.5);
 					particles.pushBack
 					(
 						{
-							{r * cos(theta),r * sin(theta),2.0f * randReal(mt) - 1.0f},
-							randReal(mt),
-							{-(r + 0.5f) * sin(theta),(r + 0.5f) * cos(theta),2.0f * randReal(mt) - 1.0f},
+							{r * sin(theta) * cos(phi),r * sin(theta) * sin(phi),r * cos(theta)},
+							randReal(mt) > 0.999f ? 100 : randReal(mt),
+							{-vk * sin(phi) / powf(r,rn),vk * cos(phi) / powf(r,rn),0},
 						}
 					);
 				}
+				particles.pushBack
+				(
+					{
+						{0,0,0},
+						8000,
+						{0,0,0},
+					}
+				);
 			}
 		};
 		struct ParticlesData :Buffer::Data
@@ -123,33 +136,15 @@ namespace OpenGL
 					return &parameter;
 				}
 			};
-			struct AccelerationData :Buffer::Data
+
+
+			struct VelocityCalculation :Program
 			{
-				unsigned int length;
-
-				AccelerationData(unsigned int _num)
+				ParameterData* parameterData;
+				VelocityCalculation(SourceManager* _sm, ParameterData* _parameterData)
 					:
-					length(_num* (_num - 1) / 2)
-				{
-
-				}
-				virtual void* pointer()override
-				{
-					return nullptr;
-				}
-				virtual unsigned int size()override
-				{
-					return length * 16;
-				}
-			};
-
-			struct AccelerationCalculation :Program
-			{
-				AccelerationData* accelerationData;
-				AccelerationCalculation(SourceManager* _sm, AccelerationData* _acc)
-					:
-					Program(_sm, "AccelerationCalculation"),
-					accelerationData(_acc)
+					Program(_sm, "VelocityCalculation"),
+					parameterData(_parameterData)
 				{
 					init();
 				}
@@ -158,7 +153,7 @@ namespace OpenGL
 				}
 				virtual void run()override
 				{
-					glDispatchCompute(accelerationData->length/1024, 1, 1);
+					glDispatchCompute(parameterData->parameter.num / 1024, 1, 1);
 				}
 			};
 			struct PositionCalculation :Program
@@ -187,11 +182,8 @@ namespace OpenGL
 			Buffer parameterBuffer;
 			BufferConfig parameterUniform;
 
-			AccelerationData accelerationData;
-			Buffer accelerationBuffer;
-			BufferConfig accelerationStorage;
 
-			AccelerationCalculation accelerationCalculation;
+			VelocityCalculation velocityCalculation;
 			PositionCalculation positionCalculation;
 
 			ComputeParticles(SourceManager* _sm, Buffer* _particlesBuffer, Particles* _particles)
@@ -200,10 +192,7 @@ namespace OpenGL
 				parameterData({ 0.005f,0.001f,_particles->num }),
 				parameterBuffer(&parameterData),
 				parameterUniform(&parameterBuffer, UniformBuffer, 3),
-				accelerationData(_particles->num),
-				accelerationBuffer(&accelerationData),
-				accelerationStorage(&accelerationBuffer, ShaderStorageBuffer, 2),
-				accelerationCalculation(_sm, &accelerationData),
+				velocityCalculation(_sm, &parameterData),
 				positionCalculation(_sm, &parameterData)
 			{
 			}
@@ -213,15 +202,14 @@ namespace OpenGL
 			virtual void run()override
 			{
 				//particlesStorage.bind();
-				accelerationCalculation.use();
-				accelerationCalculation.run();
+				velocityCalculation.use();
+				velocityCalculation.run();
 				positionCalculation.use();
 				positionCalculation.run();
 			}
 			void init()
 			{
 				parameterUniform.dataInit();
-				accelerationStorage.dataInit();
 			}
 		};
 
@@ -232,7 +220,7 @@ namespace OpenGL
 		Transform trans;
 		Renderer renderer;
 		ComputeParticles computeParticles;
-		//AccelerationCalculation computer;
+		//VelocityCalculation computer;
 
 		NBody(unsigned int _groups)
 			:
@@ -240,7 +228,7 @@ namespace OpenGL
 			particles(_groups << 10),
 			particlesData(&particles),
 			particlesBuffer(&particlesData),
-			trans({ {80.0,0.01,20},{0.05,0.8,0.01},{0.05},500.0 }),
+			trans({ {80.0,0.1,800},{0.5,0.8,0.1},{1},500.0 }),
 			renderer(&sm, &particlesBuffer, &trans),
 			computeParticles(&sm, &particlesBuffer, &particles)
 		{
@@ -249,7 +237,7 @@ namespace OpenGL
 		virtual void init(FrameScale const& _size)override
 		{
 			glViewport(0, 0, _size.w, _size.h);
-			glPointSize(1);
+			glPointSize(2);
 			glEnable(GL_DEPTH_TEST);
 			trans.init(_size);
 			renderer.transUniform.dataInit();
@@ -329,7 +317,7 @@ int main()
 		}
 	};
 	Window::WindowManager wm(winParameters);
-	OpenGL::NBody test(2);
+	OpenGL::NBody test(22);
 	wm.init(0, &test);
 	glfwSwapInterval(1);
 	FPS fps;
