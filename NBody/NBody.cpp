@@ -314,9 +314,6 @@ namespace OpenGL
 	};
 }
 
-
-
-
 int main()
 {
 	OpenGL::OpenGLInit init(4, 5);
