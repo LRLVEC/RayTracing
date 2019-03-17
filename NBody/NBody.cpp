@@ -18,36 +18,49 @@ namespace OpenGL
 				Math::vec4<float>velocity;
 			};
 			Vector<Particle>particles;
+			std::mt19937 mt;
+			std::uniform_real_distribution<float>randReal;
 			unsigned int num;
 			Particles() = delete;
 			Particles(unsigned int _num)
 				:
-				num(_num)
+				num(_num),
+				randReal(0, 1)
 			{
+			}
+			Particle flatGalaxyParticles()
+			{
+				float r(100 * randReal(mt) + 0.1);
+				float phi(2 * Math::Pi * randReal(mt));
+				r = pow(r, 0.5);
+				float vk(2.1f);
+				float rn(0.5);
+				return
+				{
+					{r * cos(phi),r * sin(phi),1.0f * randReal(mt)},
+					randReal(mt) > 0.999f ? 100 : randReal(mt),
+					{-vk * sin(phi) / powf(r,rn),vk * cos(phi) / powf(r,rn),0},
+				};
+			}
+			Particle sphereGalaxyParticles()
+			{
+				float r(pow(100.0f * randReal(mt) + 0.1f, 1.0 / 3));
+				float theta(2.0f * acos(randReal(mt)));
+				float phi(2 * Math::Pi * randReal(mt));
+				float vk(1.7f);
+				float rn(0.5);
+				return
+				{
+					{r * cos(phi) * sin(theta),r * sin(phi) * sin(theta),r * cos(theta)},
+					randReal(mt) > 0.999f ? 100 : randReal(mt),
+					{-vk * sin(phi) / powf(r,rn),vk * cos(phi) / powf(r,rn),0},
+				};
 			}
 			void randomGalaxy()
 			{
-				std::mt19937 mt;
-				std::uniform_real_distribution<float>randReal(0, 1);
 				unsigned int _num(num - 1);
 				while (_num--)
-				{
-					float theta(Math::Pi * randReal(mt));
-					float r(3 * randReal(mt) + 1);
-					float phi(2 * Math::Pi * randReal(mt));
-					r = r * r * r;
-					theta = (1 + cos(theta)) * Math::Pi / 2;
-					float vk(4.1f);
-					float rn(0.5);
-					particles.pushBack
-					(
-						{
-							{r * sin(theta) * cos(phi),r * sin(theta) * sin(phi),r * cos(theta)},
-							randReal(mt) > 0.999f ? 100 : randReal(mt),
-							{-vk * sin(phi) / powf(r,rn),vk * cos(phi) / powf(r,rn),0},
-						}
-					);
-				}
+					particles.pushBack(flatGalaxyParticles());
 				particles.pushBack
 				(
 					{
@@ -189,7 +202,7 @@ namespace OpenGL
 			ComputeParticles(SourceManager* _sm, Buffer* _particlesBuffer, Particles* _particles)
 				:
 				particlesStorage(_particlesBuffer, ShaderStorageBuffer, 1),
-				parameterData({ 0.005f,0.001f,_particles->num }),
+				parameterData({ 0.01f,0.001f,_particles->num }),
 				parameterBuffer(&parameterData),
 				parameterUniform(&parameterBuffer, UniformBuffer, 3),
 				velocityCalculation(_sm, &parameterData),
@@ -204,8 +217,10 @@ namespace OpenGL
 				//particlesStorage.bind();
 				velocityCalculation.use();
 				velocityCalculation.run();
+				glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 				positionCalculation.use();
 				positionCalculation.run();
+				glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 			}
 			void init()
 			{
@@ -314,9 +329,9 @@ int main()
 		}
 	};
 	Window::WindowManager wm(winParameters);
-	OpenGL::NBody test(22);
+	OpenGL::NBody test(7);
 	wm.init(0, &test);
-	glfwSwapInterval(1);
+	glfwSwapInterval(0);
 	FPS fps;
 	fps.refresh();
 	while (!wm.close())
@@ -324,8 +339,8 @@ int main()
 		wm.pullEvents();
 		wm.render();
 		wm.swapBuffers();
-		//fps.refresh();
-		//fps.printFPS(1);
+		fps.refresh();
+		fps.printFPS(1);
 	}
 	return 0;
 }
