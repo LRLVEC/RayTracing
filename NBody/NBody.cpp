@@ -36,7 +36,7 @@ namespace OpenGL
 					float r(3 * randReal(mt) + 1);
 					float phi(2 * Math::Pi * randReal(mt));
 					r = r * r * r;
-					theta = (1 + cos(theta)) * Math::Pi / 2;
+					theta = (1 + cosf(theta)) * Math::Pi / 2;
 					float vk(4.1f);
 					float rn(0.5);
 					particles.pushBack
