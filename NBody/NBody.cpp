@@ -18,21 +18,44 @@ namespace OpenGL
 				Math::vec4<float>velocity;
 			};
 			Vector<Particle>particles;
-			void randomGalaxy(unsigned int n)
+			unsigned int num;
+			Particles() = delete;
+			Particles(unsigned int _num)
+				:
+				num(_num)
+			{
+			}
+			void randomGalaxy()
 			{
 				std::mt19937 mt;
 				std::uniform_real_distribution<float>randReal(0, 1);
-				while (n--)
+				unsigned int _num(num - 1);
+				while (_num--)
 				{
-					float theta(2 * Math::Pi * randReal(mt));
-					float r(randReal(mt));
-					particles.pushBack(
+					float theta(Math::Pi * randReal(mt));
+					float r(3 * randReal(mt) + 1);
+					float phi(2 * Math::Pi * randReal(mt));
+					r = r * r * r;
+					theta = (1 + cos(theta)) * Math::Pi / 2;
+					float vk(4.1f);
+					float rn(0.5);
+					particles.pushBack
+					(
 						{
-							{r * cos(theta),r * sin(theta),2.0f * randReal(mt) - 1.0f},
-							randReal(mt),
-							{-(r + 0.5f) * sin(theta),(r + 0.5f) * cos(theta),2.0f * randReal(mt) - 1.0f},
-						});
+							{r * sin(theta) * cos(phi),r * sin(theta) * sin(phi),r * cos(theta)},
+							randReal(mt) > 0.999f ? 100 : randReal(mt),
+							{-vk * sin(phi) / powf(r,rn),vk * cos(phi) / powf(r,rn),0},
+						}
+					);
 				}
+				particles.pushBack
+				(
+					{
+						{0,0,0},
+						8000,
+						{0,0,0},
+					}
+				);
 			}
 		};
 		struct ParticlesData :Buffer::Data
@@ -85,13 +108,17 @@ namespace OpenGL
 			}
 
 		};
-		struct Computer :Program
+
+
+		struct ComputeParticles :Computers
 		{
 			struct ParameterData : Buffer::Data
 			{
 				struct Parameter
 				{
 					float dt;
+					float G;
+					unsigned int num;
 				};
 				Parameter parameter;
 				ParameterData(Parameter const& _parameter)
@@ -109,29 +136,80 @@ namespace OpenGL
 					return &parameter;
 				}
 			};
+
+
+			struct VelocityCalculation :Program
+			{
+				ParameterData* parameterData;
+				VelocityCalculation(SourceManager* _sm, ParameterData* _parameterData)
+					:
+					Program(_sm, "VelocityCalculation"),
+					parameterData(_parameterData)
+				{
+					init();
+				}
+				virtual void initBufferData()override
+				{
+				}
+				virtual void run()override
+				{
+					glDispatchCompute(parameterData->parameter.num / 1024, 1, 1);
+				}
+			};
+			struct PositionCalculation :Program
+			{
+				ParameterData* parameterData;
+				PositionCalculation(SourceManager* _sm, ParameterData* _parameterData)
+					:
+					Program(_sm, "PositionCalculation"),
+					parameterData(_parameterData)
+				{
+					init();
+				}
+				virtual void initBufferData()override
+				{
+				}
+				virtual void run()override
+				{
+					glDispatchCompute(parameterData->parameter.num / 1024, 1, 1);
+				}
+			};
+
+
+			BufferConfig particlesStorage;
+
 			ParameterData parameterData;
 			Buffer parameterBuffer;
 			BufferConfig parameterUniform;
-			BufferConfig particlesShader;
 
 
-			Computer(SourceManager* _sm, Buffer* _particlesBuffer)
+			VelocityCalculation velocityCalculation;
+			PositionCalculation positionCalculation;
+
+			ComputeParticles(SourceManager* _sm, Buffer* _particlesBuffer, Particles* _particles)
 				:
-				Program(_sm, "Computer"),
-				parameterData({ 0.001f }),
+				particlesStorage(_particlesBuffer, ShaderStorageBuffer, 1),
+				parameterData({ 0.005f,0.001f,_particles->num }),
 				parameterBuffer(&parameterData),
-				parameterUniform(&parameterBuffer, UniformBuffer, 2),
-				particlesShader(_particlesBuffer, ShaderStorageBuffer, 1)
+				parameterUniform(&parameterBuffer, UniformBuffer, 3),
+				velocityCalculation(_sm, &parameterData),
+				positionCalculation(_sm, &parameterData)
 			{
-				init();
 			}
 			virtual void initBufferData()override
 			{
 			}
 			virtual void run()override
 			{
-				//particlesShader.bind();
-				glDispatchCompute(particlesShader.buffer->data->size() / 1024, 1, 1);
+				//particlesStorage.bind();
+				velocityCalculation.use();
+				velocityCalculation.run();
+				positionCalculation.use();
+				positionCalculation.run();
+			}
+			void init()
+			{
+				parameterUniform.dataInit();
 			}
 		};
 
@@ -141,43 +219,42 @@ namespace OpenGL
 		Buffer particlesBuffer;
 		Transform trans;
 		Renderer renderer;
-		Computer computer;
+		ComputeParticles computeParticles;
+		//VelocityCalculation computer;
 
 		NBody(unsigned int _groups)
 			:
 			sm(),
-			particles(),
+			particles(_groups << 10),
 			particlesData(&particles),
 			particlesBuffer(&particlesData),
-			trans({ {80.0,0.01,20},{0.05,0.8,0.01},{0.05},500.0 }),
+			trans({ {80.0,0.1,800},{0.5,0.8,0.1},{1},500.0 }),
 			renderer(&sm, &particlesBuffer, &trans),
-			computer(&sm, &particlesBuffer)
+			computeParticles(&sm, &particlesBuffer, &particles)
 		{
-			particles.randomGalaxy(1024 * _groups);
-
+			particles.randomGalaxy();
 		}
 		virtual void init(FrameScale const& _size)override
 		{
 			glViewport(0, 0, _size.w, _size.h);
-			glPointSize(1);
+			glPointSize(2);
 			glEnable(GL_DEPTH_TEST);
 			trans.init(_size);
 			renderer.transUniform.dataInit();
 			renderer.particlesArray.dataInit();
-			computer.parameterUniform.dataInit();
+			computeParticles.init();
 		}
 		virtual void run()override
 		{
-			renderer.use();
 			trans.operate();
 			if (trans.updated)
 			{
 				renderer.transUniform.refreshData();
 				trans.updated = false;
 			}
+			renderer.use();
 			renderer.run();
-			computer.use();
-			computer.run();
+			computeParticles.run();
 		}
 		virtual void frameSize(int _w, int _h) override
 		{
@@ -194,9 +271,9 @@ namespace OpenGL
 		{
 			switch (_button)
 			{
-				case GLFW_MOUSE_BUTTON_LEFT:trans.mouse.refreshButton(0, _action); break;
-				case GLFW_MOUSE_BUTTON_MIDDLE:trans.mouse.refreshButton(1, _action); break;
-				case GLFW_MOUSE_BUTTON_RIGHT:trans.mouse.refreshButton(2, _action); break;
+			case GLFW_MOUSE_BUTTON_LEFT:trans.mouse.refreshButton(0, _action); break;
+			case GLFW_MOUSE_BUTTON_MIDDLE:trans.mouse.refreshButton(1, _action); break;
+			case GLFW_MOUSE_BUTTON_RIGHT:trans.mouse.refreshButton(2, _action); break;
 			}
 		}
 		virtual void mousePos(double _x, double _y) override
@@ -212,21 +289,18 @@ namespace OpenGL
 		{
 			switch (_key)
 			{
-				case GLFW_KEY_ESCAPE:
-					if (_action == GLFW_PRESS)
-						glfwSetWindowShouldClose(_window, true);
-					break;
-				case GLFW_KEY_A:trans.key.refresh(0, _action); break;
-				case GLFW_KEY_D:trans.key.refresh(1, _action); break;
-				case GLFW_KEY_W:trans.key.refresh(2, _action); break;
-				case GLFW_KEY_S:trans.key.refresh(3, _action); break;
+			case GLFW_KEY_ESCAPE:
+				if (_action == GLFW_PRESS)
+					glfwSetWindowShouldClose(_window, true);
+				break;
+			case GLFW_KEY_A:trans.key.refresh(0, _action); break;
+			case GLFW_KEY_D:trans.key.refresh(1, _action); break;
+			case GLFW_KEY_W:trans.key.refresh(2, _action); break;
+			case GLFW_KEY_S:trans.key.refresh(3, _action); break;
 			}
 		}
 	};
 }
-
-
-
 
 
 
@@ -243,7 +317,7 @@ int main()
 		}
 	};
 	Window::WindowManager wm(winParameters);
-	OpenGL::NBody test(40);
+	OpenGL::NBody test(22);
 	wm.init(0, &test);
 	glfwSwapInterval(1);
 	FPS fps;

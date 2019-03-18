@@ -70,7 +70,7 @@ namespace OpenGL
 				modelPostions(&model),
 				modelNormals(&model),
 
-				trans({ {80.0,0.1,200},{0.5,0.8,0.05},{2},500.0 }),
+				trans({ {80.0,0.1,200},{0.5,0.8,0.05},{0.5},500.0 }),
 				light(),
 
 				positionBuffer(&modelPostions),
