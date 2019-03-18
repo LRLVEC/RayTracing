@@ -30,15 +30,15 @@ namespace OpenGL
 			}
 			Particle flatGalaxyParticles()
 			{
-				float r(100 * randReal(mt) + 0.1);
+				float r(10000 * randReal(mt) + 1);
 				float phi(2 * Math::Pi * randReal(mt));
 				r = pow(r, 0.5);
 				float vk(2.1f);
-				float rn(0.5);
+				float rn(0.2);
 				return
 				{
 					{r * cos(phi),r * sin(phi),1.0f * randReal(mt)},
-					randReal(mt) > 0.999f ? 100 : randReal(mt),
+					randReal(mt) > 0.999f ? 1000 : randReal(mt),
 					{-vk * sin(phi) / powf(r,rn),vk * cos(phi) / powf(r,rn),0},
 				};
 			}
@@ -60,6 +60,7 @@ namespace OpenGL
 			{
 				unsigned int _num(num - 1);
 				while (_num--)
+					particles.pushBack(flatGalaxyParticles());
 				particles.pushBack
 				(
 					{
@@ -201,7 +202,7 @@ namespace OpenGL
 			ComputeParticles(SourceManager* _sm, Buffer* _particlesBuffer, Particles* _particles)
 				:
 				particlesStorage(_particlesBuffer, ShaderStorageBuffer, 1),
-				parameterData({ 0.01f,0.001f,_particles->num }),
+				parameterData({ 0.001f,0.001f,_particles->num }),
 				parameterBuffer(&parameterData),
 				parameterUniform(&parameterBuffer, UniformBuffer, 3),
 				velocityCalculation(_sm, &parameterData),
@@ -242,7 +243,7 @@ namespace OpenGL
 			particles(_groups << 10),
 			particlesData(&particles),
 			particlesBuffer(&particlesData),
-			trans({ {80.0,0.1,800},{0.5,0.8,0.1},{1},500.0 }),
+			trans({ {40.0,0.1,800},{0.2,0.8,0.1},{1},500.0 }),
 			renderer(&sm, &particlesBuffer, &trans),
 			computeParticles(&sm, &particlesBuffer, &particles)
 		{
@@ -268,6 +269,7 @@ namespace OpenGL
 			}
 			renderer.use();
 			renderer.run();
+			computeParticles.run();
 			computeParticles.run();
 		}
 		virtual void frameSize(int _w, int _h) override
@@ -328,9 +330,9 @@ int main()
 		}
 	};
 	Window::WindowManager wm(winParameters);
-	OpenGL::NBody test(7);
+	OpenGL::NBody test(20);
 	wm.init(0, &test);
-	glfwSwapInterval(1);
+	glfwSwapInterval(0);
 	FPS fps;
 	fps.refresh();
 	while (!wm.close())
@@ -338,8 +340,8 @@ int main()
 		wm.pullEvents();
 		wm.render();
 		wm.swapBuffers();
-		fps.refresh();
-		fps.printFPS(1);
+		//fps.refresh();
+		//fps.printFPS(1);
 	}
 	return 0;
 }
