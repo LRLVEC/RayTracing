@@ -10,69 +10,54 @@ namespace OpenGL
 	{
 		struct Renderer :Program
 		{
-			//Renderer(SourceManager*_sm)
-			//	:
-			//	Program(_sm,"Renderer",)
-			//{
-			//}
-			virtual void setBufferData()override
-			{
-			}
-			virtual void run()override
-			{
-
-			}
-			virtual void resize(int, int)override
-			{
-
-			}
-		};
-		struct Preprocessor :Program
-		{
-			Preprocessor(SourceManager* _sm)
+			Renderer(SourceManager*_sm)
 				:
-				Program(_sm, "Preprocessor")
+				Program(_sm,"Renderer")
+			{
+			}
+			virtual void initBufferData()
 			{
 
-			}
-			virtual void setBufferData()override
-			{
 			}
 			virtual void run()override
 			{
 
 			}
-			virtual void resize(int, int)override
-			{
-
-			}
 		};
-		struct RayTracer :Program
+
+
+		struct RayTracer :Computers
 		{
-			RayTracer(SourceManager* _sm)
-				:
-				Program(_sm, "RayTracer")
+			struct Preprocessor :Program
+			{
+				Preprocessor(SourceManager* _sm)
+					:
+					Program(_sm, "Preprocessor")
+				{
+
+				}
+				virtual void initBufferData()
+				{
+
+				}
+				virtual void run()override
+				{
+
+				}
+			};
+			
+
+			virtual void initBufferData()
 			{
 
 			}
-			virtual void setBufferData()override
-			{
-			}
-			virtual void run()override
-			{
-
-			}
-			virtual void resize(int, int)override
+			virtual void run()
 			{
 
 			}
 		};
-		
-
 		SourceManager sm;
-
 		Renderer renderer;
-		Preprocessor preprocessor;
 		RayTracer rayTracer;
 
 
