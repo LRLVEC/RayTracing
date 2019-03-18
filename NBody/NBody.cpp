@@ -33,8 +33,8 @@ namespace OpenGL
 				float r(100 * randReal(mt) + 0.1);
 				float phi(2 * Math::Pi * randReal(mt));
 				r = pow(r, 0.5);
-				float vk(2.1f);
-				float rn(0.5);
+				float vk(2.0f);
+				float rn(0.3);
 				return
 				{
 					{r * cos(phi),r * sin(phi),1.0f * randReal(mt)},
@@ -243,7 +243,7 @@ namespace OpenGL
 			particles(_groups << 10),
 			particlesData(&particles),
 			particlesBuffer(&particlesData),
-			trans({ {80.0,0.1,800},{0.5,0.8,0.1},{1},500.0 }),
+			trans({ {80.0,0.1,800},{0.8,0.8,0.1},{1},500.0 }),
 			renderer(&sm, &particlesBuffer, &trans),
 			computeParticles(&sm, &particlesBuffer, &particles)
 		{
