@@ -6,14 +6,27 @@
 
 namespace OpenGL
 {
-	struct RayTracing :OpenGL
+	struct RayTrace :OpenGL
 	{
 		struct Renderer :Program
 		{
-			Renderer(SourceManager*_sm)
+			RayTracing::View view;
+			Buffer viewBuffer;
+			BufferConfig viewArray;
+			VertexAttrib position;
+
+			//BufferConfig frameStorage;
+
+			Renderer(SourceManager* _sm)
 				:
-				Program(_sm,"Renderer")
+				Program(_sm, "Renderer"),
+				view(),
+				viewBuffer(&view),
+				viewArray(&viewBuffer, ArrayBuffer),
+				position(&viewArray, 0, VertexAttrib::two,
+					VertexAttrib::Float, false, sizeof(Math::vec2<float>), 0, 0)
 			{
+				init();
 			}
 			virtual void initBufferData()
 			{
@@ -21,11 +34,11 @@ namespace OpenGL
 			}
 			virtual void run()override
 			{
-
+				glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+				glClear(GL_COLOR_BUFFER_BIT);
+				glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 			}
 		};
-
-
 		struct RayTracer :Computers
 		{
 			struct Preprocessor :Program
@@ -36,7 +49,7 @@ namespace OpenGL
 				{
 
 				}
-				virtual void initBufferData()
+				virtual void initBufferData()override
 				{
 
 				}
@@ -45,7 +58,23 @@ namespace OpenGL
 
 				}
 			};
-			
+			struct Tracing:Program
+			{
+				Tracing(SourceManager* _sm)
+				:
+					Program(_sm,"Tracing")
+				{
+
+				}
+				virtual void initBufferData()override
+				{
+
+				}
+				virtual void run()override
+				{
+
+				}
+			};
 
 			virtual void initBufferData()
 			{
@@ -56,9 +85,18 @@ namespace OpenGL
 
 			}
 		};
+
+
 		SourceManager sm;
+
+		RayTracing::FrameSize frameSize;
+		RayTracing::FrameData frameData;
+		Buffer frameSizeBuffer;
+		Buffer frameDataBuffer;
+
+
 		Renderer renderer;
-		RayTracer rayTracer;
+		//RayTracer rayTracer;
 
 
 
