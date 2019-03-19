@@ -95,14 +95,15 @@ namespace OpenGL
 
 		SourceManager sm;
 		RayTracing::FrameScale frameScale;
-		RayTracing::FrameData frameData;
+		//RayTracing::FrameData frameData;
 		RayTracing::Transform transform;
 		Buffer frameSizeBuffer;
-		Buffer frameDataBuffer;
+		//Buffer frameDataBuffer;
 		Buffer transBuffer;
 		BufferConfig frameSizeUniform;
-		BufferConfig frameDataStorage;
+		//BufferConfig frameDataStorage;
 		BufferConfig transUniform;
+		GLuint texture;
 		Renderer renderer;
 		RayTracer rayTracer;
 
@@ -110,17 +111,23 @@ namespace OpenGL
 			:
 			sm(),
 			frameScale(_scale),
-			frameData(&frameScale),
-			transform({ {40.0,_scale.data[1]},{0.2,0.8,0.01},{0.3},1000.0 }),
+			//frameData(&frameScale),
+			transform({ {20.0,_scale.data[1]},{0.2,0.8,0.01},{0.3},1000.0 }),
 			frameSizeBuffer(&frameScale),
-			frameDataBuffer(&frameData),
+			//frameDataBuffer(&frameData),
 			transBuffer(&transform.bufferData),
 			frameSizeUniform(&frameSizeBuffer, UniformBuffer, 0),
-			frameDataStorage(&frameDataBuffer, ShaderStorageBuffer, 2),
+			//frameDataStorage(&frameDataBuffer, ShaderStorageBuffer, 0),
 			transUniform(&transBuffer, UniformBuffer, 1),
 			renderer(&sm),
 			rayTracer(&sm, &frameScale)
 		{
+			glGenTextures(1, &texture);
+			glBindTexture(GL_TEXTURE_2D, texture);
+			glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA32F, _scale.data[0], _scale.data[1]);
+			glTextureParameteri(texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTextureParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glBindImageTexture(2, texture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
 		}
 
 		virtual void init(FrameScale const& _size) override
@@ -129,7 +136,7 @@ namespace OpenGL
 			transform.init(_size);
 			renderer.viewArray.dataInit();
 			frameSizeUniform.dataInit();
-			frameDataStorage.dataInit();
+			//frameDataStorage.dataInit();
 			transUniform.dataInit();
 			//GLint s(0);
 			//glGetActiveUniformBlockiv(rayTracer.tracing.program, 1, GL_UNIFORM_BLOCK_DATA_SIZE, &s);
@@ -174,7 +181,7 @@ namespace OpenGL
 			if (_y != 0.0)
 				transform.scroll.refresh(_y);
 		}
-		virtual void key(GLFWwindow* _window, int _key, int _scancode, int _action, int _mods) override
+		virtual void key(GLFWwindow * _window, int _key, int _scancode, int _action, int _mods) override
 		{
 			switch (_key)
 			{
@@ -182,10 +189,10 @@ namespace OpenGL
 				if (_action == GLFW_PRESS)
 					glfwSetWindowShouldClose(_window, true);
 				break;
-				case GLFW_KEY_A:transform.key.refresh(0, _action); break;
-				case GLFW_KEY_D:transform.key.refresh(1, _action); break;
-				case GLFW_KEY_W:transform.key.refresh(2, _action); break;
-				case GLFW_KEY_S:transform.key.refresh(3, _action); break;
+			case GLFW_KEY_A:transform.key.refresh(0, _action); break;
+			case GLFW_KEY_D:transform.key.refresh(1, _action); break;
+			case GLFW_KEY_W:transform.key.refresh(2, _action); break;
+			case GLFW_KEY_S:transform.key.refresh(3, _action); break;
 			}
 		}
 	};
@@ -203,7 +210,7 @@ int main()
 		}
 	};
 	Window::WindowManager wm(winPara);
-	OpenGL::RayTrace test({ 1280,1280 });
+	OpenGL::RayTrace test({ 2560,2560 });
 	wm.init(0, &test);
 	glfwSwapInterval(1);
 	FPS fps;
@@ -213,8 +220,8 @@ int main()
 		wm.pullEvents();
 		wm.render();
 		wm.swapBuffers();
-		//fps.refresh();
-		//fps.printFPS(1);
+		fps.refresh();
+		fps.printFPS(1);
 	}
 	return 0;
 }

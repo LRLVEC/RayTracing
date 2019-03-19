@@ -21,10 +21,12 @@ layout(std140, row_major, binding = 1)uniform Trans
 	vec3 r0;
 	float z0;
 };
-layout(std430, binding = 2)buffer FrameBuffer
-{
-	vec4 frame[];
-};
+layout(binding = 2, rgba32f)uniform image2D image;
+
+//layout(std430, binding = 0)buffer FrameBuffer
+//{
+//	vec4 frame[];
+//};
 
 
 Ray rayAlloctor()
@@ -38,16 +40,18 @@ float planeTest(Ray ray, vec4 para)
 }
 vec4 rayTrace(Ray ray)
 {
-	float t = planeTest(ray, vec4(0, 0, 1, 1));
+	float t = planeTest(ray, vec4(0, 0, 1, -1));
 	if (t >= 0)
 	{
 		ray.p0 += vec4(ray.n * t, 0);
-		return vec4(0, uint((int(ray.p0.x) + int(ray.p0.y)) % 2u), 0, 0);
+		return vec4(uint((int(ray.p0.x) + int(ray.p0.y)) % 2u) * vec3(0.6, 0.6, 0.6), 0);
 	}
-	return vec4(0, 0, 1, 0);
+	return vec4(0, 0.6, 0.8, 0);
 }
 
 void main()
 {
-	frame[size.x * gl_GlobalInvocationID.y + gl_GlobalInvocationID.x] = rayTrace(rayAlloctor());
+	vec4 color = rayTrace(rayAlloctor());
+	//frame[size.x * gl_GlobalInvocationID.y + gl_GlobalInvocationID.x] = color;
+	imageStore(image, ivec2(gl_GlobalInvocationID.xy), color);
 }

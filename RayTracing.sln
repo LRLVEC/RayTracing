@@ -13,6 +13,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Transform", "Transform\Tran
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NBody", "NBody\NBody.vcxproj", "{BC1008F0-C1E1-4254-8C53-20C78BA753B8}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ImageTest", "ImageTest\ImageTest.vcxproj", "{7E983DDE-D292-4119-9207-FB2B6685375A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -61,6 +63,14 @@ Global
 		{BC1008F0-C1E1-4254-8C53-20C78BA753B8}.Release|x64.Build.0 = Release|x64
 		{BC1008F0-C1E1-4254-8C53-20C78BA753B8}.Release|x86.ActiveCfg = Release|Win32
 		{BC1008F0-C1E1-4254-8C53-20C78BA753B8}.Release|x86.Build.0 = Release|Win32
+		{7E983DDE-D292-4119-9207-FB2B6685375A}.Debug|x64.ActiveCfg = Debug|x64
+		{7E983DDE-D292-4119-9207-FB2B6685375A}.Debug|x64.Build.0 = Debug|x64
+		{7E983DDE-D292-4119-9207-FB2B6685375A}.Debug|x86.ActiveCfg = Debug|Win32
+		{7E983DDE-D292-4119-9207-FB2B6685375A}.Debug|x86.Build.0 = Debug|Win32
+		{7E983DDE-D292-4119-9207-FB2B6685375A}.Release|x64.ActiveCfg = Release|x64
+		{7E983DDE-D292-4119-9207-FB2B6685375A}.Release|x64.Build.0 = Release|x64
+		{7E983DDE-D292-4119-9207-FB2B6685375A}.Release|x86.ActiveCfg = Release|Win32
+		{7E983DDE-D292-4119-9207-FB2B6685375A}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
