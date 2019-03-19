@@ -96,10 +96,13 @@ namespace OpenGL
 		SourceManager sm;
 		RayTracing::FrameScale frameScale;
 		RayTracing::FrameData frameData;
+		RayTracing::Transform transform;
 		Buffer frameSizeBuffer;
 		Buffer frameDataBuffer;
+		Buffer transBuffer;
 		BufferConfig frameSizeUniform;
 		BufferConfig frameDataStorage;
+		BufferConfig transUniform;
 		Renderer renderer;
 		RayTracer rayTracer;
 
@@ -108,10 +111,13 @@ namespace OpenGL
 			sm(),
 			frameScale(_scale),
 			frameData(&frameScale),
+			transform({ {40.0,_scale.data[1]},{0.2,0.8,0.01},{0.3},1000.0 }),
 			frameSizeBuffer(&frameScale),
 			frameDataBuffer(&frameData),
+			transBuffer(&transform.bufferData),
 			frameSizeUniform(&frameSizeBuffer, UniformBuffer, 0),
 			frameDataStorage(&frameDataBuffer, ShaderStorageBuffer, 2),
+			transUniform(&transBuffer, UniformBuffer, 1),
 			renderer(&sm),
 			rayTracer(&sm, &frameScale)
 		{
@@ -120,12 +126,23 @@ namespace OpenGL
 		virtual void init(FrameScale const& _size) override
 		{
 			glViewport(0, 0, _size.w, _size.h);
+			transform.init(_size);
 			renderer.viewArray.dataInit();
 			frameSizeUniform.dataInit();
 			frameDataStorage.dataInit();
+			transUniform.dataInit();
+			//GLint s(0);
+			//glGetActiveUniformBlockiv(rayTracer.tracing.program, 1, GL_UNIFORM_BLOCK_DATA_SIZE, &s);
+			//::printf("Uniform block size: %d\n", s);
 		}
 		virtual void run() override
 		{
+			transform.operate();
+			if (transform.updated)
+			{
+				transUniform.refreshData();
+				transform.updated = false;
+			}
 			rayTracer.run();
 			renderer.use();
 			renderer.run();
@@ -139,17 +156,23 @@ namespace OpenGL
 		virtual void frameFocus(int) override
 		{
 		}
-		virtual void mouseButton(int, int, int) override
+		virtual void mouseButton(int _button, int _action, int _mods) override
 		{
-
+			switch (_button)
+			{
+			case GLFW_MOUSE_BUTTON_LEFT:transform.mouse.refreshButton(0, _action); break;
+			case GLFW_MOUSE_BUTTON_MIDDLE:transform.mouse.refreshButton(1, _action); break;
+			case GLFW_MOUSE_BUTTON_RIGHT:transform.mouse.refreshButton(2, _action); break;
+			}
 		}
-		virtual void mousePos(double, double) override
+		virtual void mousePos(double _x, double _y) override
 		{
-
+			transform.mouse.refreshPos(_x, _y);
 		}
-		virtual void mouseScroll(double, double) override
+		virtual void mouseScroll(double _x, double _y) override
 		{
-
+			if (_y != 0.0)
+				transform.scroll.refresh(_y);
 		}
 		virtual void key(GLFWwindow* _window, int _key, int _scancode, int _action, int _mods) override
 		{
@@ -159,10 +182,10 @@ namespace OpenGL
 				if (_action == GLFW_PRESS)
 					glfwSetWindowShouldClose(_window, true);
 				break;
-				/*case GLFW_KEY_A:trans.key.refresh(0, _action); break;
-				case GLFW_KEY_D:trans.key.refresh(1, _action); break;
-				case GLFW_KEY_W:trans.key.refresh(2, _action); break;
-				case GLFW_KEY_S:trans.key.refresh(3, _action); break;*/
+				case GLFW_KEY_A:transform.key.refresh(0, _action); break;
+				case GLFW_KEY_D:transform.key.refresh(1, _action); break;
+				case GLFW_KEY_W:transform.key.refresh(2, _action); break;
+				case GLFW_KEY_S:transform.key.refresh(3, _action); break;
 			}
 		}
 	};
@@ -175,12 +198,12 @@ int main()
 	{
 		"RayTracing",
 		{
-			{640,640},
+			{1280,1280},
 			false,false,
 		}
 	};
 	Window::WindowManager wm(winPara);
-	OpenGL::RayTrace test({ 32,32 });
+	OpenGL::RayTrace test({ 1280,1280 });
 	wm.init(0, &test);
 	glfwSwapInterval(1);
 	FPS fps;
