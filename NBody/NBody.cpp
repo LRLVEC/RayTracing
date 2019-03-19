@@ -14,7 +14,7 @@ int main()
 		"NBody",
 		{
 			{800,800},
-			true,false
+			false,false
 		}
 	};
 	Window::WindowManager wm(winParameters);

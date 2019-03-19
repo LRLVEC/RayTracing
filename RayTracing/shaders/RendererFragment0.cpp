@@ -1,5 +1,5 @@
 #version 450 core
-in uvec2 pos;
+in vec2 pos;
 out vec4 color;
 layout(std140, binding = 0)uniform Size
 {
@@ -12,5 +12,5 @@ layout(std430, binding = 1)buffer FrameBuffer
 
 void main()
 {
-	color = frame[pos.x + size.x * pos.y];
+	color = frame[uint(pos.x) + size.x * uint(pos.y)];
 }

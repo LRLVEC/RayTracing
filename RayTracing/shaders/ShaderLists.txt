@@ -7,7 +7,7 @@ Program-:	Preprocessor
 {
 	Compute		0
 }
-Program-:	RayTracer
+Program:	Tracing
 {
 	Compute		0
 }
