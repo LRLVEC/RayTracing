@@ -1,4 +1,4 @@
-#include <cstdio>
+﻿#include <cstdio>
 #include <GL/_OpenGL.h>
 #include <GL/_Window.h>
 #include <_Math.h>
@@ -111,7 +111,7 @@ namespace OpenGL
 			frameSizeBuffer(&frameScale),
 			frameDataBuffer(&frameData),
 			frameSizeUniform(&frameSizeBuffer, UniformBuffer, 0),
-			frameDataStorage(&frameDataBuffer, ShaderStorageBuffer, 1),
+			frameDataStorage(&frameDataBuffer, ShaderStorageBuffer, 2),
 			renderer(&sm),
 			rayTracer(&sm, &frameScale)
 		{
@@ -180,7 +180,7 @@ int main()
 		}
 	};
 	Window::WindowManager wm(winPara);
-	OpenGL::RayTrace test({ 640,640 });
+	OpenGL::RayTrace test({ 32,32 });
 	wm.init(0, &test);
 	glfwSwapInterval(1);
 	FPS fps;

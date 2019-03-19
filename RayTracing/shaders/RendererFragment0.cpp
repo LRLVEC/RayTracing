@@ -5,7 +5,7 @@ layout(std140, binding = 0)uniform Size
 {
 	uvec2 size;
 };
-layout(std430, binding = 1)buffer FrameBuffer
+layout(std430, binding = 2)buffer FrameBuffer
 {
 	vec4 frame[];
 };
