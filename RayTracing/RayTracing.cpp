@@ -47,15 +47,13 @@ namespace OpenGL
 					:
 					Program(_sm, "Preprocessor")
 				{
-
+					init();
 				}
 				virtual void initBufferData()override
 				{
-
 				}
 				virtual void run()override
 				{
-
 				}
 			};
 			struct Tracing :Program
@@ -77,9 +75,11 @@ namespace OpenGL
 				}
 			};
 
+			Preprocessor preprocessor;
 			Tracing tracing;
 			RayTracer(SourceManager* _sm, RayTracing::FrameScale* _frameScale)
 				:
+				preprocessor(_sm),
 				tracing(_sm, _frameScale)
 			{
 			}
@@ -95,13 +95,11 @@ namespace OpenGL
 
 		SourceManager sm;
 		RayTracing::FrameScale frameScale;
-		//RayTracing::FrameData frameData;
 		RayTracing::Transform transform;
+		RayTracing::Model model;
 		Buffer frameSizeBuffer;
-		//Buffer frameDataBuffer;
 		Buffer transBuffer;
 		BufferConfig frameSizeUniform;
-		//BufferConfig frameDataStorage;
 		BufferConfig transUniform;
 		GLuint texture;
 		Renderer renderer;
@@ -112,7 +110,7 @@ namespace OpenGL
 			sm(),
 			frameScale(_scale),
 			//frameData(&frameScale),
-			transform({ {20.0,_scale.data[1]},{0.2,0.8,0.01},{0.3},1000.0 }),
+			transform({ {20.0,_scale.data[1]},{0.2,0.8,0.01},{0.3},500.0 }),
 			frameSizeBuffer(&frameScale),
 			//frameDataBuffer(&frameData),
 			transBuffer(&transform.bufferData),
@@ -154,8 +152,9 @@ namespace OpenGL
 			renderer.use();
 			renderer.run();
 		}
-		virtual void frameSize(int, int) override
+		virtual void frameSize(int _w, int _h) override
 		{
+
 		}
 		virtual void framePos(int, int) override
 		{
@@ -205,23 +204,26 @@ int main()
 	{
 		"RayTracing",
 		{
-			{1280,1280},
+			{512,512},
 			false,false,
 		}
 	};
 	Window::WindowManager wm(winPara);
-	OpenGL::RayTrace test({ 2560,2560 });
+	OpenGL::RayTrace test({ 1024,1024 });
 	wm.init(0, &test);
 	glfwSwapInterval(1);
 	FPS fps;
 	fps.refresh();
+	//int temp(0);
+	//glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &temp);
+	//::printf("%d\n", temp);
 	while (!wm.close())
 	{
 		wm.pullEvents();
 		wm.render();
 		wm.swapBuffers();
-		fps.refresh();
-		fps.printFPS(1);
+		//fps.refresh();
+		//fps.printFPS(1);
 	}
 	return 0;
 }
