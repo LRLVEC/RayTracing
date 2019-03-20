@@ -19,8 +19,6 @@ struct TriangleGPU
 {
 	vec4 plane;
 	vec3 p1;
-	vec3 e1;
-	vec3 e2;
 	vec3 k1;
 	vec3 k2;
 	Color color;
@@ -41,43 +39,19 @@ void main()
 		trianglesOrigin[gl_GlobalInvocationID.x].color;
 	triangles[gl_GlobalInvocationID.x].p1 =
 		trianglesOrigin[gl_GlobalInvocationID.x].p1;
-	triangles[gl_GlobalInvocationID.x].e1 =
+	vec3 e1 =
 		trianglesOrigin[gl_GlobalInvocationID.x].p2 -
 		trianglesOrigin[gl_GlobalInvocationID.x].p1;
-	triangles[gl_GlobalInvocationID.x].e2 =
+	vec3 e2 =
 		trianglesOrigin[gl_GlobalInvocationID.x].p3 -
 		trianglesOrigin[gl_GlobalInvocationID.x].p1;
-	vec3 n = cross
-	(
-		triangles[gl_GlobalInvocationID.x].e1,
-		triangles[gl_GlobalInvocationID.x].e2
-	);
+	vec3 n = cross(e1, e2);
 	float s = dot(n, n);
 	n = normalize(n);
 	triangles[gl_GlobalInvocationID.x].plane =
 		vec4(n, -dot(n, triangles[gl_GlobalInvocationID.x].p1));
-	float d = dot
-	(
-		triangles[gl_GlobalInvocationID.x].e1,
-		triangles[gl_GlobalInvocationID.x].e2
-	);
-	triangles[gl_GlobalInvocationID.x].k1 =
-		(
-			dot
-			(
-				triangles[gl_GlobalInvocationID.x].e2,
-				triangles[gl_GlobalInvocationID.x].e2
-			) * triangles[gl_GlobalInvocationID.x].e1 -
-			d * triangles[gl_GlobalInvocationID.x].e2
-			) / s;
-	triangles[gl_GlobalInvocationID.x].k2 =
-		(
-			dot
-			(
-				triangles[gl_GlobalInvocationID.x].e1,
-				triangles[gl_GlobalInvocationID.x].e1
-			) * triangles[gl_GlobalInvocationID.x].e2 -
-			d * triangles[gl_GlobalInvocationID.x].e1
-			) / s;
+	float d = dot(e1, e2);
+	triangles[gl_GlobalInvocationID.x].k1 = (dot(e2, e2) * e1 - d * e2) / s;
+	triangles[gl_GlobalInvocationID.x].k2 = (dot(e1, e1) * e2 - d * e1) / s;
 
 }

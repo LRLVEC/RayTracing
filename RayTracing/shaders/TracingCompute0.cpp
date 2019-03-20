@@ -24,8 +24,6 @@ struct TriangleGPU
 {
 	vec4 plane;
 	vec3 p1;
-	vec3 e1;
-	vec3 e2;
 	vec3 k1;
 	vec3 k2;
 	Color color;
@@ -111,6 +109,7 @@ bool triangleTest(vec2 uv)
 
 vec4 rayTrace(Ray ray)
 {
+
 	float t = getPlaneT(ray, vec4(0, 0, 1, -1));
 	if (t >= 0)
 	{

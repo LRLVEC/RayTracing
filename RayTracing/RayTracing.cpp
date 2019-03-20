@@ -109,13 +109,11 @@ namespace OpenGL
 			:
 			sm(),
 			frameScale(_scale),
-			//frameData(&frameScale),
 			transform({ {20.0,_scale.data[1]},{0.2,0.8,0.01},{0.3},500.0 }),
+			model({ {UniformBuffer,4},{0,1}, {3} }),
 			frameSizeBuffer(&frameScale),
-			//frameDataBuffer(&frameData),
 			transBuffer(&transform.bufferData),
 			frameSizeUniform(&frameSizeBuffer, UniformBuffer, 0),
-			//frameDataStorage(&frameDataBuffer, ShaderStorageBuffer, 0),
 			transUniform(&transBuffer, UniformBuffer, 1),
 			renderer(&sm),
 			rayTracer(&sm, &frameScale)
@@ -134,8 +132,8 @@ namespace OpenGL
 			transform.init(_size);
 			renderer.viewArray.dataInit();
 			frameSizeUniform.dataInit();
-			//frameDataStorage.dataInit();
 			transUniform.dataInit();
+			model.dataInit();
 			//GLint s(0);
 			//glGetActiveUniformBlockiv(rayTracer.tracing.program, 1, GL_UNIFORM_BLOCK_DATA_SIZE, &s);
 			//::printf("Uniform block size: %d\n", s);
@@ -212,7 +210,7 @@ int main()
 	Window::WindowManager wm(winPara);
 	OpenGL::RayTrace test({ 1024,1024 });
 	wm.init(0, &test);
-	glfwSwapInterval(1);
+	glfwSwapInterval(1);//To enable vertical-sync, set: Intel: 0, Nvidia: 1 
 	FPS fps;
 	fps.refresh();
 	//int temp(0);
@@ -223,8 +221,8 @@ int main()
 		wm.pullEvents();
 		wm.render();
 		wm.swapBuffers();
-		//fps.refresh();
-		//fps.printFPS(1);
+		fps.refresh();
+		fps.printFPS(1);
 	}
 	return 0;
 }
