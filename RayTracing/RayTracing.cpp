@@ -151,6 +151,7 @@ namespace OpenGL
 				transform.updated = false;
 			}
 			rayTracer.run();
+			glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 			renderer.use();
 			renderer.run();
 		}
@@ -205,12 +206,12 @@ int main()
 	{
 		"RayTracing",
 		{
-			{1280,1280},
+			{1024,1024},
 			false,false,
 		}
 	};
 	Window::WindowManager wm(winPara);
-	OpenGL::RayTrace test({ 2560,2560 });
+	OpenGL::RayTrace test({ 1024,1024 });
 	wm.init(0, &test);
 	glfwSwapInterval(1);
 	FPS fps;

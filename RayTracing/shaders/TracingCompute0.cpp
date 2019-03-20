@@ -28,7 +28,6 @@ layout(binding = 2, rgba32f)uniform image2D image;
 //	vec4 frame[];
 //};
 
-
 Ray rayAlloctor()
 {
 	vec3 n0 = vec3(ivec2(gl_GlobalInvocationID.xy) - ivec2(size.xy / 2), z0);
@@ -44,7 +43,7 @@ vec4 rayTrace(Ray ray)
 	if (t >= 0)
 	{
 		ray.p0 += vec4(ray.n * t, 0);
-		return vec4(uint((int(ray.p0.x) + int(ray.p0.y)) % 2u) * vec3(0.6, 0.6, 0.6), 0);
+		return vec4(uint((int(ray.p0.x) + int(ray.p0.y)) % 2u) * vec3(0.7, 0.7, 0.7), 0);
 	}
 	return vec4(0, 0.6, 0.8, 0);
 }
