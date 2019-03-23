@@ -124,6 +124,11 @@ namespace OpenGL
 			glTextureParameteri(texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTextureParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glBindImageTexture(2, texture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
+
+
+			model.planes.planes.planes.pushBack({ {0,0,1,0},{{0,0,0},{0,0,0},{0,0,0},1} });
+			
+
 		}
 
 		virtual void init(FrameScale const& _size) override
