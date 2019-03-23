@@ -102,6 +102,7 @@ bool triangleTest(vec2 uv)
 	return false;
 }
 
+
 vec4 rayTrace(Ray ray)
 {
 	uint n = 0;
@@ -127,6 +128,23 @@ vec4 rayTrace(Ray ray)
 			{
 				t = tt;
 				tempColor = vec4(uint((int(uv.x * 10) + int(uv.y * 10)) % 2u) * vec3(0.9, 0.3, 0.8), 0);
+			}
+		}
+	}
+	for (n = 0; n < sphereNum; ++n)
+	{
+		vec3 d = spheres[n].sphere.xyz - ray.p0.xyz;
+		float s = spheres[n].sphere.w - dot(cross(d, ray.n), cross(d, ray.n));
+		if (s >= 0)
+		{
+			s = sqrt(s);
+			float k = dot(d, ray.n);
+			float tt = -1;
+			if (k + s > 0)tt = k + s;
+			if (k > s)tt = k - s;
+			if (tt > 0 && (tt < t || t < 0))
+			{
+				tempColor = vec4(0.3, 0.9, 0.8, 0);
 			}
 		}
 	}

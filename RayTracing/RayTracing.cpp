@@ -119,7 +119,7 @@ namespace OpenGL
 			sm(),
 			frameScale(_scale),
 			transform({ {20.0,_scale.data[1]},{0.2,0.8,0.01},{0.3},500.0 }),
-			model({ {UniformBuffer,4},{0,1}, {3} }),
+			model({ {UniformBuffer,4}, {0,1}, {2}, {3} }),
 			frameSizeBuffer(&frameScale),
 			transBuffer(&transform.bufferData),
 			frameSizeUniform(&frameSizeBuffer, UniformBuffer, 0),
@@ -134,8 +134,13 @@ namespace OpenGL
 			glTextureParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glBindImageTexture(2, texture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
 
-			model.planes.data.planes.pushBack({ {0,0,1,0},{{0,0,0},{0,0,0},{0,0,0},1} });
-			model.planes.numChanged = true;
+			model.planes.data.planes.pushBack
+			(
+				{
+					{0,0,1,0},
+					{{0,0,0},{0,0,0},{0,0,0},1}
+				}
+			);
 			model.triangles.trianglesOrigin.trianglesOrigin.pushBack
 			(
 				{
@@ -143,6 +148,14 @@ namespace OpenGL
 					{{0,0,0},{0,0,0},{0,0,0},1}
 				}
 			);
+			model.spheres.data.spheres.pushBack
+			(
+				{
+					{0,0,5,1},
+					{{0,0,0},{0,0,0},{0,0,0},1}
+				}
+			);
+			model.planes.numChanged = true;
 			model.triangles.numChanged = true;
 		}
 		virtual void init(FrameScale const& _size) override
