@@ -1,5 +1,6 @@
 #version 450 core
 layout(local_size_x = 32, local_size_y = 32)in;
+#define RayTraceDepth 5
 
 struct Ray
 {
@@ -10,8 +11,8 @@ struct Ray
 struct Color
 {
 	vec3 r;
+	vec3 t;
 	vec3 g;
-	vec3 b;
 	float n;
 };
 struct Plane
@@ -106,49 +107,74 @@ bool triangleTest(vec2 uv)
 vec4 rayTrace(Ray ray)
 {
 	uint n = 0;
-	float t = -1;
-	vec4 tempColor = vec4(0, 0.6, 0.8, 0);
-	for (; n < planeNum; ++n)
+	int depth = RayTraceDepth;
+	float t;
+	vec3 ratioR = vec3(1);
+	vec3 answer = vec3(0);
+	vec3 tempColor;
+	vec3 tempRatioR;
+	vec3 tempN;
+	while (bool(--depth))
 	{
-		float tt = getPlaneT(ray, planes[n].plane);
-		if (tt > 0 && (tt < t || t < 0))
+		t = -1;
+		tempColor = vec3(0, 0.6, 0.8);
+		for (n = 0; n < planeNum; ++n)
 		{
-			t = tt;
-			vec3 p1 = ray.p0.xyz + ray.n * t;
-			tempColor = vec4(uint((int(p1.x) + int(p1.y)) % 2u) * vec3(0.8, 0.8, 0.8), 0);
-		}
-	}
-	for (n = 0; n < triangleNum; ++n)
-	{
-		float tt = getPlaneT(ray, triangles[n].plane);
-		if (tt > 0 && (tt < t || t < 0))
-		{
-			vec2 uv = getTriangleUV(ray.p0.xyz + ray.n * tt, n);
-			if (triangleTest(uv))
-			{
-				t = tt;
-				tempColor = vec4(uint((int(uv.x * 10) + int(uv.y * 10)) % 2u) * vec3(0.9, 0.3, 0.8), 0);
-			}
-		}
-	}
-	for (n = 0; n < sphereNum; ++n)
-	{
-		vec3 d = spheres[n].sphere.xyz - ray.p0.xyz;
-		float s = spheres[n].sphere.w - dot(cross(d, ray.n), cross(d, ray.n));
-		if (s >= 0)
-		{
-			s = sqrt(s);
-			float k = dot(d, ray.n);
-			float tt = -1;
-			if (k + s > 0)tt = k + s;
-			if (k > s)tt = k - s;
+			float tt = getPlaneT(ray, planes[n].plane);
 			if (tt > 0 && (tt < t || t < 0))
 			{
-				tempColor = vec4(0.3, 0.9, 0.8, 0);
+				t = tt;
+				vec3 p1 = ray.p0.xyz + ray.n * t;
+				tempColor = (uint(int(p1.x) + int(p1.y)) % 2u) * planes[n].color.g;
+				tempRatioR = planes[n].color.r;
+				tempN = planes[n].plane.xyz;
 			}
 		}
+		for (n = 0; n < triangleNum; ++n)
+		{
+			float tt = getPlaneT(ray, triangles[n].plane);
+			if (tt > 0 && (tt < t || t < 0))
+			{
+				vec2 uv = getTriangleUV(ray.p0.xyz + ray.n * tt, n);
+				if (triangleTest(uv))
+				{
+					t = tt;
+					tempColor = (uint(int(uv.x * 10) + int(uv.y * 10)) % 2u) * triangles[n].color.g;
+					tempRatioR = triangles[n].color.r;
+					tempN = triangles[n].plane.xyz;
+				}
+			}
+		}
+		for (n = 0; n < sphereNum; ++n)
+		{
+			vec3 d = spheres[n].sphere.xyz - ray.p0.xyz;
+			float s = spheres[n].sphere.w - dot(cross(d, ray.n), cross(d, ray.n));
+			if (s >= 0)
+			{
+				s = sqrt(s);
+				float k = dot(d, ray.n);
+				float tt = -1;
+				if (k + s > 0)tt = k + s;
+				if (k > s)tt = k - s;
+				if (tt > 0 && (tt < t || t < 0))
+				{
+					t = tt;
+					tempColor = spheres[n].color.g;
+					tempRatioR = spheres[n].color.r;
+					tempN = normalize(ray.p0.xyz + t * ray.n - spheres[n].sphere.xyz);
+				}
+			}
+		}
+		answer += ratioR * tempColor;
+		if (t > 0)
+		{
+			ratioR *= tempRatioR;
+			ray.p0 += vec4((t - 0.0001) * ray.n, 0);
+			ray.n -= 2 * dot(ray.n, tempN) * tempN;
+		}
+		else break;
 	}
-	return tempColor;
+	return vec4(answer, 1);
 }
 
 void main()
