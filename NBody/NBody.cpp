@@ -329,11 +329,7 @@ int main()
 		}
 	};
 	Window::WindowManager wm(winParameters);
-<<<<<<< HEAD
-	OpenGL::NBody test(10);
-=======
 	OpenGL::NBody test(7);
->>>>>>> 215da6d9ecf879378afad63aad04a1ee08c85cb9
 	wm.init(0, &test);
 	glfwSwapInterval(0);
 	FPS fps;
