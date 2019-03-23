@@ -43,9 +43,11 @@ namespace OpenGL
 		{
 			struct Preprocessor :Program
 			{
-				Preprocessor(SourceManager* _sm)
+				RayTracing::Model* model;
+				Preprocessor(SourceManager* _sm, RayTracing::Model* _model)
 					:
-					Program(_sm, "Preprocessor")
+					Program(_sm, "Preprocessor"),
+					model(_model)
 				{
 					init();
 				}
@@ -54,6 +56,7 @@ namespace OpenGL
 				}
 				virtual void run()override
 				{
+					glDispatchCompute((model->geometryNum.data.num.triangleNum + 1023) / 1024, 1, 1);
 				}
 			};
 			struct Tracing :Program
@@ -77,9 +80,9 @@ namespace OpenGL
 
 			Preprocessor preprocessor;
 			Tracing tracing;
-			RayTracer(SourceManager* _sm, RayTracing::FrameScale* _frameScale)
+			RayTracer(SourceManager* _sm, RayTracing::FrameScale* _frameScale, RayTracing::Model* _model)
 				:
-				preprocessor(_sm),
+				preprocessor(_sm, _model),
 				tracing(_sm, _frameScale)
 			{
 			}
@@ -88,6 +91,12 @@ namespace OpenGL
 			}
 			virtual void run()
 			{
+				if (!preprocessor.model->triangles.GPUUpToDate)
+				{
+					preprocessor.use();
+					preprocessor.run();
+					preprocessor.model->triangles.GPUUpToDate = true;
+				}
 				tracing.use();
 				tracing.run();
 			}
@@ -116,7 +125,7 @@ namespace OpenGL
 			frameSizeUniform(&frameSizeBuffer, UniformBuffer, 0),
 			transUniform(&transBuffer, UniformBuffer, 1),
 			renderer(&sm),
-			rayTracer(&sm, &frameScale)
+			rayTracer(&sm, &frameScale, &model)
 		{
 			glGenTextures(1, &texture);
 			glBindTexture(GL_TEXTURE_2D, texture);
@@ -125,12 +134,17 @@ namespace OpenGL
 			glTextureParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glBindImageTexture(2, texture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
 
-
-			model.planes.planes.planes.pushBack({ {0,0,1,0},{{0,0,0},{0,0,0},{0,0,0},1} });
-			
-
+			model.planes.data.planes.pushBack({ {0,0,1,0},{{0,0,0},{0,0,0},{0,0,0},1} });
+			model.planes.numChanged = true;
+			model.triangles.trianglesOrigin.trianglesOrigin.pushBack
+			(
+				{
+					{{0,0,1},{1,0,1},{1,1,1}},
+					{{0,0,0},{0,0,0},{0,0,0},1}
+				}
+			);
+			model.triangles.numChanged = true;
 		}
-
 		virtual void init(FrameScale const& _size) override
 		{
 			glViewport(0, 0, _size.w, _size.h);
