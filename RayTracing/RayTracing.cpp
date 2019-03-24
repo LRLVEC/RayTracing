@@ -59,6 +59,24 @@ namespace OpenGL
 					glDispatchCompute((model->geometryNum.data.num.triangleNum + 1023) / 1024, 1, 1);
 				}
 			};
+			struct CirclePre :Program
+			{
+				RayTracing::Model* model;
+				CirclePre(SourceManager* _sm, RayTracing::Model* _model)
+					:
+					Program(_sm, "CirclePre"),
+					model(_model)
+				{
+					init();
+				}
+				virtual void initBufferData()override
+				{
+				}
+				virtual void run()override
+				{
+					glDispatchCompute((model->geometryNum.data.num.circleNum + 1023) / 1024, 1, 1);
+				}
+			};
 			struct Tracing :Program
 			{
 				RayTracing::FrameScale* frameScale;
@@ -79,10 +97,12 @@ namespace OpenGL
 			};
 
 			Preprocessor preprocessor;
+			CirclePre circlePre;
 			Tracing tracing;
 			RayTracer(SourceManager* _sm, RayTracing::FrameScale* _frameScale, RayTracing::Model* _model)
 				:
 				preprocessor(_sm, _model),
+				circlePre(_sm,_model),
 				tracing(_sm, _frameScale)
 			{
 			}
@@ -277,7 +297,7 @@ int main()
 	Window::WindowManager wm(winPara);
 	OpenGL::RayTrace test({ 640,640 });
 	wm.init(0, &test);
-	glfwSwapInterval(1);//To enable vertical-sync, set: Intel: 0, Nvidia: 1 
+	glfwSwapInterval(0);
 	FPS fps;
 	fps.refresh();
 	//int temp(0);

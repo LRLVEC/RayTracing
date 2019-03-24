@@ -10,9 +10,9 @@ struct Ray
 };
 struct Color
 {
-	vec3 r;
-	vec3 t;
-	vec3 g;
+	vec3 r;//反射率
+	vec3 t;//透射率
+	vec3 g;//自发光
 	float n;
 };
 struct Plane
@@ -102,7 +102,7 @@ vec2 getTriangleUV(vec3 pos, uint num)
 }
 //vec2 getCircleUV(vec3 pos, uint num)
 //{
-//	//vec3 d = pos - circles[num];//
+//	vec3 d = pos - circles[num];//
 //}
 bool triangleTest(vec2 uv)
 {
@@ -191,7 +191,7 @@ vec4 rayTrace(Ray ray)
 		if (t > 0)
 		{
 			ratioR *= tempRatioR;
-			ray.p0 += vec4((t - 0.00001) * ray.n, 0);
+			ray.p0 += vec4((t - 0.0001) * ray.n, 0);
 			ray.n = reflect(ray.n, tempN);
 		}
 		else break;
