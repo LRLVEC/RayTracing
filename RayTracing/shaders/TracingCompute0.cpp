@@ -10,9 +10,9 @@ struct Ray
 };
 struct Color
 {
-	vec3 r;
-	vec3 t;
-	vec3 g;
+	vec3 r;//反射率
+	vec3 t;//透射率
+	vec3 g;//自发光
 	float n;
 };
 struct Plane
@@ -128,8 +128,8 @@ vec4 rayTrace(Ray ray)
 				t = tt;
 				vec3 p1 = ray.p0.xyz + ray.n * t;
 				tempColor = (uint(int(p1.x) + int(p1.y)) % 2u) * planes[n].color.g;
-				tempRatioR = planes[n].color.r;
-				tempN = planes[n].plane.xyz;
+				tempRatioR = planes[n].color.r;//反射率
+				tempN = planes[n].plane.xyz;//反射平面的法向
 			}
 		}
 		for (n = 0; n < triangleNum; ++n)
@@ -172,7 +172,7 @@ vec4 rayTrace(Ray ray)
 		{
 			ratioR *= tempRatioR;
 			ray.p0 += vec4((t - 0.0001) * ray.n, 0);
-			ray.n -= 2 * dot(ray.n, tempN) * tempN;
+			ray.n = reflect(ray.n, tempN);
 		}
 		else break;
 	}

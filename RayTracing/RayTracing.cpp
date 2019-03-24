@@ -238,12 +238,12 @@ int main()
 	{
 		"RayTracing",
 		{
-			{640,640},
+			{1920,1024},
 			false,false,
 		}
 	};
 	Window::WindowManager wm(winPara);
-	OpenGL::RayTrace test({ 640,640 });
+	OpenGL::RayTrace test({ 1920 ,1024 });
 	wm.init(0, &test);
 	glfwSwapInterval(0);
 	FPS fps;
