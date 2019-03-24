@@ -41,12 +41,12 @@ namespace OpenGL
 		};
 		struct RayTracer :Computers
 		{
-			struct Preprocessor :Program
+			struct TrianglePre :Program
 			{
 				RayTracing::Model* model;
-				Preprocessor(SourceManager* _sm, RayTracing::Model* _model)
+				TrianglePre(SourceManager* _sm, RayTracing::Model* _model)
 					:
-					Program(_sm, "Preprocessor"),
+					Program(_sm, "TrianglePre"),
 					model(_model)
 				{
 					init();
@@ -96,12 +96,12 @@ namespace OpenGL
 				}
 			};
 
-			Preprocessor preprocessor;
+			TrianglePre trianglePre;
 			CirclePre circlePre;
 			Tracing tracing;
 			RayTracer(SourceManager* _sm, RayTracing::FrameScale* _frameScale, RayTracing::Model* _model)
 				:
-				preprocessor(_sm, _model),
+				trianglePre(_sm, _model),
 				circlePre(_sm, _model),
 				tracing(_sm, _frameScale)
 			{
@@ -111,11 +111,17 @@ namespace OpenGL
 			}
 			virtual void run()
 			{
-				if (!preprocessor.model->triangles.GPUUpToDate)
+				if (!trianglePre.model->triangles.GPUUpToDate)
 				{
-					preprocessor.use();
-					preprocessor.run();
-					preprocessor.model->triangles.GPUUpToDate = true;
+					trianglePre.use();
+					trianglePre.run();
+					trianglePre.model->triangles.GPUUpToDate = true;
+				}
+				if (!circlePre.model->circles.GPUUpToDate)
+				{
+					circlePre.use();
+					circlePre.run();
+					circlePre.model->circles.GPUUpToDate = true;
 				}
 				if (!circlePre.model->circles.GPUUpToDate)
 				{
@@ -160,21 +166,23 @@ namespace OpenGL
 			glTextureParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glBindImageTexture(2, texture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
 
-			/*	model.planes.data.planes.pushBack
-				(
-					{
-						{0,0,1,0},
-						{{0.4,0.4,0.4},{0,0,0},{0.8,0.8,0.8},1}
-					}
-				);*/
-			model.triangles.trianglesOrigin.trianglesOrigin.pushBack
+
+			model.planes.data.planes.pushBack
 			(
 				{
-					{{0,0,5},{1,0,5},{1,1,5}},
-					{{0.4,0.4,0.4},{0,0,0},{0.7,0,0},1}
+					{0,0,1,0},
+					{{0,0,0},{0.9,0.9,0.9},{1,1,1},1}
 				}
 			);
+			/*		model.triangles.trianglesOrigin.trianglesOrigin.pushBack
+					(
+						{
+							{{0,0,5},{1,0,5},{1,1,5}},
+							{{0.4,0.4,0.4},{0,0,0},{0.7,0,0},1}
+						}
+					);
 
+<<<<<<< HEAD
 			RayTracing::Model::Color borderColor
 			{ {0.1,0.7,0.5},{0,0,0},{0,0,0},1 };
 			model.triangles.trianglesOrigin.trianglesOrigin +=
@@ -212,18 +220,48 @@ namespace OpenGL
 					borderColor
 				}
 			};
+=======
+
+					model.triangles.trianglesOrigin.trianglesOrigin.pushBack
+					(
+						{
+							{{1,1,1},{1,-1,1},{1,-1,3}},
+							{{0.8,0.8,0.8},{0,0,0},{0,0,0},1}
+						}
+					);
+					model.triangles.trianglesOrigin.trianglesOrigin.pushBack
+					(
+						{
+							{{1,1,1},{1,-1,3},{1,1,3}},
+							{{0.8,0.8,0.8},{0,0,0},{0,0,0},1}
+						}
+					);
+					model.triangles.trianglesOrigin.trianglesOrigin.pushBack
+					(
+						{
+							{{-1,1,1},{-1,-1,1},{-1,-1,3}},
+							{{0.8,0.8,0.8},{0,0,0},{0,0,0},1}
+						}
+					);
+					model.triangles.trianglesOrigin.trianglesOrigin.pushBack
+					(
+						{
+							{{-1,1,1},{-1,-1,3},{-1,1,3}},
+							{{0.8,0.8,0.8},{0,0,0},{0,0,0},1}
+						}
+					);*/
 
 			model.spheres.data.spheres.pushBack
 			(
 				{
-					{0,0,2,0.1},
+					{0,0,2.1,4},
 					{0},
 					{0},
-					{{0.7,0.7,0.7},{0,0,0},{0,0,0.1},1}
+					{{0.1,0.1,0.1},{1,1,1},{0,0,0},1.5}
 				}
 			);
 
-			model.circles.data.circles +=
+			/*model.circles.data.circles +=
 			{
 				{
 					{ 0, 0, 1, 0 },
@@ -240,7 +278,7 @@ namespace OpenGL
 					{ 0,0,0 },
 					{ {0.3,0.3,0.3},{0,0,0},{0.5,0.5,0},1 }
 				}
-			};
+			};*/
 			model.planes.numChanged = true;
 			model.triangles.numChanged = true;
 			model.spheres.numChanged = true;
@@ -341,8 +379,8 @@ int main()
 		wm.pullEvents();
 		wm.render();
 		wm.swapBuffers();
-		//fps.refresh();
-		//fps.printFPS(1);
+		fps.refresh();
+		fps.printFPS(1);
 	}
 	return 0;
 }
