@@ -1,6 +1,6 @@
 #version 450 core
 layout(local_size_x = 32, local_size_y = 32)in;
-#define RayTraceDepth 5
+#define RayTraceDepth 15
 
 struct Ray
 {
@@ -62,20 +62,20 @@ layout(std140, binding = 3)uniform GeometryNum
 	uint sphereNum;
 	uint circleNum;
 };
-layout(std140, binding = 4)uniform Planes
+
+layout(std430, binding = 0)buffer Planes
 {
 	Plane planes[];
 };
-
-layout(std430, binding = 1)buffer Triangles
+layout(std430, binding = 2)buffer Triangles
 {
 	TriangleGPU triangles[];
 };
-layout(std430, binding = 2)buffer Spheres
+layout(std430, binding = 3)buffer Spheres
 {
 	Sphere spheres[];
 };
-layout(std430, binding = 3)buffer Circles
+layout(std430, binding = 4)buffer Circles
 {
 	Circle circles[];
 };
@@ -100,10 +100,6 @@ vec2 getTriangleUV(vec3 pos, uint num)
 		dot(d, triangles[num].k2)
 	);
 }
-//vec2 getCircleUV(vec3 pos, uint num)
-//{
-//	vec3 d = pos - circles[num];//
-//}
 bool triangleTest(vec2 uv)
 {
 	if (all(greaterThanEqual(uv, vec2(0, 0))) && (uv.x + uv.y <= 1.0f))
@@ -133,7 +129,7 @@ vec4 rayTrace(Ray ray)
 			{
 				t = tt;
 				vec3 p1 = ray.p0.xyz + ray.n * t;
-				tempColor = ((int(p1.x) + int(p1.y)) % 2u) * planes[n].color.g;
+				tempColor = ((int(4.2 * p1.x) + int(4.2 * p1.y)) % 2u) * planes[n].color.g;
 				tempRatioR = planes[n].color.r;
 				tempN = planes[n].plane.xyz;
 			}
@@ -174,25 +170,29 @@ vec4 rayTrace(Ray ray)
 				}
 			}
 		}
-		/*for (n = 0; n < circleNum; ++n)
+		for (n = 0; n < circleNum; ++n)
 		{
 			float tt = getPlaneT(ray, circles[n].plane);
 			if (tt > 0 && (tt < t || t < 0))
 			{
-				vec3 p1 = ray.p0.xyz + ray.n * t;
-				if ()
+				vec3 pos = ray.p0.xyz + ray.n * tt;
+				vec3 d = pos - circles[n].sphere.xyz;
+				if (dot(d, d) <= circles[n].sphere.w)
+				{
 					t = tt;
-				tempColor = (uint(int(p1.x) + int(p1.y)) % 2u) * planes[n].color.g;
-				tempRatioR = planes[n].color.r;
-				tempN = planes[n].plane.xyz;
+					vec2 uv = vec2(dot(circles[n].e1, d), dot(circles[n].e2, d));
+					tempColor = (uint(int(3 * uv.x) + int(3 * uv.y)) % 2u) * circles[n].color.g;
+					tempRatioR = circles[n].color.r;
+					tempN = circles[n].plane.xyz;
+				}
 			}
-		}*/
+		}
 		answer += ratioR * tempColor;
 		if (t > 0)
 		{
 			ratioR *= tempRatioR;
 			ray.p0 += vec4((t - 0.0001) * ray.n, 0);
-			ray.n = reflect(ray.n, tempN);
+			ray.n -= 2 * dot(ray.n, tempN) * tempN;
 		}
 		else break;
 	}

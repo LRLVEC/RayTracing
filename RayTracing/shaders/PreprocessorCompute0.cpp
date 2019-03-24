@@ -31,11 +31,11 @@ layout(std140, binding = 3)uniform GeometryNum
 	uint circleNum;
 };
 
-layout(std430, binding = 0)buffer TriangleOrigin
+layout(std430, binding = 1)buffer TriangleOrigin
 {
 	Triangle trianglesOrigin[];
 };
-layout(std430, binding = 1)buffer Triangles
+layout(std430, binding = 2)buffer Triangles
 {
 	TriangleGPU triangles[];
 };

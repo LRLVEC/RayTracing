@@ -102,7 +102,7 @@ namespace OpenGL
 			RayTracer(SourceManager* _sm, RayTracing::FrameScale* _frameScale, RayTracing::Model* _model)
 				:
 				preprocessor(_sm, _model),
-				circlePre(_sm,_model),
+				circlePre(_sm, _model),
 				tracing(_sm, _frameScale)
 			{
 			}
@@ -116,6 +116,12 @@ namespace OpenGL
 					preprocessor.use();
 					preprocessor.run();
 					preprocessor.model->triangles.GPUUpToDate = true;
+				}
+				if (!circlePre.model->circles.GPUUpToDate)
+				{
+					circlePre.use();
+					circlePre.run();
+					circlePre.model->circles.GPUUpToDate = true;
 				}
 				tracing.use();
 				tracing.run();
@@ -138,8 +144,8 @@ namespace OpenGL
 			:
 			sm(),
 			frameScale(_scale),
-			transform({ {20.0,_scale.data[1]},{0.02,0.9,0.01},{0.03},500.0 }),
-			model({ {UniformBuffer,4}, {0,1}, {2}, {3}, {3} }),
+			transform({ {40.0,_scale.data[1]},{0.02,0.9,0.01},{0.1},{0,0,10},500.0 }),
+			model({ {ShaderStorageBuffer,0}, {1,2}, {3}, {4}, {3} }),
 			frameSizeBuffer(&frameScale),
 			transBuffer(&transform.bufferData),
 			frameSizeUniform(&frameSizeBuffer, UniformBuffer, 0),
@@ -154,13 +160,13 @@ namespace OpenGL
 			glTextureParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glBindImageTexture(2, texture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
 
-			model.planes.data.planes.pushBack
-			(
-				{
-					{0,0,1,0},
-					{{0.3,0.3,0.3},{0,0,0},{0.4,0.4,0.4},1}
-				}
-			);
+			/*	model.planes.data.planes.pushBack
+				(
+					{
+						{0,0,1,0},
+						{{0.4,0.4,0.4},{0,0,0},{0.8,0.8,0.8},1}
+					}
+				);*/
 			model.triangles.trianglesOrigin.trianglesOrigin.pushBack
 			(
 				{
@@ -169,35 +175,43 @@ namespace OpenGL
 				}
 			);
 
-
-			model.triangles.trianglesOrigin.trianglesOrigin.pushBack
-			(
+			RayTracing::Model::Color borderColor
+			{ {0.1,0.7,0.5},{0,0,0},{0,0,0},1 };
+			model.triangles.trianglesOrigin.trianglesOrigin +=
+			{
 				{
-					{{1,1,1},{1,-1,1},{1,-1,3}},
-					{{0.8,0.8,0.8},{0,0,0},{0,0,0},1}
-				}
-			);
-			model.triangles.trianglesOrigin.trianglesOrigin.pushBack
-			(
+					{ {2, 2, 0}, { 2,-2, 0 }, { 2,-2, 4 }},
+						borderColor
+				},
 				{
-					{{1,1,1},{1,-1,3},{1,1,3}},
-					{{0.8,0.8,0.8},{0,0,0},{0,0,0},1}
-				}
-			);
-			model.triangles.trianglesOrigin.trianglesOrigin.pushBack
-			(
+					{{2,2,0},{2,-2,4},{2,2,4}},
+					borderColor
+				},
 				{
-					{{-1,1,1},{-1,-1,1},{-1,-1,3}},
-					{{0.8,0.8,0.8},{0,0,0},{0,0,0},1}
-				}
-			);
-			model.triangles.trianglesOrigin.trianglesOrigin.pushBack
-			(
+					{{-2,2,0},{-2,-2,0},{-2,-2,4}},
+					borderColor
+				},
 				{
-					{{-1,1,1},{-1,-1,3},{-1,1,3}},
-					{{0.8,0.8,0.8},{0,0,0},{0,0,0},1}
+					{{-2,2,0},{-2,-2,4},{-2,2,4}},
+					borderColor
+				},
+				{
+					{ {2, 2, 0}, { -2,2, 0 }, { -2,2, 4 }},
+						borderColor
+				},
+				{
+					{{2,2,0},{-2,2,4},{2,2,4}},
+					borderColor
+				},
+				{
+					{{2,-2,0},{-2,-2,0},{-2,-2,4}},
+					borderColor
+				},
+				{
+					{{2,-2,0},{-2,-2,4},{2,-2,4}},
+					borderColor
 				}
-			);
+			};
 
 			model.spheres.data.spheres.pushBack
 			(
@@ -208,10 +222,29 @@ namespace OpenGL
 					{{0.7,0.7,0.7},{0,0,0},{0,0,0.1},1}
 				}
 			);
+
+			model.circles.data.circles +=
+			{
+				{
+					{ 0, 0, 1, 0 },
+					{ 0,0,0,250 },
+					{ 1,1,0 },
+					{ 0,0,0 },
+					{ {0.4,0.4,0.4},{0,0,0},{0.8,0.8,0.8},1 }
+				}
+				,
+				{
+					{ 0, 0, 1, 0 },
+					{ 0,0,7,1 },
+					{ 1,0,0 },
+					{ 0,0,0 },
+					{ {0.3,0.3,0.3},{0,0,0},{0.5,0.5,0},1 }
+				}
+			};
 			model.planes.numChanged = true;
 			model.triangles.numChanged = true;
 			model.spheres.numChanged = true;
-			//model.circles.numChanged = true;
+			model.circles.numChanged = true;
 		}
 		virtual void init(FrameScale const& _size) override
 		{
@@ -234,7 +267,7 @@ namespace OpenGL
 				transform.updated = false;
 			}
 			rayTracer.run();
-			glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+			//glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 			renderer.use();
 			renderer.run();
 		}
@@ -290,14 +323,14 @@ int main()
 	{
 		"RayTracing",
 		{
-			{640,640},
+			{2048,2048},
 			false,false,
 		}
 	};
 	Window::WindowManager wm(winPara);
-	OpenGL::RayTrace test({ 640,640 });
+	OpenGL::RayTrace test({ 1024,1024 });
 	wm.init(0, &test);
-	glfwSwapInterval(0);
+	glfwSwapInterval(1);
 	FPS fps;
 	fps.refresh();
 	//int temp(0);

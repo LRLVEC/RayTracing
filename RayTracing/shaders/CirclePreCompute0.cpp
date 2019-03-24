@@ -22,7 +22,7 @@ layout(std140, binding = 3)uniform GeometryNum
 	uint sphereNum;
 	uint circleNum;
 };
-layout(std430, binding = 3)buffer Circles
+layout(std430, binding = 4)buffer Circles
 {
 	Circle circles[];
 };
@@ -30,15 +30,12 @@ void main()
 {
 	if (gl_GlobalInvocationID.x < circleNum)
 	{
+		vec3 n = normalize(circles[gl_GlobalInvocationID.x].plane.xyz);
 		circles[gl_GlobalInvocationID.x].plane =
-			vec4(normalize(circles[gl_GlobalInvocationID.x].plane.xyz), 1);
+			vec4(n, -dot(n, circles[gl_GlobalInvocationID.x].sphere.xyz));
 		circles[gl_GlobalInvocationID.x].e1 =
 			normalize(circles[gl_GlobalInvocationID.x].e1);
 		circles[gl_GlobalInvocationID.x].e2 =
-			cross
-			(
-				circles[gl_GlobalInvocationID.x].plane.xyz,
-				circles[gl_GlobalInvocationID.x].e1
-			);
+			cross(n, circles[gl_GlobalInvocationID.x].e1);
 	}
 }
