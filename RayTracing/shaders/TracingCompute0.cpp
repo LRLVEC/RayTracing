@@ -44,6 +44,15 @@ struct Circle
 	Color color;
 };
 
+struct Stack
+{
+	vec4 p0;
+	vec3 n;
+	int depth;
+	vec3 ratio;
+	float nNow;
+};
+
 layout(std140, binding = 0)uniform Size
 {
 	uvec2 size;
@@ -114,15 +123,20 @@ bool triangleTest(vec2 uv)
 
 vec4 rayTrace(Ray ray)
 {
-	uint n = 0;
-	int depth = RayTraceDepth;
+	Stack stack[RayTraceDepth];
+	int sp = -1;
+	int depth = 0;
 	float t;
-	vec3 ratioR = vec3(1);
+	uint n = 0;
+	vec3 ratioNow = vec3(1);
+	float nNow = 1;
 	vec3 answer = vec3(0);
 	vec3 tempColor;
 	vec3 tempRatioR;
+	vec3 tempRatioT;
 	vec3 tempN;
-	while (bool(--depth))
+	float tempn;
+	while (true)
 	{
 		t = -1;
 		tempColor = vec3(0);// , 0.6, 0.8);
@@ -135,7 +149,12 @@ vec4 rayTrace(Ray ray)
 				vec3 p1 = ray.p0.xyz + ray.n * t;
 				tempColor = ((int(p1.x) + int(p1.y)) % 2u) * planes[n].color.g;
 				tempRatioR = planes[n].color.r;
+				tempRatioT = planes[n].color.t;
 				tempN = planes[n].plane.xyz;
+				if (dot(tempN, ray.n) < 0)
+					tempn = planes[n].color.n / nNow;
+				else
+					tempn = nNow / planes[n].color.n;
 			}
 		}
 		for (n = 0; n < triangleNum; ++n)
@@ -150,7 +169,12 @@ vec4 rayTrace(Ray ray)
 					//tempColor = (uint(int(uv.x * 10) + int(uv.y * 10)) % 2u) * triangles[n].color.g;
 					tempColor = triangles[n].color.g;
 					tempRatioR = triangles[n].color.r;
+					tempRatioR = triangles[n].color.t;
 					tempN = triangles[n].plane.xyz;
+					if (dot(tempN, ray.n) < 0)
+						tempn = triangles[n].color.n / nNow;
+					else
+						tempn = nNow / triangles[n].color.n;
 				}
 			}
 		}
@@ -170,31 +194,49 @@ vec4 rayTrace(Ray ray)
 					t = tt;
 					tempColor = spheres[n].color.g;
 					tempRatioR = spheres[n].color.r;
+					tempRatioT = spheres[n].color.t;
 					tempN = normalize(ray.p0.xyz + t * ray.n - spheres[n].sphere.xyz);
+					if (dot(tempN, ray.n) < 0)
+						tempn = spheres[n].color.n / nNow;
+					else
+						tempn = nNow / spheres[n].color.n;
 				}
 			}
 		}
-		/*for (n = 0; n < circleNum; ++n)
+
+		answer += ratioNow * tempColor;
+		if (t > 0 && depth < RayTraceDepth)
 		{
-			float tt = getPlaneT(ray, circles[n].plane);
-			if (tt > 0 && (tt < t || t < 0))
+			vec3 ratio = ratioNow * tempRatioT;
+			if (any(greaterThanEqual(ratio, vec3(0.05))))
 			{
-				vec3 p1 = ray.p0.xyz + ray.n * t;
-				if ()
-					t = tt;
-				tempColor = (uint(int(p1.x) + int(p1.y)) % 2u) * planes[n].color.g;
-				tempRatioR = planes[n].color.r;
-				tempN = planes[n].plane.xyz;
+				float s = dot(ray.n, tempN);
+				float k = tempn * tempn + s * s - 1;
+				if (k > 0)
+				{
+					++sp;
+					stack[sp].p0 = ray.p0 + vec4((t + 0.0001) * ray.n, 0);
+					stack[sp].n = (ray.n - (s + sqrt(k)) * tempN) / tempn;
+					stack[sp].ratio = ratio;
+					stack[sp].depth = depth + 1;
+					stack[sp].nNow = tempn;
+				}
 			}
-		}*/
-		answer += ratioR * tempColor;
-		if (t > 0)
-		{
-			ratioR *= tempRatioR;
-			ray.p0 += vec4((t - 0.0001) * ray.n, 0);
-			ray.n = reflect(ray.n, tempN);
+			ratioNow *= tempRatioR;
+			if (any(greaterThanEqual(ratioNow, vec3(0.05))))
+			{
+				ray.p0 += vec4((t - 0.0001) * ray.n, 0);
+				ray.n = reflect(ray.n, tempN);
+				++depth;
+				continue;
+			}
 		}
-		else break;
+		if (sp < 0)break;
+		depth = stack[sp].depth;
+		ray.p0 = stack[sp].p0;
+		ray.n = stack[sp].n;
+		ratioNow = stack[sp].ratio;
+		nNow = stack[sp--].nNow;
 	}
 	return vec4(answer, 1);
 }
