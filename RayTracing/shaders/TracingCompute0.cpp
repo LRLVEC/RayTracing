@@ -1,6 +1,6 @@
 #version 450 core
 layout(local_size_x = 32, local_size_y = 32)in;
-#define RayTraceDepth 5
+#define RayTraceDepth 8
 
 struct Ray
 {
@@ -31,6 +31,8 @@ struct TriangleGPU
 struct Sphere
 {
 	vec4 sphere;
+	vec3 a;
+	vec3 b;
 	Color color;
 };
 struct Circle
