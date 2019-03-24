@@ -36,9 +36,9 @@ void keyCallback(GLFWwindow* _window, int _key, int _scancode, int _action, int 
 
 	switch (_key)
 	{
-		case GLFW_KEY_ESCAPE:
-			if (_action == GLFW_PRESS)
-				glfwSetWindowShouldClose(_window, true);
+	case GLFW_KEY_ESCAPE:
+		if (_action == GLFW_PRESS)
+			glfwSetWindowShouldClose(_window, true);
 	}
 }
 int main()
@@ -48,7 +48,8 @@ int main()
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);//使用opengl核心模式
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);//主版本号
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);//副版本号
-	GLFWwindow* window = glfwCreateWindow(200, 200, "Triangle", NULL, NULL);
+	glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
+	GLFWwindow* window = glfwCreateWindow(400, 400, "Square", NULL, NULL);
 	glfwMakeContextCurrent(window);//设置窗口的上下文
 	glfwSetKeyCallback(window, keyCallback);//设置回调函数，按下esc窗口关闭
 
@@ -92,28 +93,33 @@ int main()
 	}
 
 
-	glViewport(0, 0, 200, 200);
+	glViewport(0, 0, 400, 400);
 
-	GLuint triangle;
+	GLuint square;
 	GLuint vao;
 
 
-	glCreateBuffers(1, &triangle);//第一个参数表示创建的缓存数量
-	glBindBuffer(GL_ARRAY_BUFFER, triangle);//第一个参数表示顶点数据数组还是索引数据数组
-	float tri[3][2][3] =
+	glCreateBuffers(1, &square);//第一个参数表示创建的缓存数量
+	glBindBuffer(GL_ARRAY_BUFFER, square);//第一个参数表示顶点数据数组还是索引数据数组
+	float squ[4][2][3] =
 	{
 		{
 			{0.5f,-0.5f,0},
-			{0,0,1},
+			{0.5,0,1},
 		},
 		{
 			{-0.5f,-0.5f,0},
-			{1,0,0},
+			{1,1,1},
 		},
 		{
-			{0,0.5f,0},
-			{0,1,0},
+			{-0.5f,0.5f,0},
+			{0,0.5,1},
 		},
+		{
+			{0.5f,0.5f,0},
+			{0.5,1,0}
+
+		}
 	};
 	glCreateVertexArrays(1, &vao);
 	glBindVertexArray(vao);
@@ -122,14 +128,14 @@ int main()
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);//开启顶点属性数组
 	glUseProgram(renderer);
-	glBindBuffer(GL_ARRAY_BUFFER, triangle);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(tri), tri, GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, square);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(squ), squ, GL_STATIC_DRAW);
 	while (!glfwWindowShouldClose(window))
 	{
 		glfwPollEvents();
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
-		glDrawArrays(GL_TRIANGLES, 0, 3);
+		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 		glfwSwapBuffers(window);
 	}
 	glfwDestroyWindow(window);
