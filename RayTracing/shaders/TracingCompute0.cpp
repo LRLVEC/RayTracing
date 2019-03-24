@@ -100,10 +100,10 @@ vec2 getTriangleUV(vec3 pos, uint num)
 		dot(d, triangles[num].k2)
 	);
 }
-vec2 getCircleUV(vec3 pos, uint num)
-{
-	vec3 d = pos - circles[num];//
-}
+//vec2 getCircleUV(vec3 pos, uint num)
+//{
+//	vec3 d = pos - circles[num];//
+//}
 bool triangleTest(vec2 uv)
 {
 	if (all(greaterThanEqual(uv, vec2(0, 0))) && (uv.x + uv.y <= 1.0f))
@@ -174,7 +174,7 @@ vec4 rayTrace(Ray ray)
 				}
 			}
 		}
-		for (n = 0; n < circleNum; ++n)
+		/*for (n = 0; n < circleNum; ++n)
 		{
 			float tt = getPlaneT(ray, circles[n].plane);
 			if (tt > 0 && (tt < t || t < 0))
@@ -186,16 +186,12 @@ vec4 rayTrace(Ray ray)
 				tempRatioR = planes[n].color.r;
 				tempN = planes[n].plane.xyz;
 			}
-		}
+		}*/
 		answer += ratioR * tempColor;
 		if (t > 0)
 		{
 			ratioR *= tempRatioR;
-<<<<<<< HEAD
 			ray.p0 += vec4((t - 0.0001) * ray.n, 0);
-=======
-			ray.p0 += vec4((t - 0.00001) * ray.n, 0);
->>>>>>> 3d3bcd3e8cfd09c01f9457ed76ffca46cc07af0b
 			ray.n = reflect(ray.n, tempN);
 		}
 		else break;
