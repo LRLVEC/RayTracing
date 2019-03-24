@@ -145,7 +145,7 @@
     <ClCompile Include="RayTracing.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\include\RayTracing\_RayTracing.h" />
+    <ClInclude Include="..\..\include\RayTracing\_RayTracing.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
