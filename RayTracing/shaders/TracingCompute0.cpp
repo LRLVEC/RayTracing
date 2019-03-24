@@ -1,6 +1,6 @@
 #version 450 core
 layout(local_size_x = 32, local_size_y = 32)in;
-#define RayTraceDepth 8
+#define RayTraceDepth 50
 
 struct Ray
 {
@@ -39,6 +39,8 @@ struct Circle
 {
 	vec4 plane;
 	vec4 sphere;
+	vec3 e1;
+	vec3 e2;
 	Color color;
 };
 
@@ -98,6 +100,10 @@ vec2 getTriangleUV(vec3 pos, uint num)
 		dot(d, triangles[num].k2)
 	);
 }
+vec2 getCircleUV(vec3 pos, uint num)
+{
+	vec3 d = pos - circles[num];//
+}
 bool triangleTest(vec2 uv)
 {
 	if (all(greaterThanEqual(uv, vec2(0, 0))) && (uv.x + uv.y <= 1.0f))
@@ -119,7 +125,7 @@ vec4 rayTrace(Ray ray)
 	while (bool(--depth))
 	{
 		t = -1;
-		tempColor = vec3(0, 0.6, 0.8);
+		tempColor = vec3(0);// , 0.6, 0.8);
 		for (n = 0; n < planeNum; ++n)
 		{
 			float tt = getPlaneT(ray, planes[n].plane);
@@ -141,7 +147,8 @@ vec4 rayTrace(Ray ray)
 				if (triangleTest(uv))
 				{
 					t = tt;
-					tempColor = (uint(int(uv.x * 10) + int(uv.y * 10)) % 2u) * triangles[n].color.g;
+					//tempColor = (uint(int(uv.x * 10) + int(uv.y * 10)) % 2u) * triangles[n].color.g;
+					tempColor = triangles[n].color.g;
 					tempRatioR = triangles[n].color.r;
 					tempN = triangles[n].plane.xyz;
 				}
@@ -167,12 +174,25 @@ vec4 rayTrace(Ray ray)
 				}
 			}
 		}
+		for (n = 0; n < circleNum; ++n)
+		{
+			float tt = getPlaneT(ray, circles[n].plane);
+			if (tt > 0 && (tt < t || t < 0))
+			{
+				vec3 p1 = ray.p0.xyz + ray.n * t;
+				if ()
+					t = tt;
+				tempColor = (uint(int(p1.x) + int(p1.y)) % 2u) * planes[n].color.g;
+				tempRatioR = planes[n].color.r;
+				tempN = planes[n].plane.xyz;
+			}
+		}
 		answer += ratioR * tempColor;
 		if (t > 0)
 		{
 			ratioR *= tempRatioR;
-			ray.p0 += vec4((t - 0.0001) * ray.n, 0);
-			ray.n -= 2 * dot(ray.n, tempN) * tempN;
+			ray.p0 += vec4((t - 0.00001) * ray.n, 0);
+			ray.n = reflect(ray.n, tempN);
 		}
 		else break;
 	}

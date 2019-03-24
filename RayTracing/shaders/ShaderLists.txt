@@ -7,6 +7,10 @@ Program:	Preprocessor
 {
 	Compute		0
 }
+Program:	CirclePre
+{
+	Compute		0
+}
 Program:	Tracing
 {
 	Compute		0

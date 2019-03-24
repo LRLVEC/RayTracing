@@ -119,7 +119,7 @@ namespace OpenGL
 			sm(),
 			frameScale(_scale),
 			transform({ {20.0,_scale.data[1]},{0.02,0.9,0.01},{0.03},500.0 }),
-			model({ {UniformBuffer,4}, {0,1}, {2}, {3} }),
+			model({ {UniformBuffer,4}, {0,1}, {2}, {3}, {3} }),
 			frameSizeBuffer(&frameScale),
 			transBuffer(&transform.bufferData),
 			frameSizeUniform(&frameSizeBuffer, UniformBuffer, 0),
@@ -148,10 +148,41 @@ namespace OpenGL
 					{{0.4,0.4,0.4},{0,0,0},{0.7,0,0},1}
 				}
 			);
+
+
+			model.triangles.trianglesOrigin.trianglesOrigin.pushBack
+			(
+				{
+					{{1,1,1},{1,-1,1},{1,-1,3}},
+					{{0.8,0.8,0.8},{0,0,0},{0,0,0},1}
+				}
+			);
+			model.triangles.trianglesOrigin.trianglesOrigin.pushBack
+			(
+				{
+					{{1,1,1},{1,-1,3},{1,1,3}},
+					{{0.8,0.8,0.8},{0,0,0},{0,0,0},1}
+				}
+			);
+			model.triangles.trianglesOrigin.trianglesOrigin.pushBack
+			(
+				{
+					{{-1,1,1},{-1,-1,1},{-1,-1,3}},
+					{{0.8,0.8,0.8},{0,0,0},{0,0,0},1}
+				}
+			);
+			model.triangles.trianglesOrigin.trianglesOrigin.pushBack
+			(
+				{
+					{{-1,1,1},{-1,-1,3},{-1,1,3}},
+					{{0.8,0.8,0.8},{0,0,0},{0,0,0},1}
+				}
+			);
+
 			model.spheres.data.spheres.pushBack
 			(
 				{
-					{0,0,2,1},
+					{0,0,2,0.1},
 					{0},
 					{0},
 					{{0.7,0.7,0.7},{0,0,0},{0,0,0.1},1}
@@ -160,6 +191,7 @@ namespace OpenGL
 			model.planes.numChanged = true;
 			model.triangles.numChanged = true;
 			model.spheres.numChanged = true;
+			//model.circles.numChanged = true;
 		}
 		virtual void init(FrameScale const& _size) override
 		{
