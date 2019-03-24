@@ -43,19 +43,20 @@ namespace OpenGL
 		{
 			struct Preprocessor :Program
 			{
-				Preprocessor(SourceManager* _sm)
+				RayTracing::Model* model;
+				Preprocessor(SourceManager* _sm, RayTracing::Model* _model)
 					:
-					Program(_sm, "Preprocessor")
+					Program(_sm, "Preprocessor"),
+					model(_model)
 				{
-
+					init();
 				}
 				virtual void initBufferData()override
 				{
-
 				}
 				virtual void run()override
 				{
-
+					glDispatchCompute((model->geometryNum.data.num.triangleNum + 1023) / 1024, 1, 1);
 				}
 			};
 			struct Tracing :Program
@@ -77,9 +78,11 @@ namespace OpenGL
 				}
 			};
 
+			Preprocessor preprocessor;
 			Tracing tracing;
-			RayTracer(SourceManager* _sm, RayTracing::FrameScale* _frameScale)
+			RayTracer(SourceManager* _sm, RayTracing::FrameScale* _frameScale, RayTracing::Model* _model)
 				:
+				preprocessor(_sm, _model),
 				tracing(_sm, _frameScale)
 			{
 			}
@@ -88,6 +91,12 @@ namespace OpenGL
 			}
 			virtual void run()
 			{
+				if (!preprocessor.model->triangles.GPUUpToDate)
+				{
+					preprocessor.use();
+					preprocessor.run();
+					preprocessor.model->triangles.GPUUpToDate = true;
+				}
 				tracing.use();
 				tracing.run();
 			}
@@ -95,13 +104,11 @@ namespace OpenGL
 
 		SourceManager sm;
 		RayTracing::FrameScale frameScale;
-		//RayTracing::FrameData frameData;
 		RayTracing::Transform transform;
+		RayTracing::Model model;
 		Buffer frameSizeBuffer;
-		//Buffer frameDataBuffer;
 		Buffer transBuffer;
 		BufferConfig frameSizeUniform;
-		//BufferConfig frameDataStorage;
 		BufferConfig transUniform;
 		GLuint texture;
 		Renderer renderer;
@@ -111,16 +118,14 @@ namespace OpenGL
 			:
 			sm(),
 			frameScale(_scale),
-			//frameData(&frameScale),
-			transform({ {20.0,_scale.data[1]},{0.2,0.8,0.01},{0.3},1000.0 }),
+			transform({ {20.0,_scale.data[1]},{0.2,0.8,0.01},{0.3},500.0 }),
+			model({ {UniformBuffer,4}, {0,1}, {2}, {3} }),
 			frameSizeBuffer(&frameScale),
-			//frameDataBuffer(&frameData),
 			transBuffer(&transform.bufferData),
 			frameSizeUniform(&frameSizeBuffer, UniformBuffer, 0),
-			//frameDataStorage(&frameDataBuffer, ShaderStorageBuffer, 0),
 			transUniform(&transBuffer, UniformBuffer, 1),
 			renderer(&sm),
-			rayTracer(&sm, &frameScale)
+			rayTracer(&sm, &frameScale, &model)
 		{
 			glGenTextures(1, &texture);
 			glBindTexture(GL_TEXTURE_2D, texture);
@@ -128,16 +133,39 @@ namespace OpenGL
 			glTextureParameteri(texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTextureParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glBindImageTexture(2, texture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
-		}
 
+			model.planes.data.planes.pushBack
+			(
+				{
+					{0,0,1,0},
+					{{0,0,0},{0,0,0},{0,0,0},1}
+				}
+			);
+			model.triangles.trianglesOrigin.trianglesOrigin.pushBack
+			(
+				{
+					{{0,0,1},{1,0,1},{1,1,1}},
+					{{0,0,0},{0,0,0},{0,0,0},1}
+				}
+			);
+			model.spheres.data.spheres.pushBack
+			(
+				{
+					{0,0,5,1},
+					{{0,0,0},{0,0,0},{0,0,0},1}
+				}
+			);
+			model.planes.numChanged = true;
+			model.triangles.numChanged = true;
+		}
 		virtual void init(FrameScale const& _size) override
 		{
 			glViewport(0, 0, _size.w, _size.h);
 			transform.init(_size);
 			renderer.viewArray.dataInit();
 			frameSizeUniform.dataInit();
-			//frameDataStorage.dataInit();
 			transUniform.dataInit();
+			model.dataInit();
 			//GLint s(0);
 			//glGetActiveUniformBlockiv(rayTracer.tracing.program, 1, GL_UNIFORM_BLOCK_DATA_SIZE, &s);
 			//::printf("Uniform block size: %d\n", s);
@@ -151,11 +179,13 @@ namespace OpenGL
 				transform.updated = false;
 			}
 			rayTracer.run();
+			glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 			renderer.use();
 			renderer.run();
 		}
-		virtual void frameSize(int, int) override
+		virtual void frameSize(int _w, int _h) override
 		{
+
 		}
 		virtual void framePos(int, int) override
 		{
@@ -215,6 +245,9 @@ int main()
 	glfwSwapInterval(0);
 	FPS fps;
 	fps.refresh();
+	//int temp(0);
+	//glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &temp);
+	//::printf("%d\n", temp);
 	while (!wm.close())
 	{
 		wm.pullEvents();
