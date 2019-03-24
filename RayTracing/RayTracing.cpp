@@ -270,12 +270,12 @@ int main()
 	{
 		"RayTracing",
 		{
-			{1024,1024},
+			{640,640},
 			false,false,
 		}
 	};
 	Window::WindowManager wm(winPara);
-	OpenGL::RayTrace test({ 1024,1024 });
+	OpenGL::RayTrace test({ 640,640 });
 	wm.init(0, &test);
 	glfwSwapInterval(1);//To enable vertical-sync, set: Intel: 0, Nvidia: 1 
 	FPS fps;
@@ -288,8 +288,8 @@ int main()
 		wm.pullEvents();
 		wm.render();
 		wm.swapBuffers();
-		fps.refresh();
-		fps.printFPS(1);
+		//fps.refresh();
+		//fps.printFPS(1);
 	}
 	return 0;
 }
