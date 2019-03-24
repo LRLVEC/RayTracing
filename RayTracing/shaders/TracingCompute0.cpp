@@ -1,6 +1,6 @@
 #version 450 core
 layout(local_size_x = 32, local_size_y = 32)in;
-#define RayTraceDepth 3
+#define RayTraceDepth 2
 
 struct Ray
 {
@@ -216,8 +216,8 @@ vec4 rayTrace(Ray ray)
 		answer += ratioNow * tempColor;
 		if (t > 0 && depth < RayTraceDepth)
 		{
-			vec3 tempColor = ratioNow * tempRatioT;
-			if (any(greaterThanEqual(tempColor, vec3(0.05))))
+			tempColor = ratioNow * tempRatioT;
+			//if (any(greaterThanEqual(tempColor, vec3(0.05))))
 			{
 				float s = dot(ray.n, tempN);
 				float k = tempn * tempn + s * s - 1;
@@ -231,22 +231,27 @@ vec4 rayTrace(Ray ray)
 					stack[sp].nNow = tempn;
 				}
 			}
-			if (any(greaterThanEqual(ratioNow *= tempRatioR, vec3(0.05))))
+			ratioNow *= tempRatioR;
+			//if (any(greaterThanEqual(ratioNow, vec3(0.05))))
 			{
-				ray.p0 += vec4((t - 0.0001) * ray.n, 0);
+				ray.p0 += vec4((t - 0.001) * ray.n, 0);
 				ray.n = reflect(ray.n, tempN);
 				++depth;
 				continue;
 			}
 		}
-		if (sp < 0)break;
-		depth = stack[sp].depth;
-		ray.p0 = stack[sp].p0;
-		ray.n = stack[sp].n;
-		ratioNow = stack[sp].ratio;
-		nNow = stack[sp--].nNow;
+		if (sp < 0)
+			return vec4(answer, 1);
+		else
+		{
+			depth = stack[sp].depth;
+			ray.p0 = stack[sp].p0;
+			ray.n = stack[sp].n;
+			ratioNow = stack[sp].ratio;
+			nNow = stack[sp].nNow;
+			--sp;
+		}
 	}
-	return vec4(answer, 1);
 }
 
 void main()
