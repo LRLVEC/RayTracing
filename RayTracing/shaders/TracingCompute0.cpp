@@ -1,6 +1,6 @@
 #version 450 core
 layout(local_size_x = 32, local_size_y = 32)in;
-#define RayTraceDepth 6
+#define RayTraceDepth 8
 
 struct Ray
 {
@@ -45,13 +45,14 @@ struct Circle
 };
 struct Cylinder
 {
-	vec4 c;//(c0, R^2)
+	vec3 c;
+	float r2;
 	vec3 n;
+	float l;
 	vec3 e1;
 	vec3 e2;
 	Color color;
 };
-
 struct Stack
 {
 	vec4 p0;
@@ -77,6 +78,7 @@ layout(std140, binding = 3)uniform GeometryNum
 	uint triangleNum;
 	uint sphereNum;
 	uint circleNum;
+	uint cylinderNum;
 };
 
 layout(std430, binding = 0)buffer Planes
@@ -95,7 +97,10 @@ layout(std430, binding = 4)buffer Circles
 {
 	Circle circles[];
 };
-
+layout(std430, binding = 5)buffer Cylinders
+{
+	Cylinder cylinders[];
+};
 
 Ray rayAlloctor()
 {
@@ -138,7 +143,7 @@ vec4 rayTrace(Ray ray)
 	while (true)
 	{
 		t = -1;
-		tempColor.g = vec3(0);// , 0.6, 0.8);
+		tempColor.g = vec3(0 , 0.6, 0.8);
 		for (n = 0; n < planeNum; ++n)
 		{
 			float tt = getPlaneT(ray, planes[n].plane);
@@ -200,6 +205,68 @@ vec4 rayTrace(Ray ray)
 					tempN = circles[n].plane.xyz;
 				}
 			}
+		}
+		for (n = 0; n < cylinderNum; ++n)
+		{
+			float nn0 = dot(ray.n, cylinders[n].n);
+			float cnn02 = 1 - nn0 * nn0;
+			if (cnn02 == 0)continue;
+			vec3 d = ray.p0.xyz - cylinders[n].c;
+			float nd = dot(cylinders[n].n, d);
+			vec3 j = d - nd * cylinders[n].n;
+			float n0j = dot(ray.n, j);
+			float k = n0j * n0j + cnn02 * (cylinders[n].r2 - dot(j, j));
+			if (k <= 0)continue;
+			k = sqrt(k);
+			float tt = -1;
+			float u;
+			if (k - n0j > 0)
+			{
+				tt = (k - n0j) / cnn02;
+				u = nd + nn0 * tt;
+				if (u > cylinders[n].l || u < 0)
+					tt = -1;
+			}
+			if (k + n0j < 0)
+			{
+				float ttt = -(k + n0j) / cnn02;
+				float ut = nd + nn0 * ttt;
+				if (ut <= cylinders[n].l && ut >= 0)
+				{
+					tt = ttt;
+					u = ut;
+				}
+			}
+			if (tt > 0 && (tt < t || t < 0))
+			{
+				t = tt;
+				tempColor = cylinders[n].color;
+				tempN = normalize(d + ray.n * t - cylinders[n].n * u);
+			}
+			/*//if (pow(dot(d, cross(ray.n, cylinders[n].n)), 2) > cylinders[n].r2)continue;
+			float cd = dot(ray.n, cylinders[n].n);
+			float cr = 1 - cd * cd;
+			if (cr == 0)continue;
+			vec3 d = ray.p0.xyz - cylinders[n].c;
+			float nd = dot(cylinders[n].n, d);
+			vec3 dd = d - cylinders[n].n * nd;
+			float k = pow(dot(ray.n, dd), 2) + (cylinders[n].r2 - dot(dd, dd)) * cr;
+			if (k <= 0)continue;
+			k = sqrt(k);
+			float tt = -1;
+			if (k - nd > 0)tt = k - nd;
+			if (-k - nd > 0)tt = -k - nd;
+			if (tt > 0 && (tt < t || t < 0))
+			{
+				tt /= cr;
+				float u = nd + cd * tt;
+				if (u <= cylinders[n].l && u >= 0)
+				{
+					t = tt;
+					tempColor = cylinders[n].color;
+					tempN = normalize(d + ray.n * t - cylinders[n].n * u);
+				}
+			}*/
 		}
 		answer += tempColor.g * ratioNow;
 		if (t > 0 && depth < RayTraceDepth)

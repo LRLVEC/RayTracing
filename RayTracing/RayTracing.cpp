@@ -144,8 +144,8 @@ namespace OpenGL
 			:
 			sm(),
 			frameScale(_scale),
-			transform({ {40.0,_scale.data[1]},{0.02,0.9,0.01},{0.1},{0,0,10},500.0 }),
-			model({ {ShaderStorageBuffer,0}, {1,2}, {3}, {4}, {3} }),
+			transform({ {60.0,_scale.data[1]},{0.02,0.9,0.01},{0.1},{0,0,10},500.0 }),
+			model({ {ShaderStorageBuffer,0}, {1,2}, {3}, {4},{5}, {3} }),
 			frameSizeBuffer(&frameScale),
 			transBuffer(&transform.bufferData),
 			frameSizeUniform(&frameSizeBuffer, UniformBuffer, 0),
@@ -259,7 +259,8 @@ namespace OpenGL
 			{
 				{
 					{ 0, 0, 1, 0 },
-					{ 0,0,0,250 },
+					{ 0,0,0 },
+						250,
 					{ 1,1,0 },
 					{ 0,0,0 },
 					{ {0.6,0.6,0.6},{0,0,0},{0.8,0.8,0.8},1 }
@@ -267,16 +268,28 @@ namespace OpenGL
 				,
 				{
 					{ 0, 0, 1, 0 },
-					{ 0,0,7,1 },
+					{ 0,0,7},
+					1,
 					{ 1,0,0 },
 					{ 0,0,0 },
 					{ {0.3,0.3,0.3},{0.8,0.8,0.8},{0,0,0},1.33 }
 				}
 			};
+			model.addCylinder
+			({
+				{0, 5, 1.2},
+				1,
+				{ 0,0,1 },
+				5,
+				{ 0 },
+				{ 0 },
+				{ {0,0,0},{0.7,0.7,0.7},{0,0,0},1.1 }
+			});
 			model.planes.numChanged = true;
 			model.triangles.numChanged = true;
 			model.spheres.numChanged = true;
 			model.circles.numChanged = true;
+			model.cylinders.numChanged = true;
 		}
 		virtual void init(FrameScale const& _size) override
 		{
@@ -355,12 +368,12 @@ int main()
 	{
 		"RayTracing",
 		{
-			{640,640},
+			{2048,2048},
 			false,false,
 		}
 	};
 	Window::WindowManager wm(winPara);
-	OpenGL::RayTrace test({ 640,640 });
+	OpenGL::RayTrace test({ 1024,1024 });
 	wm.init(0, &test);
 	glfwSwapInterval(1);
 	FPS fps;
