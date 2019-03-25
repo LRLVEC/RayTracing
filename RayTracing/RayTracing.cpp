@@ -144,7 +144,7 @@ namespace OpenGL
 			:
 			sm(),
 			frameScale(_scale),
-			transform({ {60.0,_scale.data[1]},{0.02,0.9,0.01},{0.1},{0,0,10},500.0 }),
+			transform({ {40.0,_scale.data[1]},{0.02,0.9,0.01},{0.1},{0,0,10},500.0 }),
 			model({ {ShaderStorageBuffer,0}, {1,2}, {3}, {4},{5}, {3} }),
 			frameSizeBuffer(&frameScale),
 			transBuffer(&transform.bufferData),
@@ -251,7 +251,7 @@ namespace OpenGL
 					{0,0,2.1,4},
 					{0},
 					{0},
-					{{0,0,0},{0,0.7,0.7},{0,0,0},1.33}
+					{{0.8,0.8,0.8},{0,0,0},{0,0,0},1.33}
 				}
 			);
 
@@ -263,16 +263,7 @@ namespace OpenGL
 						250,
 					{ 1,1,0 },
 					{ 0,0,0 },
-					{ {0.6,0.6,0.6},{0,0,0},{0.8,0.8,0.8},1 }
-				}
-				,
-				{
-					{ 0, 0, 1, 0 },
-					{ 0,0,7},
-					1,
-					{ 1,0,0 },
-					{ 0,0,0 },
-					{ {0.3,0.3,0.3},{0.8,0.8,0.8},{0,0,0},1.33 }
+					{ {0.1,0.1,0.1},{0,0,0},{0.8,0.8,0.8},1 }
 				}
 			};
 			model.addCylinder
@@ -283,7 +274,17 @@ namespace OpenGL
 				5,
 				{ 0 },
 				{ 0 },
-				{ {0,0,0},{0.7,0.7,0.7},{0,0,0},1.1 }
+				{ {0.8,0.8,0.8},{0,0,0},{0,0,0},1.1 }
+			});
+			model.addCylinder
+			({
+				{0, 0, 7},
+				1,
+				{ 0,0,1 },
+				0.1,
+				{ 0 },
+				{ 0 },
+				{ {0.3,0.3,0.3},{0.9,0.9,0.9},{0,0,0},1.3 }
 			});
 			model.planes.numChanged = true;
 			model.triangles.numChanged = true;
@@ -368,12 +369,12 @@ int main()
 	{
 		"RayTracing",
 		{
-			{2048,2048},
+			{1920,992},
 			false,false,
 		}
 	};
 	Window::WindowManager wm(winPara);
-	OpenGL::RayTrace test({ 1024,1024 });
+	OpenGL::RayTrace test({ 1920,992 });
 	wm.init(0, &test);
 	glfwSwapInterval(1);
 	FPS fps;
