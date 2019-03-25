@@ -123,12 +123,6 @@ namespace OpenGL
 					circlePre.run();
 					circlePre.model->circles.GPUUpToDate = true;
 				}
-				if (!circlePre.model->circles.GPUUpToDate)
-				{
-					circlePre.use();
-					circlePre.run();
-					circlePre.model->circles.GPUUpToDate = true;
-				}
 				tracing.use();
 				tracing.run();
 			}
@@ -167,13 +161,13 @@ namespace OpenGL
 			glBindImageTexture(2, texture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
 
 
-			model.planes.data.planes.pushBack
+			/*model.planes.data.planes.pushBack
 			(
 				{
 					{0,0,1,0},
-					{{0,0,0},{0,0,0},{1,1,1},1}
+					{{0,0,0},{0,0,0},{0.1,1,1},1}
 				}
-			);
+			);*/
 			/*		model.triangles.trianglesOrigin.trianglesOrigin.pushBack
 					(
 						{
@@ -257,18 +251,18 @@ namespace OpenGL
 					{0,0,2.1,4},
 					{0},
 					{0},
-					{{0.9,0,0},{1,0,0},{0,0,0},1.3
+					{{0,0,0},{0,0.7,0.7},{0,0,0},1.33}
 				}
 			);
 
-			/*model.circles.data.circles +=
+			model.circles.data.circles +=
 			{
 				{
 					{ 0, 0, 1, 0 },
 					{ 0,0,0,250 },
 					{ 1,1,0 },
 					{ 0,0,0 },
-					{ {0.4,0.4,0.4},{0,0,0},{0.8,0.8,0.8},1 }
+					{ {0.6,0.6,0.6},{0,0,0},{0.8,0.8,0.8},1 }
 				}
 				,
 				{
@@ -276,9 +270,9 @@ namespace OpenGL
 					{ 0,0,7,1 },
 					{ 1,0,0 },
 					{ 0,0,0 },
-					{ {0.3,0.3,0.3},{0,0,0},{0.5,0.5,0},1 }
+					{ {0.3,0.3,0.3},{0.8,0.8,0.8},{0,0,0},1.33 }
 				}
-			};*/
+			};
 			model.planes.numChanged = true;
 			model.triangles.numChanged = true;
 			model.spheres.numChanged = true;
@@ -361,12 +355,12 @@ int main()
 	{
 		"RayTracing",
 		{
-			{1024,1024},
+			{640,640},
 			false,false,
 		}
 	};
 	Window::WindowManager wm(winPara);
-	OpenGL::RayTrace test({ 1024,1024 });
+	OpenGL::RayTrace test({ 640,640 });
 	wm.init(0, &test);
 	glfwSwapInterval(1);
 	FPS fps;

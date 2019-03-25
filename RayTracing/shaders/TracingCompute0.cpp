@@ -1,6 +1,6 @@
 #version 450 core
 layout(local_size_x = 32, local_size_y = 32)in;
-#define RayTraceDepth 2
+#define RayTraceDepth 6
 
 struct Ray
 {
@@ -10,9 +10,9 @@ struct Ray
 };
 struct Color
 {
-	vec3 r;//反射率
-	vec3 t;//透射率
-	vec3 g;//自发光
+	vec3 r;
+	vec3 t;
+	vec3 g;
 	float n;
 };
 struct Plane
@@ -43,6 +43,14 @@ struct Circle
 	vec3 e2;
 	Color color;
 };
+struct Cylinder
+{
+	vec4 c;//(c0, R^2)
+	vec3 n;
+	vec3 e1;
+	vec3 e2;
+	Color color;
+};
 
 struct Stack
 {
@@ -50,7 +58,6 @@ struct Stack
 	vec3 n;
 	int depth;
 	vec3 ratio;
-	float nNow;
 };
 
 layout(std140, binding = 0)uniform Size
@@ -125,17 +132,13 @@ vec4 rayTrace(Ray ray)
 	float t;
 	uint n = 0;
 	vec3 ratioNow = vec3(1);
-	float nNow = 1;
 	vec3 answer = vec3(0);
-	vec3 tempColor;
-	vec3 tempRatioR;
-	vec3 tempRatioT;
+	Color tempColor;
 	vec3 tempN;
-	float tempn;
 	while (true)
 	{
 		t = -1;
-		tempColor = vec3(0);// , 0.6, 0.8);
+		tempColor.g = vec3(0);// , 0.6, 0.8);
 		for (n = 0; n < planeNum; ++n)
 		{
 			float tt = getPlaneT(ray, planes[n].plane);
@@ -143,14 +146,9 @@ vec4 rayTrace(Ray ray)
 			{
 				t = tt;
 				vec3 p1 = ray.p0.xyz + ray.n * t;
-				tempColor = ((int(4.2 * p1.x) + int(4.2 * p1.y)) % 2u) * planes[n].color.g;
-				tempRatioR = planes[n].color.r;
-				tempRatioT = planes[n].color.t;
+				tempColor = planes[n].color;
+				tempColor.g = ((int(4.2 * p1.x) + int(4.2 * p1.y)) % 2u) * tempColor.g;
 				tempN = planes[n].plane.xyz;
-				if (dot(tempN, ray.n) < 0)
-					tempn = planes[n].color.n / nNow;
-				else
-					tempn = nNow / planes[n].color.n;
 			}
 		}
 		for (n = 0; n < triangleNum; ++n)
@@ -162,15 +160,9 @@ vec4 rayTrace(Ray ray)
 				if (triangleTest(uv))
 				{
 					t = tt;
-					//tempColor = (uint(int(uv.x * 10) + int(uv.y * 10)) % 2u) * triangles[n].color.g;
-					tempColor = triangles[n].color.g;
-					tempRatioR = triangles[n].color.r;
-					tempRatioR = triangles[n].color.t;
+					tempColor = planes[n].color;
+					tempColor.g = (uint(int(uv.x * 10) + int(uv.y * 10)) % 2u) * triangles[n].color.g;
 					tempN = triangles[n].plane.xyz;
-					if (dot(tempN, ray.n) < 0)
-						tempn = triangles[n].color.n / nNow;
-					else
-						tempn = nNow / triangles[n].color.n;
 				}
 			}
 		}
@@ -188,54 +180,52 @@ vec4 rayTrace(Ray ray)
 				if (tt > 0 && (tt < t || t < 0))
 				{
 					t = tt;
-					tempColor = spheres[n].color.g;
-					tempRatioR = spheres[n].color.r;
-					tempRatioT = spheres[n].color.t;
+					tempColor = spheres[n].color;
 					tempN = normalize(ray.p0.xyz + t * ray.n - spheres[n].sphere.xyz);
-					if (dot(tempN, ray.n) < 0)
-						tempn = spheres[n].color.n / nNow;
-					else
-						tempn = nNow / spheres[n].color.n;
 				}
 			}
 		}
 		for (n = 0; n < circleNum; ++n)
 		{
 			float tt = getPlaneT(ray, circles[n].plane);
-			vec3 pos = ray.p0.xyz + ray.n * tt;
-			vec3 d = pos - circles[n].sphere.xyz;
-			if (dot(d, d) <= circles[n].sphere.w)
+			if (tt > 0 && (tt < t || t < 0))
 			{
-				t = tt;
-				vec2 uv = vec2(dot(circles[n].e1, d), dot(circles[n].e2, d));
-				tempColor = (uint(int(3 * uv.x) + int(3 * uv.y)) % 2u) * circles[n].color.g;
-				tempRatioR = circles[n].color.r;
-				tempN = circles[n].plane.xyz;
+				vec3 d = ray.p0.xyz + ray.n * tt - circles[n].sphere.xyz;
+				if (dot(d, d) <= circles[n].sphere.w)
+				{
+					t = tt;
+					vec2 uv = vec2(dot(circles[n].e1, d), dot(circles[n].e2, d));
+					tempColor = circles[n].color;
+					tempColor.g *= uint(int(3 * uv.x) + int(3 * uv.y)) % 2u;
+					tempN = circles[n].plane.xyz;
+				}
 			}
 		}
-		answer += ratioNow * tempColor;
+		answer += tempColor.g * ratioNow;
 		if (t > 0 && depth < RayTraceDepth)
 		{
-			tempColor = ratioNow * tempRatioT;
-			//if (any(greaterThanEqual(tempColor, vec3(0.05))))
+			tempColor.t *= ratioNow;
+			if (any(greaterThanEqual(tempColor.t, vec3(0.05))))
 			{
 				float s = dot(ray.n, tempN);
-				float k = tempn * tempn + s * s - 1;
+				tempColor.n = pow(tempColor.n, -sign(s));
+				float k = tempColor.n * tempColor.n + s * s - 1;
 				if (k > 0)
 				{
 					++sp;
-					stack[sp].p0 = ray.p0 + vec4((t + 0.001) * ray.n, 0);
-					stack[sp].n = (ray.n - tempN * (s + sqrt(k))) / tempn;
-					stack[sp].ratio = tempColor;
+					s -= sign(s) * sqrt(k);
+					stack[sp].p0 = ray.p0 + vec4((t + 0.0001) * ray.n, 0);
+					stack[sp].n = (ray.n - tempN * s) / tempColor.n;
+					stack[sp].ratio = tempColor.t;
 					stack[sp].depth = depth + 1;
-					stack[sp].nNow = tempn;
 				}
+				else tempColor.r = vec3(1);
 			}
-			ratioNow *= tempRatioR;
-			//if (any(greaterThanEqual(ratioNow, vec3(0.05))))
+			ratioNow *= tempColor.r;
+			if (any(greaterThanEqual(ratioNow, vec3(0.05))))
 			{
-				ray.p0 += vec4((t - 0.001) * ray.n, 0);
-				ray.n = reflect(ray.n, tempN);
+				ray.p0 += vec4((t - 0.0001) * ray.n, 0);
+				ray.n -= (2 * dot(ray.n, tempN)) * tempN;
 				++depth;
 				continue;
 			}
@@ -248,10 +238,10 @@ vec4 rayTrace(Ray ray)
 			ray.p0 = stack[sp].p0;
 			ray.n = stack[sp].n;
 			ratioNow = stack[sp].ratio;
-			nNow = stack[sp].nNow;
 			--sp;
 		}
 	}
+	return vec4(answer, 1);
 }
 
 void main()
