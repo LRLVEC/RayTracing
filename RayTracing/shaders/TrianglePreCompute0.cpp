@@ -5,6 +5,7 @@ struct Color
 {
 	vec3 r;
 	vec3 t;
+	vec3 d;
 	vec3 g;
 	float n;
 };

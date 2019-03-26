@@ -127,6 +127,19 @@ namespace OpenGL
 				tracing.run();
 			}
 		};
+		struct Movement
+		{
+			RayTracing::Model* model;
+
+			void sphereRun()
+			{
+
+			}
+			void run()
+			{
+
+			}
+		};
 
 		SourceManager sm;
 		RayTracing::FrameScale frameScale;
@@ -145,7 +158,7 @@ namespace OpenGL
 			sm(),
 			frameScale(_scale),
 			transform({ {40.0,_scale.data[1]},{0.02,0.9,0.01},{0.1},{0,0,10},500.0 }),
-			model({ {ShaderStorageBuffer,0}, {1,2}, {3}, {4},{5}, {3} }),
+			model({ {ShaderStorageBuffer,0}, {1,2}, {3}, {4},{5},{6}, {3} }),
 			frameSizeBuffer(&frameScale),
 			transBuffer(&transform.bufferData),
 			frameSizeUniform(&frameSizeBuffer, UniformBuffer, 0),
@@ -251,10 +264,9 @@ namespace OpenGL
 					{0,0,2.1,4},
 					{0},
 					{0},
-					{{0.8,0.8,0.8},{0,0,0},{0,0,0},1.33}
+					{{0,0.2,0.2},{0,0.5,0.5},{0,1,1},{0,0,0},1.1}
 				}
 			);
-
 			model.circles.data.circles +=
 			{
 				{
@@ -263,34 +275,51 @@ namespace OpenGL
 						250,
 					{ 1,1,0 },
 					{ 0,0,0 },
-					{ {0.1,0.1,0.1},{0,0,0},{0.8,0.8,0.8},1 }
+					{ {0.1,0.1,0.1},{0,0,0},{0.6,0.6,0.6},{0.4,0.4,0.4},1 }
 				}
 			};
 			model.addCylinder
-			({
-				{0, 5, 1.2},
-				1,
-				{ 0,0,1 },
-				5,
-				{ 0 },
-				{ 0 },
-				{ {0.8,0.8,0.8},{0,0,0},{0,0,0},1.1 }
-			});
+			(
+				{
+					{0, 5, 1.2},
+					1,
+					{ 0,0,1 },
+					5,
+					{ 0 },
+					{ 0 },
+					{{0.1,0,0.1},{0.5,0,0.5},{1,0,1},{0,0,0},1.1 }
+				}
+			);
 			model.addCylinder
-			({
-				{0, 0, 7},
-				1,
-				{ 0,0,1 },
-				0.1,
-				{ 0 },
-				{ 0 },
-				{ {0.3,0.3,0.3},{0.9,0.9,0.9},{0,0,0},1.3 }
-			});
+			(
+				{
+					{3, 3, 0.01},
+					1,
+					{ 0,0,1 },
+					0.5,
+					{ 0 },
+					{ 0 },
+					{{0.1,0.1,0.1},{0.6,0.6,0},{1,1,0},{0,0,0},1.6 }
+				}
+			);
+			model.pointLights.data.pointLights +=
+			{
+				/*{
+					{200, 200, 200},
+					{ 0,0,100 }
+				},*/
+				{
+					{3,3,3},
+					{ 0,0,7 }
+				}
+			};
+
 			model.planes.numChanged = true;
 			model.triangles.numChanged = true;
 			model.spheres.numChanged = true;
 			model.circles.numChanged = true;
 			model.cylinders.numChanged = true;
+			model.pointLights.numChanged = true;
 		}
 		virtual void init(FrameScale const& _size) override
 		{
@@ -369,12 +398,12 @@ int main()
 	{
 		"RayTracing",
 		{
-			{1920,992},
+			{1024,1024},
 			false,false,
 		}
 	};
 	Window::WindowManager wm(winPara);
-	OpenGL::RayTrace test({ 1920,992 });
+	OpenGL::RayTrace test({ 1024,1024 });
 	wm.init(0, &test);
 	glfwSwapInterval(1);
 	FPS fps;
@@ -387,8 +416,8 @@ int main()
 		wm.pullEvents();
 		wm.render();
 		wm.swapBuffers();
-		fps.refresh();
-		fps.printFPS(1);
+		//fps.refresh();
+		//fps.printFPS(1);
 	}
 	return 0;
 }
