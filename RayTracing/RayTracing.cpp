@@ -405,7 +405,7 @@ int main()
 	Window::WindowManager wm(winPara);
 	OpenGL::RayTrace test({ 1024,1024 });
 	wm.init(0, &test);
-	glfwSwapInterval(1);
+	glfwSwapInterval(0);
 	FPS fps;
 	fps.refresh();
 	//int temp(0);
@@ -416,8 +416,8 @@ int main()
 		wm.pullEvents();
 		wm.render();
 		wm.swapBuffers();
-		//fps.refresh();
-		//fps.printFPS(1);
+		fps.refresh();
+		fps.printFPS(1);
 	}
 	return 0;
 }
