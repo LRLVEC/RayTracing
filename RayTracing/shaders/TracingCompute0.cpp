@@ -1,6 +1,6 @@
-#version 450 core
+#version 460 core
 layout(local_size_x = 32, local_size_y = 32)in;
-#define RayTraceDepth 5
+#define RayTraceDepth 6
 
 struct Ray
 {
@@ -16,6 +16,7 @@ struct Color
 	vec3 g;
 	float n;
 };
+
 struct Plane
 {
 	vec4 plane;
@@ -42,6 +43,7 @@ struct Circle
 	vec4 sphere;
 	vec3 e1;
 	vec3 e2;
+	uint tex;
 	Color color;
 };
 struct Cylinder
@@ -288,7 +290,9 @@ vec4 rayTrace(Ray ray)
 					t = tt;
 					vec2 uv = vec2(dot(circles[n].e1, d), dot(circles[n].e2, d));
 					tempColor = circles[n].color;
-					tempColor.g *= uint(int(uv.x) + int(uv.y)) % 2u;
+					//tempColor.g *= uint(int(uv.x) + int(uv.y)) % 2u;
+					if (circles[n].tex == 1)
+						tempColor.d *= uint(int(uv.x) + int(uv.y)) % 2u;
 					tempN = circles[n].plane.xyz;
 				}
 			}

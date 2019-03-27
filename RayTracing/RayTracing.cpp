@@ -130,14 +130,31 @@ namespace OpenGL
 		struct Movement
 		{
 			RayTracing::Model* model;
+			float t;
 
+			Movement(RayTracing::Model* _model)
+				:
+				model(_model),
+				t(0)
+			{
+			}
 			void sphereRun()
 			{
-
+				model->spheres.data.spheres[0].sphere[2] += sin(t) * 0.2;
+				model->spheres.upToDate = false;
+			}
+			void pointLightRun()
+			{
+				model->pointLights.data.pointLights[0].p[0] = 3 * sin(t);
+				model->pointLights.data.pointLights[0].p[2] += 0.2 * sin(t);
+				model->pointLights.upToDate = false;
 			}
 			void run()
 			{
-
+				t += 0.1;
+				pointLightRun();
+				sphereRun();
+				model->dataInit();
 			}
 		};
 
@@ -152,6 +169,7 @@ namespace OpenGL
 		GLuint texture;
 		Renderer renderer;
 		RayTracer rayTracer;
+		Movement movement;
 
 		RayTrace(Math::vec2<unsigned int>const& _scale)
 			:
@@ -164,7 +182,8 @@ namespace OpenGL
 			frameSizeUniform(&frameSizeBuffer, UniformBuffer, 0),
 			transUniform(&transBuffer, UniformBuffer, 1),
 			renderer(&sm),
-			rayTracer(&sm, &frameScale, &model)
+			rayTracer(&sm, &frameScale, &model),
+			movement(&model)
 		{
 			glGenTextures(1, &texture);
 			glBindTexture(GL_TEXTURE_2D, texture);
@@ -264,7 +283,7 @@ namespace OpenGL
 					{0,0,2.1,4},
 					{0},
 					{0},
-					{{0,0.2,0.2},{0,0.5,0.5},{0,1,1},{0,0,0},1.1}
+					{{0,0.2,0.2},{0,0.5,0.5},{0.01,0.01,0.01},{0,0,0},1.1}
 				}
 			);
 			model.circles.data.circles +=
@@ -272,10 +291,11 @@ namespace OpenGL
 				{
 					{ 0, 0, 1, 0 },
 					{ 0,0,0 },
-						250,
+					800,
 					{ 1,1,0 },
 					{ 0,0,0 },
-					{ {0.1,0.1,0.1},{0,0,0},{0.6,0.6,0.6},{0.4,0.4,0.4},1 }
+					1,
+					{ {0,0,0},{0,0,0},{0.6,0.6,0.6},{0,0,0},1 }
 				}
 			};
 			model.addCylinder
@@ -287,7 +307,7 @@ namespace OpenGL
 					5,
 					{ 0 },
 					{ 0 },
-					{{0.1,0,0.1},{0.5,0,0.5},{1,0,1},{0,0,0},1.1 }
+					{{0,0,0},{0,0,0},{1,1,0},{0,0,0},1.1 }
 				}
 			);
 			model.addCylinder
@@ -299,7 +319,7 @@ namespace OpenGL
 					0.5,
 					{ 0 },
 					{ 0 },
-					{{0.1,0.1,0.1},{0.6,0.6,0},{1,1,0},{0,0,0},1.6 }
+					{{0,0,0},{0,0,0},{1,0,1},{0,0,0},1.1 }
 				}
 			);
 			model.pointLights.data.pointLights +=
@@ -309,7 +329,7 @@ namespace OpenGL
 					{ 0,0,100 }
 				},*/
 				{
-					{3,3,3},
+					{6, 6, 6},
 					{ 0,0,7 }
 				}
 			};
@@ -335,6 +355,7 @@ namespace OpenGL
 		}
 		virtual void run() override
 		{
+			//movement.run();
 			transform.operate();
 			if (transform.updated)
 			{
@@ -393,17 +414,17 @@ namespace OpenGL
 
 int main()
 {
-	OpenGL::OpenGLInit init(4, 5);
+	OpenGL::OpenGLInit init(4, 6);
 	Window::Window::Data winPara
 	{
 		"RayTracing",
 		{
-			{1024,1024},
+			{1920,1024},
 			false,false,
 		}
 	};
 	Window::WindowManager wm(winPara);
-	OpenGL::RayTrace test({ 1024,1024 });
+	OpenGL::RayTrace test({ 1920,1024 });
 	wm.init(0, &test);
 	glfwSwapInterval(1);
 	FPS fps;

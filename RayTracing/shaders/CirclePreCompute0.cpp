@@ -1,4 +1,4 @@
-#version 450 core
+#version 460 core
 layout(local_size_x = 1024)in;
 struct Color
 {
@@ -14,6 +14,7 @@ struct Circle
 	vec4 sphere;
 	vec3 e1;
 	vec3 e2;
+	uint tex;
 	Color color;
 };
 layout(std140, binding = 3)uniform GeometryNum
