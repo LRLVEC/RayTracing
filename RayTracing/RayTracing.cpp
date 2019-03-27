@@ -277,15 +277,21 @@ namespace OpenGL
 						}
 					);*/
 
-			model.spheres.data.spheres.pushBack
-			(
+			model.spheres.data.spheres+=
+			{
 				{
-					{0,0,2.1,4},
-					{0},
-					{0},
-					{{0,0.2,0.2},{0,0.5,0.5},{0.01,0.01,0.01},{0,0,0},1.1}
+					{0, 0, 2.1, 4},
+					{ 0 },
+					{ 0 },
+					{ {0,0.2,0.2},{0,0.5,0.5},{0.01,0.01,0.01},{0,0,0},1.1 }
+				},
+				{
+					{-4, -4, 2.1, 4},
+					{ 0 },
+					{ 0 },
+					{ {0,0.2,0.2},{0,0.5,0.5},{0,0,0},{0,0,0},1.1 }
 				}
-			);
+			};
 			model.circles.data.circles +=
 			{
 				{
@@ -307,7 +313,7 @@ namespace OpenGL
 					5,
 					{ 0 },
 					{ 0 },
-					{{0,0,0},{0,0,0},{1,1,0},{0,0,0},1.1 }
+					{{0,0,0},{0.7,0.7,0},{0,0,0},{0,0,0},1.1 }
 				}
 			);
 			model.addCylinder
@@ -355,7 +361,7 @@ namespace OpenGL
 		}
 		virtual void run() override
 		{
-			//movement.run();
+			movement.run();
 			transform.operate();
 			if (transform.updated)
 			{
@@ -414,17 +420,17 @@ namespace OpenGL
 
 int main()
 {
-	OpenGL::OpenGLInit init(4, 6);
+	OpenGL::OpenGLInit init(4, 5);
 	Window::Window::Data winPara
 	{
 		"RayTracing",
 		{
-			{1920,1024},
+			{640,640},
 			false,false,
 		}
 	};
 	Window::WindowManager wm(winPara);
-	OpenGL::RayTrace test({ 1920,1024 });
+	OpenGL::RayTrace test({ 640,640 });
 	wm.init(0, &test);
 	glfwSwapInterval(0);
 	FPS fps;
