@@ -1,4 +1,4 @@
-#version 460 core
+#version 450 core
 layout(local_size_x = 32, local_size_y = 32)in;
 #define RayTraceDepth 6
 
@@ -56,6 +56,16 @@ struct Cylinder
 	vec3 e2;
 	Color color;
 };
+struct Cone
+{
+	vec3 c;
+	float c2;
+	vec3 n;
+	float l2;
+	vec3 e1;
+	vec3 e2;
+	Color color;
+};
 struct PointLight
 {
 	vec3 color;
@@ -87,6 +97,7 @@ layout(std140, binding = 3)uniform GeometryNum
 	uint sphereNum;
 	uint circleNum;
 	uint cylinderNum;
+	uint coneNum;
 	uint pointLightNum;
 };
 
@@ -110,7 +121,11 @@ layout(std430, binding = 5)buffer Cylinders
 {
 	Cylinder cylinders[];
 };
-layout(std430, binding = 6)buffer PointLights
+layout(std430, binding = 6)buffer Cones
+{
+	Cone cones[];
+};
+layout(std430, binding = 7)buffer PointLights
 {
 	PointLight pointLights[];
 };
@@ -213,6 +228,37 @@ bool judgeHit(Ray ray)
 		}
 		if (tt > 0 && tt < ray.t)
 			return true;
+	}
+	for (n = 0; n < coneNum; ++n)
+	{
+		vec3 d = ray.p0.xyz - cones[n].c;
+		float nn0 = dot(ray.n, cones[n].n);
+		float dn0 = dot(d, cones[n].n);
+		float dn = dot(d, ray.n);
+		float d2 = dot(d, d);
+		float a = cones[n].c2 - nn0 * nn0;
+		float b = nn0 * dn0 - dn * cones[n].c2;
+		float c = d2 * cones[n].c2 - dn0 * dn0;
+		float s = b * b - a * c;
+		if (s <= 0)continue;
+		s = sqrt(s);
+		float r2;
+		float tt = (b + s) / a;
+		if (tt > 0 && tt < ray.t)
+		{
+			r2 = d2 + tt * tt + 2 * dn * tt;
+			float k = dn0 + nn0 * tt;
+			if (r2 < cones[n].l2 && k >= 0)
+				return true;
+		}
+		tt = (b - s) / a;
+		if (tt > 0 && tt < ray.t)
+		{
+			r2 = d2 + tt * tt + 2 * dn * tt;
+			float k = dn0 + nn0 * tt;
+			if (r2 < cones[n].l2 && k >= 0)
+				return true;
+		}
 	}
 	return false;
 }
@@ -335,6 +381,48 @@ vec4 rayTrace(Ray ray)
 				tempN = normalize(d + ray.n * t - cylinders[n].n * u);
 			}
 		}
+		for (n = 0; n < coneNum; ++n)
+		{
+			vec3 d = ray.p0.xyz - cones[n].c;
+			float nn0 = dot(ray.n, cones[n].n);
+			float dn0 = dot(d, cones[n].n);
+			float dn = dot(d, ray.n);
+			float d2 = dot(d, d);
+			float a = cones[n].c2 - nn0 * nn0;
+			float b = nn0 * dn0 - dn * cones[n].c2;
+			float c = d2 * cones[n].c2 - dn0 * dn0;
+			float s = b * b - a * c;
+			if (s > 0)
+			{
+				s = sqrt(s);
+				float tt = -1;
+				float r2;
+				tt = (b + s) / a;
+				if (tt > 0)
+				{
+					r2 = d2 + tt * tt + 2 * dn * tt;
+					float k = dn0 + nn0 * tt;
+					if (r2 > cones[n].l2 || k < 0)tt = -1;
+				}
+				float ttt = (b - s) / a;
+				if (ttt > 0 && (ttt < tt || (tt < 0)))
+				{
+					float r2t = d2 + ttt * ttt + 2 * dn * ttt;
+					float k = dn0 + nn0 * ttt;
+					if (r2t <= cones[n].l2 && k > 0)
+					{
+						tt = ttt;
+						r2 = r2t;
+					}
+				}
+				if (tt > 0 && (tt < t || t < 0))
+				{
+					t = tt;
+					tempColor = cones[n].color;
+					tempN = normalize(d + ray.n * t - cones[n].n * sqrt(r2 / cones[n].c2));
+				}
+			}
+		}
 		answer += tempColor.g * ratioNow;
 		if (t > 0 && depth < RayTraceDepth)
 		{
@@ -365,7 +453,7 @@ vec4 rayTrace(Ray ray)
 				tt *= 0.05;
 				dn = normalize(dn);
 				if (!judgeHit(Ray(ray.p0, dn, ttt)))
-					answer += max((dot(tempN, dn) / tt) * pointLights[n].color * tempColor.d * ratioNow, vec3(0));
+					answer += max(dot(tempN, dn) / tt, 0) * pointLights[n].color * tempColor.d * ratioNow;
 			}
 
 			ratioNow *= tempColor.r;

@@ -176,7 +176,7 @@ namespace OpenGL
 			sm(),
 			frameScale(_scale),
 			transform({ {40.0,_scale.data[1]},{0.02,0.9,0.01},{0.1},{0,0,10},500.0 }),
-			model({ {ShaderStorageBuffer,0}, {1,2}, {3}, {4},{5},{6}, {3} }),
+			model({ {ShaderStorageBuffer,0}, {1,2}, {3}, {4},{5},{6},{7},{3} }),
 			frameSizeBuffer(&frameScale),
 			transBuffer(&transform.bufferData),
 			frameSizeUniform(&frameSizeBuffer, UniformBuffer, 0),
@@ -291,10 +291,10 @@ namespace OpenGL
 				{
 					{ 0, 0, 1, 0 },
 					{ 0,0,0 },
-					800,
+						800,
 					{ 1,1,0 },
 					{ 0,0,0 },
-					1,
+						1,
 					{ {0,0,0},{0,0,0},{0.6,0.6,0.6},{0,0,0},1 }
 				}
 			};
@@ -307,19 +307,29 @@ namespace OpenGL
 					5,
 					{ 0 },
 					{ 0 },
-					{{0,0,0},{0,0,0},{1,1,0},{0,0,0},1.1 }
+					{{0,0,0},{0.9,0.9,0},{0.1,0.1,0},{0,0,0},1.1 }
 				}
 			);
 			model.addCylinder
 			(
 				{
-					{3, 3, 0.01},
+					{3, 3, 2},
 					1,
 					{ 0,0,1 },
 					0.5,
 					{ 0 },
 					{ 0 },
-					{{0,0,0},{0,0,0},{1,0,1},{0,0,0},1.1 }
+					{{0.1,0.1,0.1},{0.8,0,0.8},{0.1,0,0.1},{0,0,0},1.1 }
+				}
+			);
+			model.addCone
+			(
+				{
+					{3, -3, 6},0.75,
+					{ 0,0,-1 },9,
+					{ 0 },
+					{ 0 },
+					{{0.1,0.1,0.1},{0.7,0.7,0.7},{0,0.1,0.2},{0,0,0},1.1 }
 				}
 			);
 			model.pointLights.data.pointLights +=
@@ -339,6 +349,7 @@ namespace OpenGL
 			model.spheres.numChanged = true;
 			model.circles.numChanged = true;
 			model.cylinders.numChanged = true;
+			model.cones.numChanged = true;
 			model.pointLights.numChanged = true;
 		}
 		virtual void init(FrameScale const& _size) override
@@ -414,17 +425,17 @@ namespace OpenGL
 
 int main()
 {
-	OpenGL::OpenGLInit init(4, 6);
+	OpenGL::OpenGLInit init(4, 5);
 	Window::Window::Data winPara
 	{
 		"RayTracing",
 		{
-			{1920,1024},
+			{1024,1024},
 			false,false,
 		}
 	};
 	Window::WindowManager wm(winPara);
-	OpenGL::RayTrace test({ 1920,1024 });
+	OpenGL::RayTrace test({ 1024,1024 });
 	wm.init(0, &test);
 	glfwSwapInterval(1);
 	FPS fps;
