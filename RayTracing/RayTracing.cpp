@@ -4,6 +4,7 @@
 #include <_Math.h>
 #include <_Time.h>
 #include <RayTracing/_RayTracing.h>
+#include <GL/_Texture.h>
 
 namespace OpenGL
 {
@@ -166,7 +167,9 @@ namespace OpenGL
 		Buffer transBuffer;
 		BufferConfig frameSizeUniform;
 		BufferConfig transUniform;
-		GLuint texture;
+		Texture image;
+		TextureConfig<TextureStorage2D>imageConfig;
+		//GLuint texture;
 		Renderer renderer;
 		RayTracer rayTracer;
 		Movement movement;
@@ -181,17 +184,15 @@ namespace OpenGL
 			transBuffer(&transform.bufferData),
 			frameSizeUniform(&frameSizeBuffer, UniformBuffer, 0),
 			transUniform(&transBuffer, UniformBuffer, 1),
+			image(nullptr),
+			imageConfig(&image, Texture2D, RGBA32f, 1, _scale.data[0], _scale.data[1]),
 			renderer(&sm),
 			rayTracer(&sm, &frameScale, &model),
 			movement(&model)
 		{
-			glGenTextures(1, &texture);
-			glBindTexture(GL_TEXTURE_2D, texture);
-			glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA32F, _scale.data[0], _scale.data[1]);
-			glTextureParameteri(texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			glTextureParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			glBindImageTexture(2, texture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
-
+			imageConfig.parameteri(TextureParameter::TextureMinFilter, TextureParameter::MinFilter_Linear);
+			imageConfig.parameteri(TextureParameter::TextureMagFilter, TextureParameter::MagFilter_Linear);
+			glBindImageTexture(2, image.texture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
 
 			/*model.planes.data.planes.pushBack
 			(
@@ -277,19 +278,13 @@ namespace OpenGL
 						}
 					);*/
 
-			model.spheres.data.spheres+=
+			model.spheres.data.spheres +=
 			{
 				{
 					{0, 0, 2.1, 4},
 					{ 0 },
 					{ 0 },
 					{ {0,0.2,0.2},{0,0.5,0.5},{0.01,0.01,0.01},{0,0,0},1.1 }
-				},
-				{
-					{-4, -4, 2.1, 4},
-					{ 0 },
-					{ 0 },
-					{ {0,0.2,0.2},{0,0.5,0.5},{0,0,0},{0,0,0},1.1 }
 				}
 			};
 			model.circles.data.circles +=
@@ -372,7 +367,7 @@ namespace OpenGL
 		}
 		virtual void run() override
 		{
-			movement.run();
+			//movement.run();
 			transform.operate();
 			if (transform.updated)
 			{
@@ -443,7 +438,7 @@ int main()
 	Window::WindowManager wm(winPara);
 	OpenGL::RayTrace test({ 640,640 });
 	wm.init(0, &test);
-	glfwSwapInterval(0);
+	glfwSwapInterval(1);
 	FPS fps;
 	fps.refresh();
 	//int temp(0);
