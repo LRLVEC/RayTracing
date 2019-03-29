@@ -283,7 +283,7 @@ namespace OpenGL
 					{0,0,2.1,4},
 					{0},
 					{0},
-					{{0,0.2,0.2},{0,0.5,0.5},{0.01,0.01,0.01},{0,0,0},1.1}
+					{{0,0.2,0.2},{0,0.5,0.5},{0,0,0},{0,0,0},1.1}
 				}
 			);
 			model.circles.data.circles +=
@@ -366,7 +366,7 @@ namespace OpenGL
 		}
 		virtual void run() override
 		{
-			//movement.run();
+			movement.run();
 			transform.operate();
 			if (transform.updated)
 			{
