@@ -5,6 +5,8 @@
 #include <_Time.h>
 #include <RayTracing/_RayTracing.h>
 #include <GL/_Texture.h>
+#include <_STL.h>
+#include <_BMP.h>
 
 namespace OpenGL
 {
@@ -167,9 +169,11 @@ namespace OpenGL
 		Buffer transBuffer;
 		BufferConfig frameSizeUniform;
 		BufferConfig transUniform;
+		BMPData testBMP;
 		Texture image;
+		Texture texture;
 		TextureConfig<TextureStorage2D>imageConfig;
-		//GLuint texture;
+		TextureConfig<TextureStorage3D>textureConfig;
 		Renderer renderer;
 		RayTracer rayTracer;
 		Movement movement;
@@ -178,14 +182,17 @@ namespace OpenGL
 			:
 			sm(),
 			frameScale(_scale),
-			transform({ {40.0,_scale.data[1]},{0.02,0.9,0.01},{0.1},{0,0,10},500.0 }),
+			transform({ {20.0,_scale.data[1]},{0.1,0.9,0.01},{1},{0,0,10},800.0 }),
 			model({ {ShaderStorageBuffer,0}, {1,2}, {3}, {4},{5},{6},{7},{3} }),
 			frameSizeBuffer(&frameScale),
 			transBuffer(&transform.bufferData),
 			frameSizeUniform(&frameSizeBuffer, UniformBuffer, 0),
 			transUniform(&transBuffer, UniformBuffer, 1),
-			image(nullptr),
+			testBMP("C:/Users/0/Pictures/Saved Pictures/Haja1.bmp"),
+			image(nullptr, 1),
+			texture(&testBMP, 0),
 			imageConfig(&image, Texture2D, RGBA32f, 1, _scale.data[0], _scale.data[1]),
+			textureConfig(&texture, Texture2DArray, RGBA32f, 1, testBMP.bmp.header.width, testBMP.bmp.header.height, 1),
 			renderer(&sm),
 			rayTracer(&sm, &frameScale, &model),
 			movement(&model)
@@ -193,6 +200,24 @@ namespace OpenGL
 			imageConfig.parameteri(TextureParameter::TextureMinFilter, TextureParameter::MinFilter_Linear);
 			imageConfig.parameteri(TextureParameter::TextureMagFilter, TextureParameter::MagFilter_Linear);
 			glBindImageTexture(2, image.texture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
+
+			testBMP.bmp.printInfo();
+
+			//GLenum bgra[4]{ GL_BLUE,GL_GREEN,GL_RED,GL_ALPHA };
+			//glTextureParameteriv(texture.texture, GL_TEXTURE_SWIZZLE_RGBA, (GLint*)bgra);
+			//glTextureParameteri(texture.texture, GL_TEXTURE_SWIZZLE_A, GL_ONE);
+			textureConfig.dataRefresh(0, TextureInputBGRInt, TextureInputUByte, 0, 0, 0, testBMP.bmp.header.width, testBMP.bmp.header.height, 1);
+			/*unsigned char* gg((unsigned char*)::malloc(3 * 256 * 256));
+			for (int c0(0); c0 < 3 * 256 * 256; ++c0)
+				gg[c0] = 128;
+			glTextureSubImage3D(texture.texture, 0, 0, 0, 0, 256, 256, 1, TextureInputBGRInt, TextureInputUByte, gg);
+			::free(gg);*/
+
+			renderer.use();
+			image.bindUnit();
+			rayTracer.tracing.use();
+			image.bindUnit();
+			texture.bindUnit();
 
 			/*model.planes.data.planes.pushBack
 			(
@@ -278,13 +303,39 @@ namespace OpenGL
 						}
 					);*/
 
+
+			model.triangles.trianglesOrigin.trianglesOrigin +=
+			{
+				{
+					{
+						{20, -20, 5},
+						{ 30,-20,5 },
+						{ 20,-10,5 }
+					},
+					{
+						{0, 0, 0}, -1,
+						{ 1,1,1 }, 0,
+						{ 0.5,0.5,0.5 }, 0,
+						{ 0.1,0.1,0.1 }, 0,
+						0,
+						1
+					}
+				}
+			};
 			model.spheres.data.spheres +=
 			{
 				{
-					{0, 0, 2.1, 4},
-					{ 0 },
-					{ 0 },
-					{ {0,0.2,0.2},{0,0.5,0.5},{0.01,0.01,0.01},{0,0,0},1.1 }
+					{0 - 20, 0 - 20, 15, 40},
+					{ 0,0,1 },
+					{ 1,0,0 },
+					{
+						{0,0,0},-1,
+						{1,1,1},0,
+						{0.05,0.05,0.05},0,
+						{0.01,0.01,0.01},0,
+						0,
+						1.1
+					}
 				}
 			};
 			model.circles.data.circles +=
@@ -292,56 +343,79 @@ namespace OpenGL
 				{
 					{ 0, 0, 1, 0 },
 					{ 0,0,0 },
-						800,
+						2500,
 					{ 1,1,0 },
-					{ 0,0,0 },
-						1,
-					{ {0,0,0},{0,0,0},{0.6,0.6,0.6},{0,0,0},1 }
+					{
+						{0,0,0},-1,
+						{0,0,0},-1,
+						{1,1,1},0,
+						{0.1,0.1,0.1},-1,
+						0,
+						1
+					}
 				}
 			};
 			model.addCylinder
 			(
 				{
-					{0, 5, 1.2},
-					1,
+					{0 - 20, -15 - 20, 8},
+					3,
 					{ 0,0,1 },
-					5,
-					{ 0 },
-					{ 0 },
-					{{0,0,0},{0.9,0.9,0},{0.1,0.1,0},{0,0,0},1.1 }
+					10,
+					{ 1,0,0 },
+					{
+						{0,0,0},-1,
+						{0,0,0},-1,
+						{0,0,0},-1,
+						{1,1,1},0,
+						0,
+						1.1
+					}
 				}
 			);
 			model.addCylinder
 			(
 				{
-					{3, 3, 2},
+					{8 - 20, 8 - 20, 2},
 					1,
 					{ 0,0,1 },
-					0.5,
-					{ 0 },
-					{ 0 },
-					{{0.1,0.1,0.1},{0.8,0,0.8},{0.1,0,0.1},{0,0,0},1.1 }
+					3,
+					{ 1,0,0 },
+					{
+						{0.1,0.1,0.1},0,
+						{1,1,1},0,
+						{0.1,0.1,0.1},-1,
+						{0.1,0.1,0.1},0,
+						0,
+						1.1
+					}
 				}
 			);
 			model.addCone
 			(
 				{
-					{3, -3, 6},0.75,
-					{ 0,0,-1 },9,
-					{ 0 },
-					{ 0 },
-					{{0.1,0.1,0.1},{0.7,0.7,0.7},{0,0.1,0.2},{0,0,0},1.1 }
+					{10 - 20, -10 - 20, 25},0.75,
+					{ 0,0,-1 },25,
+					{ 1,0,0 },
+					{
+						{0,0,0},-1,
+						{1,1,1},0,
+						{1,1,1},0,
+						{0.1,0.1,0.1},0,
+						0,
+						1.1
+					}
 				}
 			);
 			model.pointLights.data.pointLights +=
 			{
-				/*{
-					{200, 200, 200},
-					{ 0,0,100 }
-				},*/
 				{
-					{6, 6, 6},
-					{ 0,0,7 }
+					{400, 400, 400},
+					{ 0,0,100 }
+				},
+				{
+					{20, 20, 20},
+					{ -20,-20,40 }
 				}
 			};
 
@@ -367,7 +441,7 @@ namespace OpenGL
 		}
 		virtual void run() override
 		{
-			movement.run();
+			//movement.run();
 			transform.operate();
 			if (transform.updated)
 			{
@@ -431,12 +505,12 @@ int main()
 	{
 		"RayTracing",
 		{
-			{640,640},
+			{1024,1024},
 			false,false,
 		}
 	};
 	Window::WindowManager wm(winPara);
-	OpenGL::RayTrace test({ 640,640 });
+	OpenGL::RayTrace test({ 1024,1024 });
 	wm.init(0, &test);
 	glfwSwapInterval(1);
 	FPS fps;
@@ -449,8 +523,8 @@ int main()
 		wm.pullEvents();
 		wm.render();
 		wm.swapBuffers();
-		fps.refresh();
-		fps.printFPS(1);
+		//fps.refresh();
+		//fps.printFPS(1);
 	}
 	return 0;
 }

@@ -3,9 +3,14 @@ layout(local_size_x = 1024)in;
 struct Color
 {
 	vec3 r;
+	int texR;
 	vec3 t;
+	int texT;
 	vec3 d;
+	int texD;
 	vec3 g;
+	int texG;
+	vec3 blank;
 	float n;
 };
 struct Circle
@@ -13,7 +18,6 @@ struct Circle
 	vec4 plane;
 	vec4 sphere;
 	vec3 e1;
-	vec3 e2;
 	uint tex;
 	Color color;
 };
@@ -37,7 +41,5 @@ void main()
 			vec4(n, -dot(n, circles[gl_GlobalInvocationID.x].sphere.xyz));
 		circles[gl_GlobalInvocationID.x].e1 =
 			normalize(circles[gl_GlobalInvocationID.x].e1);
-		circles[gl_GlobalInvocationID.x].e2 =
-			cross(n, circles[gl_GlobalInvocationID.x].e1);
 	}
 }

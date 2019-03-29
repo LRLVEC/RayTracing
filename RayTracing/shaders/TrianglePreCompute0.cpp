@@ -4,9 +4,14 @@ layout(local_size_x = 1024)in;
 struct Color
 {
 	vec3 r;
+	int texR;
 	vec3 t;
+	int texT;
 	vec3 d;
+	int texD;
 	vec3 g;
+	int texG;
+	vec3 blank;
 	float n;
 };
 struct Triangle
