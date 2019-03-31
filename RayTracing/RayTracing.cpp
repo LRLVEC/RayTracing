@@ -7,7 +7,7 @@
 #include <GL/_Texture.h>
 #include <_STL.h>
 #include <_BMP.h>
-
+#include <RayTracing/_Model.h>
 namespace OpenGL
 {
 	struct RayTrace :OpenGL
@@ -188,7 +188,7 @@ namespace OpenGL
 			transBuffer(&transform.bufferData),
 			frameSizeUniform(&frameSizeBuffer, UniformBuffer, 0),
 			transUniform(&transBuffer, UniformBuffer, 1),
-			testBMP("C:/Users/0/Pictures/Saved Pictures/Haja1.bmp"),
+			testBMP("C://Users//陈卓//Pictures//Saved Pictures//a.bmp"),
 			image(nullptr, 1),
 			texture(&testBMP, 0),
 			imageConfig(&image, Texture2D, RGBA32f, 1, _scale.data[0], _scale.data[1]),
@@ -330,9 +330,9 @@ namespace OpenGL
 					{ 1,0,0 },
 					{
 						{0,0,0},-1,
+						{0},-1,
+						{0},-1,
 						{1,1,1},0,
-						{0.05,0.05,0.05},0,
-						{0.01,0.01,0.01},0,
 						0,
 						1.1
 					}
