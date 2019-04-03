@@ -190,10 +190,9 @@ namespace OpenGL
 			transBuffer(&transform.bufferData),
 			frameSizeUniform(&frameSizeBuffer, UniformBuffer, 0),
 			transUniform(&transBuffer, UniformBuffer, 1),
-			testBMP("C:/Users/0/Pictures/Saved Pictures/Haja1.bmp"),
+			testBMP("C:\\Users\\0\\Pictures\\Saved Pictures\\l.bmp"),
 			image(nullptr, 0),
 			texture(&testBMP, 1),
-			//cube(&testBMP,2),
 			imageConfig(&image, Texture2D, RGBA32f, 1, _scale.data[0], _scale.data[1]),
 			textureConfig(&texture, Texture2DArray, RGBA32f, 1, testBMP.bmp.header.width, testBMP.bmp.header.height, 1),
 			//cubeConfig(&cube,TextureCubeMap,RGBA32f,1,testBMP.bmp.header.width,testBMP.bmp.header.height,)
