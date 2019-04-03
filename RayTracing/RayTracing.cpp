@@ -172,8 +172,10 @@ namespace OpenGL
 		BMPData testBMP;
 		Texture image;
 		Texture texture;
+		//Texture cube;
 		TextureConfig<TextureStorage2D>imageConfig;
 		TextureConfig<TextureStorage3D>textureConfig;
+		//TextureConfig<TextureStorage3D>cubeConfig;
 		Renderer renderer;
 		RayTracer rayTracer;
 		Movement movement;
@@ -182,17 +184,19 @@ namespace OpenGL
 			:
 			sm(),
 			frameScale(_scale),
-			transform({ {20.0,_scale.data[1]},{0.1,0.9,0.01},{1},{0,0,10},800.0 }),
+			transform({ {20.0,_scale.data[1]},{0.1,0.9,0.01},{0.5},{0,0,10},1100.0 }),
 			model({ {ShaderStorageBuffer,0}, {1,2}, {3}, {4},{5},{6},{7},{3} }),
 			frameSizeBuffer(&frameScale),
 			transBuffer(&transform.bufferData),
 			frameSizeUniform(&frameSizeBuffer, UniformBuffer, 0),
 			transUniform(&transBuffer, UniformBuffer, 1),
 			testBMP("C:/Users/0/Pictures/Saved Pictures/Haja1.bmp"),
-			image(nullptr, 1),
-			texture(&testBMP, 0),
+			image(nullptr, 0),
+			texture(&testBMP, 1),
+			//cube(&testBMP,2),
 			imageConfig(&image, Texture2D, RGBA32f, 1, _scale.data[0], _scale.data[1]),
 			textureConfig(&texture, Texture2DArray, RGBA32f, 1, testBMP.bmp.header.width, testBMP.bmp.header.height, 1),
+			//cubeConfig(&cube,TextureCubeMap,RGBA32f,1,testBMP.bmp.header.width,testBMP.bmp.header.height,)
 			renderer(&sm),
 			rayTracer(&sm, &frameScale, &model),
 			movement(&model)
@@ -308,10 +312,13 @@ namespace OpenGL
 			{
 				{
 					{
-						{20, -20, 5},
+						{20, -20,5 },
 						{ 30,-20,5 },
 						{ 20,-10,5 }
 					},
+					{ 0,0 },
+					{ 1,0 },
+					{ 0,1 },
 					{
 						{0, 0, 0}, -1,
 						{ 1,1,1 }, 0,
@@ -320,7 +327,25 @@ namespace OpenGL
 						0,
 						1
 					}
-				}
+				},
+				{
+					{
+						{30, -10, 5},
+						{ 20,-10,5 },
+						{ 30,-20,5 }
+					},
+					{ 1,1 },
+					{ 0,1 },
+					{ 1,0 },
+					{
+						{0, 0, 0}, -1,
+						{ 1,1,1 }, 0,
+						{ 0.5,0.5,0.5 }, 0,
+						{ 0.1,0.1,0.1 }, 0,
+						0,
+						1
+					}
+				},
 			};
 			model.spheres.data.spheres +=
 			{
@@ -332,7 +357,7 @@ namespace OpenGL
 						{0,0,0},-1,
 						{1,1,1},0,
 						{0.05,0.05,0.05},0,
-						{0.01,0.01,0.01},0,
+						{0.1,0.1,0.1},0,
 						0,
 						1.1
 					}

@@ -34,6 +34,9 @@ struct TriangleGPU
 	vec3 p1;
 	vec3 k1;
 	vec3 k2;
+	vec2 uv1;
+	vec2 uv2;
+	vec2 uv3;
 	Color color;
 };
 struct Sphere
@@ -93,8 +96,8 @@ layout(std140, row_major, binding = 1)uniform Trans
 	float z0;
 };
 layout(binding = 2, rgba32f)uniform image2D image;
-layout(binding = 1)uniform sampler2D smp;
-layout(binding = 0)uniform sampler2DArray texSmp;
+layout(binding = 0)uniform sampler2D smp;
+layout(binding = 1)uniform sampler2DArray texSmp;
 layout(std140, binding = 3)uniform GeometryNum
 {
 	uint planeNum;
@@ -309,7 +312,7 @@ vec4 rayTrace(Ray ray)
 					t = tt;
 					tempColor = triangles[n].color;
 					tempN = triangles[n].plane.xyz;
-					tempUV = uv;
+					tempUV = (1 - uv.x - uv.y) * triangles[n].uv1 + uv.x * triangles[n].uv2 + uv.y * triangles[n].uv3;
 				}
 			}
 		}

@@ -5,7 +5,7 @@ layout(std140, binding = 0)uniform Size
 {
 	uvec2 size;
 };
-layout(binding = 1)uniform sampler2D smp;
+layout(binding = 0)uniform sampler2D smp;
 void main()
 {
 	color = texture(smp, pos);
