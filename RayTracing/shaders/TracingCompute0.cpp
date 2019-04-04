@@ -19,7 +19,7 @@ struct Color
 	int texD;
 	vec3 g;
 	int texG;
-	vec3 blank;
+	vec3 decayFactor;
 	float n;
 };
 
@@ -286,6 +286,7 @@ vec4 rayTrace(Ray ray)
 	tempColor.texG = -1;
 	vec3 tempN;
 	vec2 tempUV;
+	vec3 tempDecay = vec3(1);
 	while (true)
 	{
 		t = -1;
@@ -456,7 +457,7 @@ vec4 rayTrace(Ray ray)
 			tempColor.g *= texture(texSmp, vec3(tempUV, tempColor.texG)).xyz;
 		if (t < 0)
 		{
-			tempColor.g =  texture(cubeSmp, ray.n).xyz;
+			tempColor.g = texture(cubeSmp, ray.n).xyz;
 		}
 		answer += tempColor.g * ratioNow;
 		if (t > 0 && depth < RayTraceDepth)
@@ -467,7 +468,10 @@ vec4 rayTrace(Ray ray)
 			if (any(greaterThanEqual(tempColor.t, vec3(0.05))))
 			{
 				float s = dot(ray.n, tempN);
-				tempColor.n = pow(tempColor.n, -sign(s));
+				tempColor.n = s > 0 ? 1 / tempColor.n : tempColor.n;
+				if (tempDecay.x != 1)
+					tempColor.t *= exp(tempDecay * t);
+				tempDecay = tempColor.decayFactor;
 				float k = tempColor.n * tempColor.n + s * s - 1;
 				if (k > 0)
 				{
