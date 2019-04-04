@@ -98,6 +98,7 @@ layout(std140, row_major, binding = 1)uniform Trans
 layout(binding = 2, rgba32f)uniform image2D image;
 layout(binding = 0)uniform sampler2D smp;
 layout(binding = 1)uniform sampler2DArray texSmp;
+layout(binding = 2)uniform samplerCube cubeSmp;
 layout(std140, binding = 3)uniform GeometryNum
 {
 	uint planeNum;
@@ -453,6 +454,10 @@ vec4 rayTrace(Ray ray)
 		}
 		if (tempColor.texG >= 0)
 			tempColor.g *= texture(texSmp, vec3(tempUV, tempColor.texG)).xyz;
+		if (t < 0)
+		{
+			tempColor.g =  texture(cubeSmp, ray.n).xyz;
+		}
 		answer += tempColor.g * ratioNow;
 		if (t > 0 && depth < RayTraceDepth)
 		{

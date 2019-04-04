@@ -170,9 +170,10 @@ namespace OpenGL
 		BufferConfig frameSizeUniform;
 		BufferConfig transUniform;
 		BMPData testBMP;
+		BMPCubeData cubeData;
 		Texture image;
 		Texture texture;
-		//Texture cube;
+		TextureCube cube;
 		TextureConfig<TextureStorage2D>imageConfig;
 		TextureConfig<TextureStorage3D>textureConfig;
 		//TextureConfig<TextureStorage3D>cubeConfig;
@@ -184,15 +185,17 @@ namespace OpenGL
 			:
 			sm(),
 			frameScale(_scale),
-			transform({ {20.0,_scale.data[1]},{0.1,0.9,0.01},{0.5},{0,0,10},1100.0 }),
+			transform({ {40.0,_scale.data[1]},{0.1,0.9,0.01},{0.5},{0,0,10},1100.0 }),
 			model({ {ShaderStorageBuffer,0}, {1,2}, {3}, {4},{5},{6},{7},{3} }),
 			frameSizeBuffer(&frameScale),
 			transBuffer(&transform.bufferData),
 			frameSizeUniform(&frameSizeBuffer, UniformBuffer, 0),
 			transUniform(&transBuffer, UniformBuffer, 1),
-			testBMP("C:\\Users\\0\\Pictures\\Saved Pictures\\l.bmp"),
+			testBMP("./resources/cube/front.bmp"),
+			cubeData("./resources/cube/"),
 			image(nullptr, 0),
 			texture(&testBMP, 1),
+			cube(&cubeData, 2, RGBA32f, 1, cubeData.bmp[0].header.width, cubeData.bmp[0].header.height),
 			imageConfig(&image, Texture2D, RGBA32f, 1, _scale.data[0], _scale.data[1]),
 			textureConfig(&texture, Texture2DArray, RGBA32f, 1, testBMP.bmp.header.width, testBMP.bmp.header.height, 1),
 			//cubeConfig(&cube,TextureCubeMap,RGBA32f,1,testBMP.bmp.header.width,testBMP.bmp.header.height,)
@@ -210,6 +213,7 @@ namespace OpenGL
 			//glTextureParameteriv(texture.texture, GL_TEXTURE_SWIZZLE_RGBA, (GLint*)bgra);
 			//glTextureParameteri(texture.texture, GL_TEXTURE_SWIZZLE_A, GL_ONE);
 			textureConfig.dataRefresh(0, TextureInputBGRInt, TextureInputUByte, 0, 0, 0, testBMP.bmp.header.width, testBMP.bmp.header.height, 1);
+			cube.dataInit(0, TextureInputBGRInt, TextureInputUByte);
 			/*unsigned char* gg((unsigned char*)::malloc(3 * 256 * 256));
 			for (int c0(0); c0 < 3 * 256 * 256; ++c0)
 				gg[c0] = 128;
@@ -221,6 +225,7 @@ namespace OpenGL
 			rayTracer.tracing.use();
 			image.bindUnit();
 			texture.bindUnit();
+			cube.bindUnit();
 
 			/*model.planes.data.planes.pushBack
 			(
@@ -311,13 +316,13 @@ namespace OpenGL
 			{
 				{
 					{
-						{20, -20,5 },
+						{20, -20, 5 },
 						{ 30,-20,5 },
 						{ 20,-10,5 }
 					},
-					{ 0,0 },
-					{ 1,0 },
-					{ 0,1 },
+						{ 0,0 },
+						{ 1,0 },
+						{ 0,1 },
 					{
 						{0, 0, 0}, -1,
 						{ 1,1,1 }, 0,
@@ -370,9 +375,9 @@ namespace OpenGL
 						2500,
 					{ 1,1,0 },
 					{
+						{0.2,0.2,0.2},-1,
 						{0,0,0},-1,
-						{0,0,0},-1,
-						{1,1,1},0,
+						{0.1,0.1,0.1},-1,
 						{0.1,0.1,0.1},-1,
 						0,
 						1
