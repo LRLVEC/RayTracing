@@ -191,8 +191,8 @@ namespace OpenGL
 			transBuffer(&transform.bufferData),
 			frameSizeUniform(&frameSizeBuffer, UniformBuffer, 0),
 			transUniform(&transBuffer, UniformBuffer, 1),
-			testBMP("./resources/cube/front.bmp"),
-			cubeData("./resources/cube/"),
+			testBMP("resources/cube/front.bmp"),
+			cubeData("resources/cube/"),
 			image(nullptr, 0),
 			texture(&testBMP, 1),
 			cube(&cubeData, 2, RGBA32f, 1, cubeData.bmp[0].header.width, cubeData.bmp[0].header.height),
@@ -226,6 +226,7 @@ namespace OpenGL
 			image.bindUnit();
 			texture.bindUnit();
 			cube.bindUnit();
+			glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
 			/*model.planes.data.planes.pushBack
 			(
@@ -375,12 +376,12 @@ namespace OpenGL
 						2500,
 					{ 1,1,0 },
 					{
-						{0.2,0.2,0.2},-1,
-						{0,0,0},-1,
+						{0.1,0.1,0.1},-1,
+						{0.5,0.5,0.5},-1,
 						{0.1,0.1,0.1},-1,
 						{0.1,0.1,0.1},-1,
 						0,
-						1
+						1.5
 					}
 				}
 			};
