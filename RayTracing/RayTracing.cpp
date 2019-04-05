@@ -7,7 +7,6 @@
 #include <GL/_Texture.h>
 #include <_STL.h>
 #include <_BMP.h>
-
 namespace OpenGL
 {
 	struct RayTrace :OpenGL
@@ -80,6 +79,22 @@ namespace OpenGL
 					glDispatchCompute((model->geometryNum.data.num.circleNum + 1023) / 1024, 1, 1);
 				}
 			};
+			struct DecayOriginPre :Program
+			{
+				DecayOriginPre(SourceManager* _sm)
+					:
+					Program(_sm, "Decay")
+				{
+					init();
+				}
+				virtual void initBufferData()override
+				{
+				}
+				virtual void run()override
+				{
+					glDispatchCompute(1, 1, 1);
+				}
+			};
 			struct Tracing :Program
 			{
 				RayTracing::FrameScale* frameScale;
@@ -99,13 +114,17 @@ namespace OpenGL
 				}
 			};
 
+			RayTracing::Transform* transform;
 			TrianglePre trianglePre;
 			CirclePre circlePre;
+			DecayOriginPre decayOriginPre;
 			Tracing tracing;
-			RayTracer(SourceManager* _sm, RayTracing::FrameScale* _frameScale, RayTracing::Model* _model)
+			RayTracer(SourceManager* _sm, RayTracing::FrameScale* _frameScale, RayTracing::Model* _model, RayTracing::Transform*_transform)
 				:
+				transform(_transform),
 				trianglePre(_sm, _model),
 				circlePre(_sm, _model),
+				decayOriginPre(_sm),
 				tracing(_sm, _frameScale)
 			{
 			}
@@ -118,14 +137,18 @@ namespace OpenGL
 				{
 					trianglePre.use();
 					trianglePre.run();
-					trianglePre.model->triangles.GPUUpToDate = true;
 				}
 				if (!circlePre.model->circles.GPUUpToDate)
 				{
 					circlePre.use();
 					circlePre.run();
-					circlePre.model->circles.GPUUpToDate = true;
 				}
+				if (transform->moved|| trianglePre.model->moved)
+				{
+					decayOriginPre.use();
+					decayOriginPre.run();
+				}
+				trianglePre.model->upToDate();
 				tracing.use();
 				tracing.run();
 			}
@@ -164,11 +187,14 @@ namespace OpenGL
 		SourceManager sm;
 		RayTracing::FrameScale frameScale;
 		RayTracing::Transform transform;
+		RayTracing::DecayOriginData decayOriginData;
 		RayTracing::Model model;
 		Buffer frameSizeBuffer;
 		Buffer transBuffer;
+		Buffer decayOriginBuffer;
 		BufferConfig frameSizeUniform;
 		BufferConfig transUniform;
+		BufferConfig decayOriginStorage;
 		BMPData testBMP;
 		BMPCubeData cubeData;
 		Texture image;
@@ -189,10 +215,12 @@ namespace OpenGL
 			model({ {ShaderStorageBuffer,0}, {1,2}, {3}, {4},{5},{6},{7},{3} }),
 			frameSizeBuffer(&frameScale),
 			transBuffer(&transform.bufferData),
+			decayOriginBuffer(&decayOriginData),
 			frameSizeUniform(&frameSizeBuffer, UniformBuffer, 0),
 			transUniform(&transBuffer, UniformBuffer, 1),
-			testBMP("resources/Haja1.bmp"),
-			cubeData("resources/vendetta/"),
+			decayOriginStorage(&decayOriginBuffer, ShaderStorageBuffer,8),
+			testBMP("resources\\Haja1.bmp"),
+			cubeData("resources\\vendetta\\"),
 			image(nullptr, 0),
 			texture(&testBMP, 1),
 			cube(&cubeData, 2, RGBA32f, 1, cubeData.bmp[0].header.width, cubeData.bmp[0].header.height),
@@ -200,7 +228,7 @@ namespace OpenGL
 			textureConfig(&texture, Texture2DArray, RGBA32f, 1, testBMP.bmp.header.width, testBMP.bmp.header.height, 1),
 			//cubeConfig(&cube,TextureCubeMap,RGBA32f,1,testBMP.bmp.header.width,testBMP.bmp.header.height,)
 			renderer(&sm),
-			rayTracer(&sm, &frameScale, &model),
+			rayTracer(&sm, &frameScale, &model,&transform),
 			movement(&model)
 		{
 			imageConfig.parameteri(TextureParameter::TextureMinFilter, TextureParameter::MinFilter_Linear);
@@ -321,9 +349,9 @@ namespace OpenGL
 						{ 30,-5,20 },
 						{ 20,-5,10 }
 					},
-					{ 0,0 },
-					{ 1,0 },
-					{ 0,1 },
+						{ 0,0 },
+						{ 1,0 },
+						{ 0,1 },
 					{
 						0, -1,
 						0, -1,
@@ -368,16 +396,16 @@ namespace OpenGL
 					}
 				},
 				{
-					{-10, -10, 10, 16},
+					{-10, -20, 10, 64},
 					{ 0,-1,0 },
 					{ 1,0,0 },
 					{
-						0.7,-1,
+						{0,0,0},-1,
+						{1,1,1},-1,
 						0,-1,
-						0.1,-1,
 						0,-1,
 						{-0.05,-0.05,0},
-						1
+						1.1
 					}
 				}
 			};
@@ -475,12 +503,12 @@ namespace OpenGL
 					{ 0,1,0 },100,
 					{ 1,0,0 },
 					{
-						0.8,-1,
+						0,-1,
+						1,-1,
 						0,-1,
 						0,-1,
-						0,-1,
-						0,
-						1
+						{0,-0.15,-0.15},
+						1.1
 					}
 				}
 			);
@@ -511,6 +539,7 @@ namespace OpenGL
 			renderer.viewArray.dataInit();
 			frameSizeUniform.dataInit();
 			transUniform.dataInit();
+			decayOriginStorage.dataInit();
 			model.dataInit();
 			//GLint s(0);
 			//glGetActiveUniformBlockiv(rayTracer.tracing.program, 1, GL_UNIFORM_BLOCK_DATA_SIZE, &s);
@@ -582,12 +611,12 @@ int main()
 	{
 		"RayTracing",
 		{
-			{1024,1024},
+			{640,640},
 			false,false,
 		}
 	};
 	Window::WindowManager wm(winPara);
-	OpenGL::RayTrace test({ 1024,1024 });
+	OpenGL::RayTrace test({ 640,640 });
 	wm.init(0, &test);
 	glfwSwapInterval(1);
 	FPS fps;
