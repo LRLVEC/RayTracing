@@ -185,14 +185,14 @@ namespace OpenGL
 			:
 			sm(),
 			frameScale(_scale),
-			transform({ {40.0,_scale.data[1]},{0.1,0.9,0.01},{0.5},{0,0,10},1100.0 }),
+			transform({ {60.0,_scale.data[1]},{0.1,0.9,0.01},{0.5},{0,0,10},1100.0 }),
 			model({ {ShaderStorageBuffer,0}, {1,2}, {3}, {4},{5},{6},{7},{3} }),
 			frameSizeBuffer(&frameScale),
 			transBuffer(&transform.bufferData),
 			frameSizeUniform(&frameSizeBuffer, UniformBuffer, 0),
 			transUniform(&transBuffer, UniformBuffer, 1),
-			testBMP("resources/cube/front.bmp"),
-			cubeData("resources/cube/"),
+			testBMP("resources/Haja1.bmp"),
+			cubeData("resources/vendetta/"),
 			image(nullptr, 0),
 			texture(&testBMP, 1),
 			cube(&cubeData, 2, RGBA32f, 1, cubeData.bmp[0].header.width, cubeData.bmp[0].header.height),
@@ -207,7 +207,7 @@ namespace OpenGL
 			imageConfig.parameteri(TextureParameter::TextureMagFilter, TextureParameter::MagFilter_Linear);
 			glBindImageTexture(2, image.texture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
 
-			testBMP.bmp.printInfo();
+			//testBMP.bmp.printInfo();
 
 			//GLenum bgra[4]{ GL_BLUE,GL_GREEN,GL_RED,GL_ALPHA };
 			//glTextureParameteriv(texture.texture, GL_TEXTURE_SWIZZLE_RGBA, (GLint*)bgra);
@@ -317,36 +317,36 @@ namespace OpenGL
 			{
 				{
 					{
-						{20, -20, 5 },
-						{ 30,-20,5 },
-						{ 20,-10,5 }
+						{20, -5, 20 },
+						{ 30,-5,20 },
+						{ 20,-5,10 }
 					},
-						{ 0,0 },
-						{ 1,0 },
-						{ 0,1 },
+					{ 0,0 },
+					{ 1,0 },
+					{ 0,1 },
 					{
-						{0, 0, 0}, -1,
-						{ 1,1,1 }, 0,
-						{ 0.5,0.5,0.5 }, 0,
-						{ 0.1,0.1,0.1 }, 0,
+						0, -1,
+						0, -1,
+						0.5, 0,
+						0,-1,
 						0,
 						1
 					}
 				},
 				{
 					{
-						{30, -10, 5},
-						{ 20,-10,5 },
-						{ 30,-20,5 }
+						{30, -5, 10},
+						{ 20,-5,10},
+						{ 30,-5,20 }
 					},
 					{ 1,1 },
 					{ 0,1 },
 					{ 1,0 },
 					{
-						{0, 0, 0}, -1,
-						{ 1,1,1 }, 0,
-						{ 0.5,0.5,0.5 }, 0,
-						{ 0.1,0.1,0.1 }, 0,
+						0, -1,
+						0, -1,
+						0.5, 0,
+						0,-1,
 						0,
 						1
 					}
@@ -355,31 +355,44 @@ namespace OpenGL
 			model.spheres.data.spheres +=
 			{
 				{
-					{0 - 20, 0 - 20, 15, 40},
-					{ 0,0,1 },
+					{-10, -10, 10, 64},
+					{ 0,-1,0 },
 					{ 1,0,0 },
 					{
 						{0,0,0},-1,
-						{1,1,1},0,
-						{0.05,0.05,0.05},0,
-						{0.1,0.1,0.1},0,
-						0,
+						{1,1,1},-1,
+						0,-1,
+						0,-1,
+						{-0.05,-0.05,0},
 						1.1
+					}
+				},
+				{
+					{-10, -10, 10, 16},
+					{ 0,-1,0 },
+					{ 1,0,0 },
+					{
+						0.7,-1,
+						0,-1,
+						0.1,-1,
+						0,-1,
+						{-0.05,-0.05,0},
+						1
 					}
 				}
 			};
 			model.circles.data.circles +=
 			{
 				{
-					{ 0, 0, 1, 0 },
+					{ 0, -1, 0, 0 },
 					{ 0,0,0 },
 						2500,
-					{ 1,1,0 },
+					{ 1,0,0 },
 					{
-						{0.1,0.1,0.1},-1,
-						{0.5,0.5,0.5},-1,
-						{0.1,0.1,0.1},-1,
-						{0.1,0.1,0.1},-1,
+						0,-1,
+						0,-1,
+						0.5,0,
+						0,-1,
 						0,
 						1.5
 					}
@@ -388,17 +401,35 @@ namespace OpenGL
 			model.addCylinder
 			(
 				{
-					{0 - 20, -15 - 20, 8},
-					3,
-					{ 0,0,1 },
+					{5 , -20 , -10},
+					80,
+					{ 1,0,0 },
 					10,
 					{ 1,0,0 },
 					{
 						{0,0,0},-1,
+						1,-1,
 						{0,0,0},-1,
-						{0,0,0},-1,
-						{1,1,1},0,
-						0,
+						0,0,
+						{-0.1,-0.03,-0.03},
+						1.05
+					}
+				}
+			);
+			model.addCylinder
+			(
+				{
+					{8 , -8 , 2},
+					1,
+					{ 0,-1,0 },
+					3,
+					{ 1,0,0 },
+					{
+						0,-1,
+						1,-1,
+						0,-1,
+						0,-1,
+						{-0.1,-0.3,-0.1},
 						1.1
 					}
 				}
@@ -406,17 +437,33 @@ namespace OpenGL
 			model.addCylinder
 			(
 				{
-					{8 - 20, 8 - 20, 2},
-					1,
-					{ 0,0,1 },
-					3,
+					{15 , -20 , 10},
+					80,
+					{ 1,0,0 },
+					10,
 					{ 1,0,0 },
 					{
-						{0.1,0.1,0.1},0,
-						{1,1,1},0,
-						{0.1,0.1,0.1},-1,
-						{0.1,0.1,0.1},0,
+						0.6,-1,
+						0,-1,
+						0.1,-1,
+						0,-1,
 						0,
+						1
+					}
+				}
+			);
+			model.addCone
+			(
+				{
+					{10, -10, 10},0.75,
+					{ 0,1,0 },100,
+					{ 1,0,0 },
+					{
+						0,-1,
+						1,-1,
+						0,-1,
+						0,-1,
+						{0,-0.15,-0.15},
 						1.1
 					}
 				}
@@ -424,16 +471,16 @@ namespace OpenGL
 			model.addCone
 			(
 				{
-					{10 - 20, -10 - 20, 25},0.75,
-					{ 0,0,-1 },25,
+					{10, -25, -10},0.75,
+					{ 0,1,0 },100,
 					{ 1,0,0 },
 					{
-						{0,0,0},-1,
-						{1,1,1},0,
-						{1,1,1},0,
-						{0.1,0.1,0.1},0,
+						0.8,-1,
+						0,-1,
+						0,-1,
+						0,-1,
 						0,
-						1.1
+						1
 					}
 				}
 			);
@@ -441,11 +488,11 @@ namespace OpenGL
 			{
 				{
 					{400, 400, 400},
-					{ 0,0,100 }
+					{ 0,-100,0 }
 				},
 				{
-					{20, 20, 20},
-					{ -20,-20,40 }
+					{200, 200, 200},
+					{ -20,-40,20 }
 				}
 			};
 
