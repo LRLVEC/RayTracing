@@ -19,7 +19,7 @@ struct Color
 	int texD;
 	vec3 g;
 	int texG;
-	vec3 blank;
+	vec3 decayFactor;
 	float n;
 };
 
@@ -34,6 +34,9 @@ struct TriangleGPU
 	vec3 p1;
 	vec3 k1;
 	vec3 k2;
+	vec2 uv1;
+	vec2 uv2;
+	vec2 uv3;
 	Color color;
 };
 struct Sphere
@@ -80,6 +83,7 @@ struct Stack
 	vec3 n;
 	int depth;
 	vec3 ratio;
+	vec3 decayFactor;
 };
 
 layout(std140, binding = 0)uniform Size
@@ -93,8 +97,9 @@ layout(std140, row_major, binding = 1)uniform Trans
 	float z0;
 };
 layout(binding = 2, rgba32f)uniform image2D image;
-layout(binding = 1)uniform sampler2D smp;
-layout(binding = 0)uniform sampler2DArray texSmp;
+layout(binding = 0)uniform sampler2D smp;
+layout(binding = 1)uniform sampler2DArray texSmp;
+layout(binding = 2)uniform samplerCube cubeSmp;
 layout(std140, binding = 3)uniform GeometryNum
 {
 	uint planeNum;
@@ -282,6 +287,7 @@ vec4 rayTrace(Ray ray)
 	tempColor.texG = -1;
 	vec3 tempN;
 	vec2 tempUV;
+	vec3 decayNow = vec3(0);
 	while (true)
 	{
 		t = -1;
@@ -309,7 +315,7 @@ vec4 rayTrace(Ray ray)
 					t = tt;
 					tempColor = triangles[n].color;
 					tempN = triangles[n].plane.xyz;
-					tempUV = uv;
+					tempUV = (1 - uv.x - uv.y) * triangles[n].uv1 + uv.x * triangles[n].uv2 + uv.y * triangles[n].uv3;
 				}
 			}
 		}
@@ -450,6 +456,12 @@ vec4 rayTrace(Ray ray)
 		}
 		if (tempColor.texG >= 0)
 			tempColor.g *= texture(texSmp, vec3(tempUV, tempColor.texG)).xyz;
+		if (t < 0)
+		{
+			tempColor.g = texture(cubeSmp, ray.n).xyz;
+			t = 0;
+		}
+		ratioNow *= exp(decayNow * t);
 		answer += tempColor.g * ratioNow;
 		if (t > 0 && depth < RayTraceDepth)
 		{
@@ -459,11 +471,12 @@ vec4 rayTrace(Ray ray)
 			if (any(greaterThanEqual(tempColor.t, vec3(0.05))))
 			{
 				float s = dot(ray.n, tempN);
-				tempColor.n = pow(tempColor.n, -sign(s));
+				tempColor.n = s > 0 ? 1 / tempColor.n : tempColor.n;
 				float k = tempColor.n * tempColor.n + s * s - 1;
 				if (k > 0)
 				{
 					++sp;
+					stack[sp].decayFactor = decayNow - sign(s) * tempColor.decayFactor;
 					s -= sign(s) * sqrt(k);
 					stack[sp].p0 = ray.p0 + vec4((t + 0.003) * ray.n, 0);
 					stack[sp].n = (ray.n - tempN * s) / tempColor.n;
@@ -478,14 +491,12 @@ vec4 rayTrace(Ray ray)
 			{
 				vec3 dn = pointLights[n].p - ray.p0.xyz;
 				float tt = dot(dn, dn);
-				float ttt = sqrt(tt);
-				tt *= 0.05;
 				dn = normalize(dn);
-				if (!judgeHit(Ray(ray.p0, dn, ttt)))
+				if (!judgeHit(Ray(ray.p0, dn, sqrt(tt))))
 				{
 					if (tempColor.texD >= 0)
 						tempColor.d *= texture(texSmp, vec3(tempUV, tempColor.texD)).xyz;
-					answer += max(dot(tempN, dn) / tt, 0) * pointLights[n].color * tempColor.d * ratioNow;
+					answer += max(-20 * sign(dot(ray.n, tempN)) * dot(tempN, dn) / tt, 0) * pointLights[n].color * tempColor.d * ratioNow;
 				}
 			}
 
@@ -507,6 +518,7 @@ vec4 rayTrace(Ray ray)
 			ray.p0 = stack[sp].p0;
 			ray.n = stack[sp].n;
 			ratioNow = stack[sp].ratio;
+			decayNow = stack[sp].decayFactor;
 			--sp;
 		}
 	}

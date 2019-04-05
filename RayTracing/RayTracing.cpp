@@ -169,10 +169,13 @@ namespace OpenGL
 		BufferConfig frameSizeUniform;
 		BufferConfig transUniform;
 		BMPData testBMP;
+		BMPCubeData cubeData;
 		Texture image;
 		Texture texture;
+		TextureCube cube;
 		TextureConfig<TextureStorage2D>imageConfig;
 		TextureConfig<TextureStorage3D>textureConfig;
+		//TextureConfig<TextureStorage3D>cubeConfig;
 		Renderer renderer;
 		RayTracer rayTracer;
 		Movement movement;
@@ -181,17 +184,20 @@ namespace OpenGL
 			:
 			sm(),
 			frameScale(_scale),
-			transform({ {20.0,_scale.data[1]},{0.1,0.9,0.01},{1},{0,0,10},800.0 }),
+			transform({ {60.0,_scale.data[1]},{0.1,0.9,0.01},{0.5},{0,0,10},1100.0 }),
 			model({ {ShaderStorageBuffer,0}, {1,2}, {3}, {4},{5},{6},{7},{3} }),
 			frameSizeBuffer(&frameScale),
 			transBuffer(&transform.bufferData),
 			frameSizeUniform(&frameSizeBuffer, UniformBuffer, 0),
 			transUniform(&transBuffer, UniformBuffer, 1),
-			testBMP("C://Users//陈卓//Pictures//Saved Pictures//a.bmp"),
-			image(nullptr, 1),
-			texture(&testBMP, 0),
+			testBMP("resources/Haja1.bmp"),
+			cubeData("resources/vendetta/"),
+			image(nullptr, 0),
+			texture(&testBMP, 1),
+			cube(&cubeData, 2, RGBA32f, 1, cubeData.bmp[0].header.width, cubeData.bmp[0].header.height),
 			imageConfig(&image, Texture2D, RGBA32f, 1, _scale.data[0], _scale.data[1]),
 			textureConfig(&texture, Texture2DArray, RGBA32f, 1, testBMP.bmp.header.width, testBMP.bmp.header.height, 1),
+			//cubeConfig(&cube,TextureCubeMap,RGBA32f,1,testBMP.bmp.header.width,testBMP.bmp.header.height,)
 			renderer(&sm),
 			rayTracer(&sm, &frameScale, &model),
 			movement(&model)
@@ -200,12 +206,13 @@ namespace OpenGL
 			imageConfig.parameteri(TextureParameter::TextureMagFilter, TextureParameter::MagFilter_Linear);
 			glBindImageTexture(2, image.texture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
 
-			testBMP.bmp.printInfo();
+			//testBMP.bmp.printInfo();
 
 			//GLenum bgra[4]{ GL_BLUE,GL_GREEN,GL_RED,GL_ALPHA };
 			//glTextureParameteriv(texture.texture, GL_TEXTURE_SWIZZLE_RGBA, (GLint*)bgra);
 			//glTextureParameteri(texture.texture, GL_TEXTURE_SWIZZLE_A, GL_ONE);
 			textureConfig.dataRefresh(0, TextureInputBGRInt, TextureInputUByte, 0, 0, 0, testBMP.bmp.header.width, testBMP.bmp.header.height, 1);
+			cube.dataInit(0, TextureInputBGRInt, TextureInputUByte);
 			/*unsigned char* gg((unsigned char*)::malloc(3 * 256 * 256));
 			for (int c0(0); c0 < 3 * 256 * 256; ++c0)
 				gg[c0] = 128;
@@ -217,6 +224,8 @@ namespace OpenGL
 			rayTracer.tracing.use();
 			image.bindUnit();
 			texture.bindUnit();
+			cube.bindUnit();
+			glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
 			/*model.planes.data.planes.pushBack
 			(
@@ -307,67 +316,119 @@ namespace OpenGL
 			{
 				{
 					{
-						{20, -20, 5},
-						{ 30,-20,5 },
-						{ 20,-10,5 }
+						{20, -5, 20 },
+						{ 30,-5,20 },
+						{ 20,-5,10 }
 					},
+					{ 0,0 },
+					{ 1,0 },
+					{ 0,1 },
 					{
-						{0, 0, 0}, -1,
-						{ 1,1,1 }, 0,
-						{ 0.5,0.5,0.5 }, 0,
-						{ 0.1,0.1,0.1 }, 0,
+						0, -1,
+						0, -1,
+						0.5, 0,
+						0,-1,
 						0,
 						1
 					}
-				}
+				},
+				{
+					{
+						{30, -5, 10},
+						{ 20,-5,10},
+						{ 30,-5,20 }
+					},
+					{ 1,1 },
+					{ 0,1 },
+					{ 1,0 },
+					{
+						0, -1,
+						0, -1,
+						0.5, 0,
+						0,-1,
+						0,
+						1
+					}
+				},
 			};
 			model.spheres.data.spheres +=
 			{
 				{
-					{0 - 20, 0 - 20, 15, 40},
-					{ 0,0,1 },
+					{-10, -10, 10, 64},
+					{ 0,-1,0 },
 					{ 1,0,0 },
 					{
 						{0,0,0},-1,
-						{0},-1,
-						{0},-1,
-						{1,1,1},0,
-						0,
+						{1,1,1},-1,
+						0,-1,
+						0,-1,
+						{-0.05,-0.05,0},
 						1.1
+					}
+				},
+				{
+					{-10, -10, 10, 16},
+					{ 0,-1,0 },
+					{ 1,0,0 },
+					{
+						0.7,-1,
+						0,-1,
+						0.1,-1,
+						0,-1,
+						{-0.05,-0.05,0},
+						1
 					}
 				}
 			};
 			model.circles.data.circles +=
 			{
 				{
-					{ 0, 0, 1, 0 },
+					{ 0, -1, 0, 0 },
 					{ 0,0,0 },
 						2500,
-					{ 1,1,0 },
+					{ 1,0,0 },
 					{
-						{0,0,0},-1,
-						{0,0,0},-1,
-						{1,1,1},0,
-						{0.1,0.1,0.1},-1,
+						0,-1,
+						0,-1,
+						0.5,0,
+						0,-1,
 						0,
-						1
+						1.5
 					}
 				}
 			};
 			model.addCylinder
 			(
 				{
-					{0 - 20, -15 - 20, 8},
-					3,
-					{ 0,0,1 },
+					{5 , -20 , -10},
+					80,
+					{ 1,0,0 },
 					10,
 					{ 1,0,0 },
 					{
 						{0,0,0},-1,
+						1,-1,
 						{0,0,0},-1,
-						{0,0,0},-1,
-						{1,1,1},0,
-						0,
+						0,0,
+						{-0.1,-0.03,-0.03},
+						1.05
+					}
+				}
+			);
+			model.addCylinder
+			(
+				{
+					{8 , -8 , 2},
+					1,
+					{ 0,-1,0 },
+					3,
+					{ 1,0,0 },
+					{
+						0,-1,
+						1,-1,
+						0,-1,
+						0,-1,
+						{-0.1,-0.3,-0.1},
 						1.1
 					}
 				}
@@ -375,17 +436,33 @@ namespace OpenGL
 			model.addCylinder
 			(
 				{
-					{8 - 20, 8 - 20, 2},
-					1,
-					{ 0,0,1 },
-					3,
+					{15 , -20 , 10},
+					80,
+					{ 1,0,0 },
+					10,
 					{ 1,0,0 },
 					{
-						{0.1,0.1,0.1},0,
-						{1,1,1},0,
-						{0.1,0.1,0.1},-1,
-						{0.1,0.1,0.1},0,
+						0.6,-1,
+						0,-1,
+						0.1,-1,
+						0,-1,
 						0,
+						1
+					}
+				}
+			);
+			model.addCone
+			(
+				{
+					{10, -10, 10},0.75,
+					{ 0,1,0 },100,
+					{ 1,0,0 },
+					{
+						0,-1,
+						1,-1,
+						0,-1,
+						0,-1,
+						{0,-0.15,-0.15},
 						1.1
 					}
 				}
@@ -393,16 +470,16 @@ namespace OpenGL
 			model.addCone
 			(
 				{
-					{10 - 20, -10 - 20, 25},0.75,
-					{ 0,0,-1 },25,
+					{10, -25, -10},0.75,
+					{ 0,1,0 },100,
 					{ 1,0,0 },
 					{
-						{0,0,0},-1,
-						{1,1,1},0,
-						{1,1,1},0,
-						{0.1,0.1,0.1},0,
+						0.8,-1,
+						0,-1,
+						0,-1,
+						0,-1,
 						0,
-						1.1
+						1
 					}
 				}
 			);
@@ -410,11 +487,11 @@ namespace OpenGL
 			{
 				{
 					{400, 400, 400},
-					{ 0,0,100 }
+					{ 0,-100,0 }
 				},
 				{
-					{20, 20, 20},
-					{ -20,-20,40 }
+					{200, 200, 200},
+					{ -20,-40,20 }
 				}
 			};
 
