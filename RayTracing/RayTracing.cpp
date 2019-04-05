@@ -7,7 +7,6 @@
 #include <GL/_Texture.h>
 #include <_STL.h>
 #include <_BMP.h>
-#include <RayTracing/_Model.h>
 namespace OpenGL
 {
 	struct RayTrace :OpenGL
