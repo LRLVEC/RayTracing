@@ -111,6 +111,7 @@ layout(std140, binding = 3)uniform GeometryNum
 	uint pointLightNum;
 };
 
+
 layout(std430, binding = 0)buffer Planes
 {
 	Plane planes[];
@@ -138,6 +139,10 @@ layout(std430, binding = 6)buffer Cones
 layout(std430, binding = 7)buffer PointLights
 {
 	PointLight pointLights[];
+};
+layout(std430, binding = 8)buffer DecayOrigin
+{
+	vec3 decayOrigin;
 };
 
 Ray rayAlloctor()
@@ -287,11 +292,11 @@ vec4 rayTrace(Ray ray)
 	tempColor.texG = -1;
 	vec3 tempN;
 	vec2 tempUV;
-	vec3 decayNow = vec3(0);
+	vec3 decayNow = decayOrigin;
 	while (true)
 	{
 		t = -1;
-		tempColor.g = vec3(0);// , 0.6, 0.8);
+		tempColor.g;// = vec3(0);// , 0.6, 0.8);
 		for (n = 0; n < planeNum; ++n)
 		{
 			float tt = getPlaneT(ray, planes[n].plane);
