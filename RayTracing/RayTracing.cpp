@@ -185,7 +185,7 @@ namespace OpenGL
 			:
 			sm(),
 			frameScale(_scale),
-			transform({ {60.0,_scale.data[1]},{0.1,0.9,0.01},{0.5},{0,0,10},1100.0 }),
+			transform({ {40.0,_scale.data[1]},{0.1,0.9,0.01},{0.5},{0,0,10},1100.0 }),
 			model({ {ShaderStorageBuffer,0}, {1,2}, {3}, {4},{5},{6},{7},{3} }),
 			frameSizeBuffer(&frameScale),
 			transBuffer(&transform.bufferData),
@@ -372,12 +372,12 @@ namespace OpenGL
 					{ 0,-1,0 },
 					{ 1,0,0 },
 					{
-						0.7,-1,
+						{0,0,0},-1,
+						{1,1,1},-1,
 						0,-1,
-						0.1,-1,
 						0,-1,
-						{-0.05,-0.05,0},
-						1
+						{0,0,-0.2},
+						1.1
 					}
 				}
 			};
@@ -429,7 +429,7 @@ namespace OpenGL
 						1,-1,
 						0,-1,
 						0,-1,
-						{-0.1,-0.3,-0.1},
+						{-0.05,-0.15,-0.05},
 						1.1
 					}
 				}
@@ -600,8 +600,8 @@ int main()
 		wm.pullEvents();
 		wm.render();
 		wm.swapBuffers();
-		//fps.refresh();
-		//fps.printFPS(1);
+		fps.refresh();
+		fps.printFPS(1);
 	}
 	return 0;
 }
