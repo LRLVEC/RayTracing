@@ -1,8 +1,8 @@
 #version 450 core
 layout(local_size_x = 32, local_size_y = 32)in;
-#define RayTraceDepth 12
+#define RayTraceDepth 8
 #define Pi 3.14159265359
-#define offset 0.001
+#define offset 0.003
 #define originSamples 8
 
 struct Ray
@@ -482,12 +482,12 @@ vec4 rayTrace(Ray ray)
 			{
 				float i1 = acos(abs(cosi1));
 				if (cosi1 > 0) tempColor.n = 1 / tempColor.n;
-				float sini2 = sin(i1) / tempColor.n;
+				float sini1 = sqrt(1 - cosi1 * cosi1);
+				float sini2 = sini1 / tempColor.n;
 				if (sini2 < 1)
 				{
-					float i2 = asin(sini2);
-					float cosi2 = cos(i2);
-					if (i1 == 0)
+					float cosi2 = sqrt(1 - sini2 * sini2);
+					if (i1 <= 0.02)
 					{
 						float nadd1 = 1 / (tempColor.n + 1);
 						tempColor.r *= pow((tempColor.n - 1) * nadd1, 2);
@@ -495,11 +495,15 @@ vec4 rayTrace(Ray ray)
 					}
 					else
 					{
-						float i1addi2 = i1 + i2;
-						float i1minusi2 = i1 - i2;
-						float ahh = 1 / pow(cos(i1minusi2), 2);
-						tempColor.r *= (1 + pow(cos(i1addi2), 2) * ahh) * pow(sin(i1minusi2) / sin(i1addi2), 2) / 2;
-						tempColor.t *= abs(cosi2 * pow(2 * sini2 * cosi1 * tempColor.n / sin(i1addi2), 2) * (1 + ahh) / (2 * cosi1));
+						float cosadd = abs(cosi1) * cosi2;
+						float cosminus = cosadd + sini1 * sini2;
+						float sinadd = sini1 * cosi2;
+						float sinminus = sinadd - abs(cosi1) * sini2;
+						cosadd = 2 * cosadd - cosminus;
+						sinadd = 2 * sinadd - sinminus;
+						float ahh = 1 / pow(cosminus, 2);
+						tempColor.r *= (1 + pow(cosadd, 2) * ahh) * pow(sinminus / sinadd, 2) / 2;
+						tempColor.t *= abs(cosi2 * pow(2 * sini2 * cosi1 * tempColor.n / sinadd, 2) * (1 + ahh) / (2 * cosi1));
 					}
 					if (any(greaterThanEqual(tempColor.t, vec3(0.05))))
 					{

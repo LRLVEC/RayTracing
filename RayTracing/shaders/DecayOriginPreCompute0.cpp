@@ -287,7 +287,7 @@ void main()
 		else
 		{
 			decayTemp += decayNow;
-			ray.p0 += vec4(ray.n * (t + 0.001), 0);
+			ray.p0 += vec4(ray.n * (t + 0.003), 0);
 		}
 	}
 }

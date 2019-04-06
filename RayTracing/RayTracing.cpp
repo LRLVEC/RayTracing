@@ -253,7 +253,7 @@ namespace OpenGL
 			:
 			sm(),
 			frameScale(_scale),
-			transform({ {30.0,_scale.data[1]},{0.1,0.9,0.1},{0.3},{0,0,10},1100.0 }),
+			transform({ {30.0,_scale.data[1]},{0.1,0.9,0.1},{0.5},{0,0,10},700.0 }),
 			model({ {ShaderStorageBuffer,0}, {1,2}, {3}, {4},{5},{6},{7},{3} }),
 			frameSizeBuffer(&frameScale),
 			transBuffer(&transform.bufferData),
@@ -383,7 +383,7 @@ namespace OpenGL
 					);*/
 
 
-			model.triangles.trianglesOrigin.trianglesOrigin +=
+			/*model.triangles.trianglesOrigin.trianglesOrigin +=
 			{
 				{
 					{
@@ -421,11 +421,11 @@ namespace OpenGL
 						1
 					}
 				},
-			};
+			};*/
 			model.spheres.data.spheres +=
 			{
 				{
-					{-10, -10, 10, 64},
+					{-10, -30, 10, 64},
 					{ 0,-1,0 },
 					{ 1,0,0 },
 					{
@@ -433,12 +433,12 @@ namespace OpenGL
 						1,-1,
 						0,-1,
 						0,-1,
-						{-0.5,-0.5,-0.5},
+						{-0.1,-0.1,0},
 						1.33
 					}
 				},
 				{
-					{-10, -10, 10, 63},
+					{-10, -30, 10, 60},
 					{ 0,-1,0 },
 					{ 1,0,0 },
 					{
@@ -446,8 +446,8 @@ namespace OpenGL
 						{1,1,1},-1,
 						0,-1,
 						0,-1,
-						{0.5,0.5,0.5},
-						1/1.33
+						{0.1,0.1,0},
+						1 / 1.33
 					}
 				}
 			};
@@ -477,51 +477,34 @@ namespace OpenGL
 					10,
 					{ 1,0,0 },
 					{
-						{0,0,0},-1,
+						1,-1,
 						1,-1,
 						{0,0,0},-1,
 						0,0,
-						{-0.1,-0.03,-0.03},
-						1.33
+						{-0.1,0,-0.1},
+						1.6
 					}
 				}
 			);
 			model.addCylinder
 			(
 				{
-					{8 , -8 , 2},
-					1,
-					{ 0,-1,0 },
-					3,
+					{5.2 , -20 , -10},
+					76,
+					{ 1,0,0 },
+					9.6,
 					{ 1,0,0 },
 					{
-						0,-1,
 						1,-1,
-						0,-1,
-						0,-1,
-						{-0.1,-0.3,-0.1},
-						1.33
+						1,-1,
+						{0,0,0},-1,
+						0,0,
+						{0.1,0,0.1},
+						1 / 1.6
 					}
 				}
 			);
-			model.addCylinder
-			(
-				{
-					{15 , -20 , 10},
-					80,
-					{ 1,0,0 },
-					10,
-					{ 1,0,0 },
-					{
-						0,-1,
-						0,-1,
-						{0.4,0.6,0.8},-1,
-						0,-1,
-						0,
-						1
-					}
-				}
-			);
+
 			model.addCone
 			(
 				{
@@ -529,40 +512,44 @@ namespace OpenGL
 					{ 0,1,0 },100,
 					{ 1,0,0 },
 					{
-						0,-1,
+						1,-1,
 						1,-1,
 						0,-1,
 						0,-1,
-						{0,-0.15,-0.15},
-						1.33
+						{0,-0.3,-0.3},
+						1.6
 					}
 				}
 			);
 			model.addCone
 			(
 				{
-					{10, -25, -10},0.75,
-					{ 0,1,0 },100,
+					{10, -39.5, 10},0.75,
+					{ 0,1,0 },85,
 					{ 1,0,0 },
 					{
-						0,-1,
+						1,-1,
 						1,-1,
 						0,-1,
 						0,-1,
-						{0,0.15,0.15},
-						1/1.33
+						{0,0.3,0.3},
+						1 / 1.6
 					}
 				}
 			);
 			model.pointLights.data.pointLights +=
 			{
 				{
-					{400, 400, 400},
+					{600, 600, 600},
 					{ 0,-100,0 }
 				},
 				{
-					{200, 200, 200},
+					{100, 100, 100},
 					{ -20,-40,20 }
+				},
+				{
+					{100, 100, 100},
+					{ 20,-40,-20 }
 				}
 			};
 
@@ -654,12 +641,12 @@ int main()
 	{
 		"RayTracing",
 		{
-			{1024,1024},
+			{2048,2048},
 			false,false,
 		}
 	};
 	Window::WindowManager wm(winPara);
-	OpenGL::RayTrace test({ 1024,1024 });
+	OpenGL::RayTrace test({ 2048,2048 });
 	wm.init(0, &test);
 	glfwSwapInterval(0);
 	FPS fps;
@@ -672,8 +659,8 @@ int main()
 		wm.pullEvents();
 		wm.render();
 		wm.swapBuffers();
-		fps.refresh();
-		fps.printFPS(1);
+		//fps.refresh();
+		//fps.printFPS(1);
 	}
 	return 0;
 }
