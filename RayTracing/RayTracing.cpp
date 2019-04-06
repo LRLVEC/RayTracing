@@ -433,8 +433,8 @@ namespace OpenGL
 						1,-1,
 						0,-1,
 						0,-1,
-						{-0.1,-0.1,0},
-						1.33
+						{-1,-1,0},
+						1.8
 					}
 				},
 				{
@@ -446,8 +446,8 @@ namespace OpenGL
 						{1,1,1},-1,
 						0,-1,
 						0,-1,
-						{0.1,0.1,0},
-						1 / 1.33
+						{1,1,0},
+						1 / 1.8
 					}
 				}
 			};
@@ -641,12 +641,12 @@ int main()
 	{
 		"RayTracing",
 		{
-			{2048,2048},
+			{640,640},
 			false,false,
 		}
 	};
 	Window::WindowManager wm(winPara);
-	OpenGL::RayTrace test({ 2048,2048 });
+	OpenGL::RayTrace test({ 640,640 });
 	wm.init(0, &test);
 	glfwSwapInterval(0);
 	FPS fps;
