@@ -1,5 +1,6 @@
 #version 450 core
 layout(local_size_x = 1)in;
+#define originSamples 8
 
 struct Ray
 {
@@ -106,6 +107,7 @@ layout(std430, binding = 6)buffer Cones
 };
 layout(std430, binding = 8)buffer DecayOrigin
 {
+	vec3 decayOrigins[originSamples];
 	vec3 decayOrigin;
 };
 
@@ -130,14 +132,27 @@ bool triangleTest(vec2 uv)
 		return true;
 	return false;
 }
+
+float random(vec2 st)
+{
+	return 2 * fract(sin(dot(st.xy + vec2(43758.5453123), vec2(12.9898, 78.233))) * 43758.5453123) - 1;
+}
+
+
 void main()
 {
 	Ray ray;
-	ray.p0 = vec4(10000, 10000, 10000, 1);
-	vec3 dr = r0 - ray.p0.xyz;
-	float l = length(dr);
-	ray.n = normalize(dr);
-	decayOrigin = vec3(0);
+	ray.p0 = vec4(r0, 1);
+	ray.n = normalize
+	(
+		vec3
+		(
+			random(r0.xy + vec2(gl_GlobalInvocationID.x & 1)),
+			random(r0.yz + vec2((gl_GlobalInvocationID.x & 2) / 2)),
+			random(r0.zx + vec2((gl_GlobalInvocationID.x & 4) / 4))
+		)
+	);
+	vec3 decayTemp = vec3(0);
 	while (true)
 	{
 		float t = -1;
@@ -146,13 +161,13 @@ void main()
 		for (n = 0; n < triangleNum; ++n)
 		{
 			float tt = getPlaneT(ray, triangles[n].plane);
-			if (tt > 0 && (tt < t || t < 0) && l > tt)
+			if (tt > 0 && (tt < t || t < 0))
 			{
 				vec2 uv = getTriangleUV(ray.p0.xyz + ray.n * tt, n);
 				if (triangleTest(uv))
 				{
 					t = tt;
-					decayNow = -triangles[n].color.decayFactor * sign(dot(ray.n, triangles[n].plane.xyz));
+					decayNow = triangles[n].color.decayFactor * sign(dot(ray.n, triangles[n].plane.xyz));
 				}
 			}
 		}
@@ -167,23 +182,23 @@ void main()
 				float tt = -1;
 				if (k + s > 0)tt = k + s;
 				if (k > s)tt = k - s;
-				if (tt > 0 && (tt < t || t < 0) && l > tt)
+				if (tt > 0 && (tt < t || t < 0))
 				{
 					t = tt;
-					decayNow = -spheres[n].color.decayFactor * sign(dot(ray.n, (ray.p0.xyz + t * ray.n - spheres[n].sphere.xyz) / sqrt(spheres[n].sphere.w)));
+					decayNow = spheres[n].color.decayFactor * sign(dot(ray.n, (ray.p0.xyz + t * ray.n - spheres[n].sphere.xyz) / sqrt(spheres[n].sphere.w)));
 				}
 			}
 		}
 		for (n = 0; n < circleNum; ++n)
 		{
 			float tt = getPlaneT(ray, circles[n].plane);
-			if (tt > 0 && (tt < t || t < 0) && l > tt)
+			if (tt > 0 && (tt < t || t < 0))
 			{
 				vec3 d = ray.p0.xyz + ray.n * tt - circles[n].sphere.xyz;
 				if (dot(d, d) <= circles[n].sphere.w)
 				{
 					t = tt;
-					decayNow = -circles[n].color.decayFactor * sign(dot(ray.n, circles[n].plane.xyz));
+					decayNow = circles[n].color.decayFactor * sign(dot(ray.n, circles[n].plane.xyz));
 				}
 			}
 		}
@@ -218,10 +233,10 @@ void main()
 					v = ut;
 				}
 			}
-			if (tt > 0 && (tt < t || t < 0) && l > tt)
+			if (tt > 0 && (tt < t || t < 0))
 			{
 				t = tt;
-				decayNow = -cylinders[n].color.decayFactor * sign(dot(ray.n, normalize(d + ray.n * t - cylinders[n].n * v)));
+				decayNow = cylinders[n].color.decayFactor * sign(dot(ray.n, normalize(d + ray.n * t - cylinders[n].n * v)));
 			}
 		}
 		for (n = 0; n < coneNum; ++n)
@@ -245,32 +260,34 @@ void main()
 				{
 					r2 = d2 + tt * tt + 2 * dn * tt;
 					float k = dn0 + nn0 * tt;
-					if (r2 > cones[n].l2 || k < 0)tt = -1;
+					if (r2 >= cones[n].l2 || k < 0)tt = -1;
 				}
 				float ttt = (b - s) / a;
-				if (ttt > 0 && (ttt < tt || (tt < 0)) && l > ttt)
+				if (ttt > 0 && (ttt < tt || (tt < 0)))
 				{
 					float r2t = d2 + ttt * ttt + 2 * dn * ttt;
 					float k = dn0 + nn0 * ttt;
-					if (r2t <= cones[n].l2 && k > 0)
+					if (r2t < cones[n].l2 && k > 0)
 					{
 						tt = ttt;
 					}
 				}
-				if (tt > 0 && (tt < t || t < 0) && l > tt)
+				if (tt > 0 && (tt < t || t < 0))
 				{
 					t = tt;
-					decayNow = -cones[n].color.decayFactor * sign(dot(ray.n, normalize(d + ray.n * t - cones[n].n * sqrt(r2 / cones[n].c2))));
+					decayNow = cones[n].color.decayFactor * sign(dot(ray.n, normalize(d + ray.n * t - cones[n].n * sqrt(r2 / cones[n].c2))));
 				}
 			}
 		}
-		decayOrigin += decayNow;
-		if (t < 0)break;
+		if (t < 0)
+		{
+			decayOrigins[gl_GlobalInvocationID.x] = decayTemp;
+			return;
+		}
 		else
 		{
-			t += 0.001;
-			ray.p0 += vec4(ray.n * t, 0);
-			l -= t;
+			decayTemp += decayNow;
+			ray.p0 += vec4(ray.n * (t + 0.001), 0);
 		}
 	}
 }
