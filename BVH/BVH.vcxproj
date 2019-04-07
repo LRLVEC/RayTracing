@@ -79,7 +79,7 @@
     <IncludePath>D:\files\C++\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>E:\files\C++\include;$(IncludePath)</IncludePath>
+    <IncludePath>D:\files\C++\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>

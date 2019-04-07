@@ -19,7 +19,6 @@ namespace OpenGL
 			BufferConfig viewArray;
 			VertexAttrib position;
 
-			//BufferConfig frameStorage;
 
 			Renderer(SourceManager* _sm)
 				:
@@ -521,26 +520,23 @@ int main()
 	{
 		"RayTracing",
 		{
-			{1024,768},
+			{1024,	1024},
 			true, false,
 		}
 	};
 	Window::WindowManager wm(winPara);
 	OpenGL::RayTrace test;
 	wm.init(0, &test);
-	glfwSwapInterval(0);
+	glfwSwapInterval(1);
 	FPS fps;
 	fps.refresh();
-	//int temp(0);
-	//glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &temp);
-	//::printf("%d\n", temp);
 	while (!wm.close())
 	{
 		wm.pullEvents();
 		wm.render();
 		wm.swapBuffers();
-		//fps.refresh();
-		//fps.printFPS(1);
+		fps.refresh();
+		fps.printFPS(1);
 	}
 	return 0;
 }
