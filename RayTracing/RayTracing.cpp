@@ -37,8 +37,8 @@ namespace OpenGL
 			}
 			virtual void run()override
 			{
-				glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-				glClear(GL_COLOR_BUFFER_BIT);
+				//glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+				//glClear(GL_COLOR_BUFFER_BIT);
 				glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 			}
 		};
@@ -253,7 +253,7 @@ namespace OpenGL
 			:
 			sm(),
 			frameScale(_scale),
-			transform({ {30.0,_scale.data[1]},{0.1,0.9,0.1},{0.5},{0,0,10},700.0 }),
+			transform({ {60.0,_scale.data[1]},{0.1,0.9,0.1},{0.5},{0,0,10},700.0 }),
 			model({ {ShaderStorageBuffer,0}, {1,2}, {3}, {4},{5},{6},{7},{3} }),
 			frameSizeBuffer(&frameScale),
 			transBuffer(&transform.bufferData),
@@ -641,12 +641,12 @@ int main()
 	{
 		"RayTracing",
 		{
-			{640,640},
+			{1024,1024},
 			false,false,
 		}
 	};
 	Window::WindowManager wm(winPara);
-	OpenGL::RayTrace test({ 640,640 });
+	OpenGL::RayTrace test({ 1024,1024 });
 	wm.init(0, &test);
 	glfwSwapInterval(0);
 	FPS fps;

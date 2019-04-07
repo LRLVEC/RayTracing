@@ -478,16 +478,15 @@ vec4 rayTrace(Ray ray)
 				tempColor.t *= texture(texSmp, vec3(tempUV, tempColor.texT)).xyz;
 			float cosi1 = dot(ray.n, tempN);
 			tempColor.t *= ratioNow;
-			if (any(greaterThanEqual(tempColor.t, vec3(0.1))))
+			if (any(greaterThanEqual(tempColor.t, vec3(0.05))))
 			{
-				float i1 = acos(abs(cosi1));
 				if (cosi1 > 0) tempColor.n = 1 / tempColor.n;
 				float sini1 = sqrt(1 - cosi1 * cosi1);
 				float sini2 = sini1 / tempColor.n;
 				if (sini2 < 1)
 				{
 					float cosi2 = sqrt(1 - sini2 * sini2);
-					if (i1 <= 0.02)
+					if (sini2 <= 0.02)
 					{
 						float nadd1 = 1 / (tempColor.n + 1);
 						tempColor.r *= pow((tempColor.n - 1) * nadd1, 2);
@@ -537,7 +536,7 @@ vec4 rayTrace(Ray ray)
 			if (tempColor.texR >= 0)
 				tempColor.r *= texture(texSmp, vec3(tempUV, tempColor.texR)).xyz;
 			ratioNow *= tempColor.r;
-			if (any(greaterThanEqual(ratioNow, vec3(0.1))))
+			if (any(greaterThanEqual(ratioNow, vec3(0.05))))
 			{
 				ray.n -= 2 * cosi1 * tempN;
 				++depth;
