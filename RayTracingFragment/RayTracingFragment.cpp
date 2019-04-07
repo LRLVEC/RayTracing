@@ -186,8 +186,8 @@ namespace OpenGL
 			}
 			void sphereRun()
 			{
-				model->spheres.data.spheres[0].sphere[1] += sin(t) * 0.2;
-				model->spheres.data.spheres[1].sphere[1] += sin(t) * 0.2;
+				model->spheres.data.spheres[0].sphere[1] += sin(t);
+				model->spheres.data.spheres[1].sphere[1] += sin(t);
 				model->spheres.upToDate = false;
 			}
 			void pointLightRun()
@@ -306,7 +306,7 @@ namespace OpenGL
 						1,-1,
 						0,-1,
 						0,-1,
-						{-0.5,-0.5,0},
+						{-0.5,0,-0.5},
 						1.33
 					}
 				},
@@ -319,7 +319,7 @@ namespace OpenGL
 						{1,1,1},-1,
 						0,-1,
 						0,-1,
-						{0.5,0.5,0},
+						{0.5,0,0.5},
 						1 / 1.33
 					}
 				}
@@ -341,7 +341,7 @@ namespace OpenGL
 					}
 				}
 			};
-			model.addCylinder
+			/*model.addCylinder
 			(
 				{
 					{5 , -20 , -10},
@@ -409,7 +409,7 @@ namespace OpenGL
 						1 / 1.33
 					}
 				}
-			);
+			);*/
 			model.pointLights.data.pointLights +=
 			{
 				{
@@ -521,8 +521,8 @@ int main()
 	{
 		"RayTracing",
 		{
-			{1024,1024},
-			true, true,
+			{1024,768},
+			true, false,
 		}
 	};
 	Window::WindowManager wm(winPara);
