@@ -15,7 +15,11 @@ Program:	Tracing
 {
 	Compute		0
 }
-Program:	Decay
+Program:	DecayOriginPre
+{
+	Compute		0
+}
+Program:	DecayOrigin
 {
 	Compute		0
 }

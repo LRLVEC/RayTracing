@@ -7,6 +7,7 @@
 #include <GL/_Texture.h>
 #include <_STL.h>
 #include <_BMP.h>
+
 namespace OpenGL
 {
 	struct RayTrace :OpenGL
@@ -36,8 +37,8 @@ namespace OpenGL
 			}
 			virtual void run()override
 			{
-				glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-				glClear(GL_COLOR_BUFFER_BIT);
+				//glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+				//glClear(GL_COLOR_BUFFER_BIT);
 				glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 			}
 		};
@@ -79,20 +80,61 @@ namespace OpenGL
 					glDispatchCompute((model->geometryNum.data.num.circleNum + 1023) / 1024, 1, 1);
 				}
 			};
-			struct DecayOriginPre :Program
+			struct DecayOriginCalc :Computers
 			{
-				DecayOriginPre(SourceManager* _sm)
-					:
-					Program(_sm, "Decay")
+				struct DecayOriginPre :Program
 				{
-					init();
+					DecayOriginPre(SourceManager* _sm)
+						:
+						Program(_sm, "DecayOriginPre")
+					{
+						init();
+					}
+					virtual void initBufferData()override
+					{
+					}
+					virtual void run()override
+					{
+						glDispatchCompute(8, 1, 1);
+					}
+				};
+				struct DecayOrigin :Program
+				{
+					DecayOrigin(SourceManager* _sm)
+						:
+						Program(_sm, "DecayOrigin")
+					{
+						init();
+					}
+					virtual void initBufferData()override
+					{
+					}
+					virtual void run()override
+					{
+						glDispatchCompute(1, 1, 1);
+					}
+				};
+
+				DecayOriginPre decayOriginPre;
+				DecayOrigin decayOrigin;
+
+				DecayOriginCalc(SourceManager* _sm)
+					:
+					decayOriginPre(_sm),
+					decayOrigin(_sm)
+				{
 				}
 				virtual void initBufferData()override
 				{
 				}
 				virtual void run()override
 				{
-					glDispatchCompute(1, 1, 1);
+					glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+					decayOriginPre.use();
+					decayOriginPre.run();
+					glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+					decayOrigin.use();
+					decayOrigin.run();
 				}
 			};
 			struct Tracing :Program
@@ -117,14 +159,14 @@ namespace OpenGL
 			RayTracing::Transform* transform;
 			TrianglePre trianglePre;
 			CirclePre circlePre;
-			DecayOriginPre decayOriginPre;
+			DecayOriginCalc decayOriginCalc;
 			Tracing tracing;
-			RayTracer(SourceManager* _sm, RayTracing::FrameScale* _frameScale, RayTracing::Model* _model, RayTracing::Transform*_transform)
+			RayTracer(SourceManager* _sm, RayTracing::FrameScale* _frameScale, RayTracing::Model* _model, RayTracing::Transform* _transform)
 				:
 				transform(_transform),
 				trianglePre(_sm, _model),
 				circlePre(_sm, _model),
-				decayOriginPre(_sm),
+				decayOriginCalc(_sm),
 				tracing(_sm, _frameScale)
 			{
 			}
@@ -143,12 +185,12 @@ namespace OpenGL
 					circlePre.use();
 					circlePre.run();
 				}
-				if (transform->moved|| trianglePre.model->moved)
+				if (transform->moved || trianglePre.model->moved)
 				{
-					decayOriginPre.use();
-					decayOriginPre.run();
+					decayOriginCalc.run();
 				}
 				trianglePre.model->upToDate();
+				glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 				tracing.use();
 				tracing.run();
 			}
@@ -202,7 +244,6 @@ namespace OpenGL
 		TextureCube cube;
 		TextureConfig<TextureStorage2D>imageConfig;
 		TextureConfig<TextureStorage3D>textureConfig;
-		//TextureConfig<TextureStorage3D>cubeConfig;
 		Renderer renderer;
 		RayTracer rayTracer;
 		Movement movement;
@@ -211,14 +252,14 @@ namespace OpenGL
 			:
 			sm(),
 			frameScale(_scale),
-			transform({ {60.0,_scale.data[1]},{0.1,0.9,0.01},{0.5},{0,0,10},1100.0 }),
+			transform({ {60.0,_scale.data[1]},{0.1,0.9,0.1},{0.5},{0,0,10},700.0 }),
 			model({ {ShaderStorageBuffer,0}, {1,2}, {3}, {4},{5},{6},{7},{3} }),
 			frameSizeBuffer(&frameScale),
 			transBuffer(&transform.bufferData),
 			decayOriginBuffer(&decayOriginData),
 			frameSizeUniform(&frameSizeBuffer, UniformBuffer, 0),
 			transUniform(&transBuffer, UniformBuffer, 1),
-			decayOriginStorage(&decayOriginBuffer, ShaderStorageBuffer,8),
+			decayOriginStorage(&decayOriginBuffer, ShaderStorageBuffer, 8),
 			testBMP("resources\\Haja1.bmp"),
 			cubeData("resources\\vendetta\\"),
 			image(nullptr, 0),
@@ -228,7 +269,7 @@ namespace OpenGL
 			textureConfig(&texture, Texture2DArray, RGBA32f, 1, testBMP.bmp.header.width, testBMP.bmp.header.height, 1),
 			//cubeConfig(&cube,TextureCubeMap,RGBA32f,1,testBMP.bmp.header.width,testBMP.bmp.header.height,)
 			renderer(&sm),
-			rayTracer(&sm, &frameScale, &model,&transform),
+			rayTracer(&sm, &frameScale, &model, &transform),
 			movement(&model)
 		{
 			imageConfig.parameteri(TextureParameter::TextureMinFilter, TextureParameter::MinFilter_Linear);
@@ -271,46 +312,6 @@ namespace OpenGL
 						}
 					);
 
-<<<<<<< HEAD
-			RayTracing::Model::Color borderColor
-			{ {0.1,0.7,0.5},{0,0,0},{0,0,0},1 };
-			model.triangles.trianglesOrigin.trianglesOrigin +=
-			{
-				{
-					{ {2, 2, 0}, { 2,-2, 0 }, { 2,-2, 4 }},
-						borderColor
-				},
-				{
-					{{2,2,0},{2,-2,4},{2,2,4}},
-					borderColor
-				},
-				{
-					{{-2,2,0},{-2,-2,0},{-2,-2,4}},
-					borderColor
-				},
-				{
-					{{-2,2,0},{-2,-2,4},{-2,2,4}},
-					borderColor
-				},
-				{
-					{ {2, 2, 0}, { -2,2, 0 }, { -2,2, 4 }},
-						borderColor
-				},
-				{
-					{{2,2,0},{-2,2,4},{2,2,4}},
-					borderColor
-				},
-				{
-					{{2,-2,0},{-2,-2,0},{-2,-2,4}},
-					borderColor
-				},
-				{
-					{{2,-2,0},{-2,-2,4},{2,-2,4}},
-					borderColor
-				}
-			};
-=======
-
 					model.triangles.trianglesOrigin.trianglesOrigin.pushBack
 					(
 						{
@@ -341,7 +342,7 @@ namespace OpenGL
 					);*/
 
 
-			model.triangles.trianglesOrigin.trianglesOrigin +=
+			/*model.triangles.trianglesOrigin.trianglesOrigin +=
 			{
 				{
 					{
@@ -379,24 +380,24 @@ namespace OpenGL
 						1
 					}
 				},
-			};
+			};*/
 			model.spheres.data.spheres +=
 			{
 				{
-					{-10, -10, 10, 64},
+					{-10, -30, 10, 64},
 					{ 0,-1,0 },
 					{ 1,0,0 },
 					{
-						{0,0,0},-1,
-						{1,1,1},-1,
+						1,-1,
+						1,-1,
 						0,-1,
 						0,-1,
-						{-0.05,-0.05,0},
-						1.1
+						{-1,-1,0},
+						1.8
 					}
 				},
 				{
-					{-10, -20, 10, 64},
+					{-10, -30, 10, 60},
 					{ 0,-1,0 },
 					{ 1,0,0 },
 					{
@@ -404,8 +405,8 @@ namespace OpenGL
 						{1,1,1},-1,
 						0,-1,
 						0,-1,
-						{-0.05,-0.05,0},
-						1.1
+						{1,1,0},
+						1 / 1.8
 					}
 				}
 			};
@@ -435,92 +436,79 @@ namespace OpenGL
 					10,
 					{ 1,0,0 },
 					{
-						{0,0,0},-1,
+						1,-1,
 						1,-1,
 						{0,0,0},-1,
 						0,0,
-						{-0.1,-0.03,-0.03},
-						1.05
+						{-0.1,0,-0.1},
+						1.6
 					}
 				}
 			);
 			model.addCylinder
 			(
 				{
-					{8 , -8 , 2},
-					1,
-					{ 0,-1,0 },
-					3,
+					{5.2 , -20 , -10},
+					76,
+					{ 1,0,0 },
+					9.6,
 					{ 1,0,0 },
 					{
-						0,-1,
 						1,-1,
-						0,-1,
-						0,-1,
-						{-0.1,-0.3,-0.1},
-						1.1
+						1,-1,
+						{0,0,0},-1,
+						0,0,
+						{0.1,0,0.1},
+						1 / 1.6
 					}
 				}
 			);
-			model.addCylinder
+
+			model.addCone
 			(
 				{
-					{15 , -20 , 10},
-					80,
-					{ 1,0,0 },
-					10,
+					{10, -40, 10},0.75,
+					{ 0,1,0 },100,
 					{ 1,0,0 },
 					{
-						0.6,-1,
+						1,-1,
+						1,-1,
 						0,-1,
-						0.1,-1,
 						0,-1,
-						0,
-						1
+						{0,-0.3,-0.3},
+						1.6
 					}
 				}
 			);
 			model.addCone
 			(
 				{
-					{10, -10, 10},0.75,
-					{ 0,1,0 },100,
+					{10, -39.5, 10},0.75,
+					{ 0,1,0 },85,
 					{ 1,0,0 },
 					{
-						0,-1,
+						1,-1,
 						1,-1,
 						0,-1,
 						0,-1,
-						{0,-0.15,-0.15},
-						1.1
-					}
-				}
-			);
-			model.addCone
-			(
-				{
-					{10, -25, -10},0.75,
-					{ 0,1,0 },100,
-					{ 1,0,0 },
-					{
-						0,-1,
-						1,-1,
-						0,-1,
-						0,-1,
-						{0,-0.15,-0.15},
-						1.1
+						{0,0.3,0.3},
+						1 / 1.6
 					}
 				}
 			);
 			model.pointLights.data.pointLights +=
 			{
 				{
-					{400, 400, 400},
+					{600, 600, 600},
 					{ 0,-100,0 }
 				},
 				{
-					{200, 200, 200},
+					{100, 100, 100},
 					{ -20,-40,20 }
+				},
+				{
+					{100, 100, 100},
+					{ 20,-40,-20 }
 				}
 			};
 
@@ -556,6 +544,7 @@ namespace OpenGL
 			}
 			rayTracer.run();
 			//glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+			glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 			renderer.use();
 			renderer.run();
 		}
@@ -611,14 +600,14 @@ int main()
 	{
 		"RayTracing",
 		{
-			{1280,1280},
+			{1024,1024},
 			false,false,
 		}
 	};
 	Window::WindowManager wm(winPara);
-	OpenGL::RayTrace test({ 1280,1280 });
+	OpenGL::RayTrace test({ 1024,1024 });
 	wm.init(0, &test);
-	glfwSwapInterval(1);
+	glfwSwapInterval(0);
 	FPS fps;
 	fps.refresh();
 	//int temp(0);

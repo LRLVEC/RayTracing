@@ -1,7 +1,9 @@
 #version 450 core
 layout(local_size_x = 32, local_size_y = 32)in;
-#define RayTraceDepth 6
+#define RayTraceDepth 8
 #define Pi 3.14159265359
+#define offset 0.003
+#define originSamples 8
 
 struct Ray
 {
@@ -142,8 +144,10 @@ layout(std430, binding = 7)buffer PointLights
 };
 layout(std430, binding = 8)buffer DecayOrigin
 {
+	vec3 decayOrigins[originSamples];
 	vec3 decayOrigin;
 };
+
 
 Ray rayAlloctor()
 {
@@ -472,26 +476,50 @@ vec4 rayTrace(Ray ray)
 		{
 			if (tempColor.texT >= 0)
 				tempColor.t *= texture(texSmp, vec3(tempUV, tempColor.texT)).xyz;
+			float cosi1 = dot(ray.n, tempN);
 			tempColor.t *= ratioNow;
 			if (any(greaterThanEqual(tempColor.t, vec3(0.05))))
 			{
-				float s = dot(ray.n, tempN);
-				tempColor.n = s > 0 ? 1 / tempColor.n : tempColor.n;
-				float k = tempColor.n * tempColor.n + s * s - 1;
-				if (k > 0)
+				if (cosi1 > 0) tempColor.n = 1 / tempColor.n;
+				float sini1 = sqrt(1 - cosi1 * cosi1);
+				float sini2 = sini1 / tempColor.n;
+				if (sini2 < 1)
 				{
-					++sp;
-					stack[sp].decayFactor = decayNow - sign(s) * tempColor.decayFactor;
-					s -= sign(s) * sqrt(k);
-					stack[sp].p0 = ray.p0 + vec4((t + 0.003) * ray.n, 0);
-					stack[sp].n = (ray.n - tempN * s) / tempColor.n;
-					stack[sp].ratio = tempColor.t;
-					stack[sp].depth = depth + 1;
+					float cosi2 = sqrt(1 - sini2 * sini2);
+					if (sini2 <= 0.02)
+					{
+						float nadd1 = 1 / (tempColor.n + 1);
+						tempColor.r *= pow((tempColor.n - 1) * nadd1, 2);
+						tempColor.t *= pow(2 * nadd1 * tempColor.n, 2);
+					}
+					else
+					{
+						float cosadd = abs(cosi1) * cosi2;
+						float cosminus = cosadd + sini1 * sini2;
+						float sinadd = sini1 * cosi2;
+						float sinminus = sinadd - abs(cosi1) * sini2;
+						cosadd = 2 * cosadd - cosminus;
+						sinadd = 2 * sinadd - sinminus;
+						float ahh = 1 / pow(cosminus, 2);
+						tempColor.r *= (1 + pow(cosadd, 2) * ahh) * pow(sinminus / sinadd, 2) / 2;
+						tempColor.t *= abs(cosi2 * pow(2 * sini2 * cosi1 * tempColor.n / sinadd, 2) * (1 + ahh) / (2 * cosi1));
+					}
+					if (any(greaterThanEqual(tempColor.t, vec3(0.05))))
+					{
+						stack[++sp].decayFactor = decayNow - sign(cosi1) * tempColor.decayFactor;
+						stack[sp].p0 = ray.p0 + vec4((t + offset) * ray.n, 0);
+						stack[sp].n = (ray.n + (tempColor.n * sign(cosi1) * cosi2 - cosi1) * tempN) / tempColor.n;
+						stack[sp].ratio = tempColor.t;
+						stack[sp].depth = depth + 1;
+					}
 				}
-				else tempColor.r = vec3(1);
+				else
+				{
+					tempColor.r = vec3(1);
+				}
 			}
 
-			ray.p0 += vec4((t - 0.003) * ray.n, 0);
+			ray.p0 += vec4((t - offset) * ray.n, 0);
 			for (n = 0; n < pointLightNum; ++n)
 			{
 				vec3 dn = pointLights[n].p - ray.p0.xyz;
@@ -510,7 +538,7 @@ vec4 rayTrace(Ray ray)
 			ratioNow *= tempColor.r;
 			if (any(greaterThanEqual(ratioNow, vec3(0.05))))
 			{
-				ray.n -= (2 * dot(ray.n, tempN)) * tempN;
+				ray.n -= 2 * cosi1 * tempN;
 				++depth;
 				continue;
 			}
