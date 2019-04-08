@@ -4,6 +4,18 @@
 #define offset 0.001
 #define originSamples 8
 
+/*
+	geometry:
+		Have right child	&2 != 0
+		Have left child		&1 != 0
+		No left child		 0
+		Triangle			-2
+		Sphere				-3
+		Circle				-4
+		Cylinder			-5
+		Cone				-6
+*/
+
 struct Ray
 {
 	vec4 p0;
@@ -25,7 +37,10 @@ struct Color
 };
 struct Bound
 {
-
+	vec3 min;
+	int geometry;
+	vec3 max;
+	int num;
 };
 
 struct Plane

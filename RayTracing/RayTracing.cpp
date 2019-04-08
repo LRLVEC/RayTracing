@@ -244,7 +244,6 @@ namespace OpenGL
 		TextureCube cube;
 		TextureConfig<TextureStorage2D>imageConfig;
 		TextureConfig<TextureStorage3D>textureConfig;
-		//TextureConfig<TextureStorage3D>cubeConfig;
 		Renderer renderer;
 		RayTracer rayTracer;
 		Movement movement;
