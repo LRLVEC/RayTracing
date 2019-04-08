@@ -521,8 +521,8 @@ int main()
 	{
 		"RayTracing",
 		{
-			{1024,768},
-			true, false,
+			{122,220},
+			true, true,
 		}
 	};
 	Window::WindowManager wm(winPara);

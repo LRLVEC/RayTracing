@@ -23,6 +23,10 @@ struct Color
 	vec3 decayFactor;
 	float n;
 };
+struct Bound
+{
+
+};
 
 struct Plane
 {

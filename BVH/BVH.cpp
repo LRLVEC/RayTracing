@@ -341,7 +341,7 @@ namespace OpenGL
 					}
 				}
 			};
-			/*model.addCylinder
+			model.addCylinder
 			(
 				{
 					{5 , -20 , -10},
@@ -359,7 +359,7 @@ namespace OpenGL
 					}
 				}
 			);
-			model.addCylinder
+			/*model.addCylinder
 			(
 				{
 					{5.2 , -20 , -10},
@@ -376,7 +376,7 @@ namespace OpenGL
 						1 / 1.33
 					}
 				}
-			);
+			);*/
 
 			model.addCone
 			(
@@ -394,7 +394,7 @@ namespace OpenGL
 					}
 				}
 			);
-			model.addCone
+			/*model.addCone
 			(
 				{
 					{10, -39, 10},0.75,
@@ -522,13 +522,13 @@ int main()
 		"RayTracing",
 		{
 			{1024,768},
-			true, false,
+			true, true,
 		}
 	};
 	Window::WindowManager wm(winPara);
 	OpenGL::RayTrace test;
 	wm.init(0, &test);
-	glfwSwapInterval(1);
+	glfwSwapInterval(0);
 	FPS fps;
 	fps.refresh();
 	//int temp(0);
