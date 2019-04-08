@@ -312,46 +312,6 @@ namespace OpenGL
 						}
 					);
 
-<<<<<<< HEAD
-			RayTracing::Model::Color borderColor
-			{ {0.1,0.7,0.5},{0,0,0},{0,0,0},1 };
-			model.triangles.trianglesOrigin.trianglesOrigin +=
-			{
-				{
-					{ {2, 2, 0}, { 2,-2, 0 }, { 2,-2, 4 }},
-						borderColor
-				},
-				{
-					{{2,2,0},{2,-2,4},{2,2,4}},
-					borderColor
-				},
-				{
-					{{-2,2,0},{-2,-2,0},{-2,-2,4}},
-					borderColor
-				},
-				{
-					{{-2,2,0},{-2,-2,4},{-2,2,4}},
-					borderColor
-				},
-				{
-					{ {2, 2, 0}, { -2,2, 0 }, { -2,2, 4 }},
-						borderColor
-				},
-				{
-					{{2,2,0},{-2,2,4},{2,2,4}},
-					borderColor
-				},
-				{
-					{{2,-2,0},{-2,-2,0},{-2,-2,4}},
-					borderColor
-				},
-				{
-					{{2,-2,0},{-2,-2,4},{2,-2,4}},
-					borderColor
-				}
-			};
-=======
-
 					model.triangles.trianglesOrigin.trianglesOrigin.pushBack
 					(
 						{
