@@ -6,14 +6,6 @@
 
 /*
 	geometry:
-		Have right child	&2 != 0
-		Have left child		&1 != 0
-		No left child		 0
-		Triangle			-2
-		Sphere				-3
-		Circle				-4
-		Cylinder			-5
-		Cone				-6
 */
 
 struct Ray
@@ -38,9 +30,18 @@ struct Color
 struct Bound
 {
 	vec3 min;
-	int geometry;
+	int leftChild;
 	vec3 max;
-	int num;
+	int rightChild;
+};
+struct Node
+{
+	Bound bound;
+	uint father;
+	uint axis;
+	uint geometry;
+	uint geometryNum;
+	vec4 blank;
 };
 
 struct Plane
@@ -104,6 +105,13 @@ struct Stack
 	int depth;
 	vec3 ratio;
 	vec3 decayFactor;
+};
+struct Bound
+{
+	vec3 min;
+	int geometry;
+	vec3 max;
+	int num;
 };
 
 layout(std140, binding = 0)uniform Size
@@ -181,6 +189,16 @@ vec2 getTriangleUV(vec3 pos, uint num)
 bool triangleTest(vec2 uv)
 {
 	return  all(greaterThanEqual(uv, vec2(0, 0))) && (uv.x + uv.y <= 1);
+}
+bool judgeHitBox(Ray ray, Bound bound)
+{
+	if (all(lessThanEqual(bound.min, ray.p0.xyz)) && all(lessThanEqual(ray.p0.xyz, bound.max)))
+		return true;
+	vec3 tmin = (bound.min - ray.p0.xyz) / ray.n;
+	vec3 tmax = (bound.max - ray.p0.xyz) / ray.n;
+	vec3 mintt = min(tmin, tmax);
+	tmax = max(tmin, tmax);
+	return(max(mintt.x, max(mintt.y, mintt.z)) < min(tmax.x, min(tmax.y, tmax.z)));
 }
 bool judgeHit(Ray ray)
 {

@@ -409,7 +409,7 @@ namespace OpenGL
 						1 / 1.33
 					}
 				}
-			);*/
+			);
 			model.pointLights.data.pointLights +=
 			{
 				{
@@ -425,7 +425,8 @@ namespace OpenGL
 					{ 20,-40,-20 }
 				}
 			};
-
+			model.bvh.getBVH(model);
+			model.bvh.getLinearBVH();
 			model.planes.numChanged = true;
 			model.triangles.numChanged = true;
 			model.spheres.numChanged = true;
@@ -531,9 +532,6 @@ int main()
 	glfwSwapInterval(0);
 	FPS fps;
 	fps.refresh();
-	//int temp(0);
-	//glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &temp);
-	//::printf("%d\n", temp);
 	while (!wm.close())
 	{
 		wm.pullEvents();
