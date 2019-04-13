@@ -6,14 +6,6 @@
 
 /*
 	geometry:
-		Have right child	&2 != 0
-		Have left child		&1 != 0
-		No left child		 0
-		Triangle			-2
-		Sphere				-3
-		Circle				-4
-		Cylinder			-5
-		Cone				-6
 */
 
 struct Ray
@@ -38,9 +30,18 @@ struct Color
 struct Bound
 {
 	vec3 min;
-	int geometry;
+	int leftChild;
 	vec3 max;
-	int num;
+	int rightChild;
+};
+struct Node
+{
+	Bound bound;
+	uint father;
+	uint axis;
+	uint geometry;
+	uint geometryNum;
+	vec4 blank;
 };
 
 struct Plane

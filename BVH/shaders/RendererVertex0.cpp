@@ -6,5 +6,5 @@ layout(std140, binding = 0)uniform Size
 };
 void main()
 {
-	gl_Position = vec4(position, 0, 0);
+	gl_Position = vec4(position, 0, 1);
 }
