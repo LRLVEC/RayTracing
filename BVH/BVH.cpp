@@ -232,7 +232,7 @@ namespace OpenGL
 			sizeChanged(true),
 			frameScale(),
 			transform({ {60.0},{0.1,0.9,0.1},{0.5},{0,0,10},700.0 }),
-			model({ {ShaderStorageBuffer,0}, {1,2}, {3}, {4},{5},{6},{7},{3} }),
+			model({ {ShaderStorageBuffer,0},{1,2},{3},{4},{5},{6},{7},{3},{9} }),
 			frameSizeBuffer(&frameScale),
 			transBuffer(&transform.bufferData),
 			decayOriginBuffer(&decayOriginData),
@@ -295,7 +295,7 @@ namespace OpenGL
 					}
 				},
 			};*/
-			model.spheres.data.spheres +=
+			/*model.spheres.data.spheres +=
 			{
 				{
 					{-10, -30, 10, 64},
@@ -323,7 +323,24 @@ namespace OpenGL
 						1 / 1.33
 					}
 				}
-			};
+			};*/
+			for (int c0(0); c0 < 3; ++c0)
+				for (int c1(0); c1 < 3; ++c1)
+					for (int c2(0); c2 < 3; ++c2)
+						model.spheres.data.spheres.pushBack
+						({
+							{-10 - 5.0f * c0, -30.0f - 5.0f * c1, 10 - 5.0f * c2, 4},
+							{ 0,-1,0 },
+							{ 1,0,0 },
+							{
+								1,-1,
+								1,-1,
+								0,-1,
+								0,-1,
+								{-0.5,0,-0.5},
+								1.33
+							}
+							});
 			model.circles.data.circles +=
 			{
 				{
@@ -338,6 +355,24 @@ namespace OpenGL
 						0,-1,
 						0,
 						1.5
+					}
+				}
+			};
+			model.cylinders.data.cylinders +=
+			{
+				{
+					{5, -20, -10},
+						80,
+					{ 1,0,0 },
+						10,
+					{ 1,0,0 },
+					{
+						1,-1,
+						1,-1,
+						{0,0,0},-1,
+						0,0,
+						{-0.1,0,-0.1},
+						1.33
 					}
 				}
 			};
@@ -359,7 +394,7 @@ namespace OpenGL
 					}
 				}
 			);
-			/*model.addCylinder
+			model.addCylinder
 			(
 				{
 					{5.2 , -20 , -10},
@@ -376,7 +411,7 @@ namespace OpenGL
 						1 / 1.33
 					}
 				}
-			);*/
+			);
 
 			model.addCone
 			(
@@ -394,7 +429,7 @@ namespace OpenGL
 					}
 				}
 			);
-			/*model.addCone
+			model.addCone
 			(
 				{
 					{10, -39, 10},0.75,
@@ -416,17 +451,15 @@ namespace OpenGL
 					{600, 600, 600},
 					{ 0,-100,0 }
 				},
-				{
-					{100, 100, 100},
-					{ -20,-40,20 }
-				},
-				{
-					{100, 100, 100},
-					{ 20,-40,-20 }
-				}
+					/*{
+						{100, 100, 100},
+						{ -20,-40,20 }
+					},
+					{
+						{100, 100, 100},
+						{ 20,-40,-20 }
+					}*/
 			};
-			model.bvh.getBVH(model);
-			model.bvh.getLinearBVH();
 			model.planes.numChanged = true;
 			model.triangles.numChanged = true;
 			model.spheres.numChanged = true;
@@ -449,7 +482,7 @@ namespace OpenGL
 		}
 		virtual void run() override
 		{
-			movement.run();
+			//movement.run();
 			if (sizeChanged)
 			{
 				glViewport(0, 0, frameScale.scale.data[0], frameScale.scale.data[1]);
@@ -484,9 +517,9 @@ namespace OpenGL
 		{
 			switch (_button)
 			{
-			case GLFW_MOUSE_BUTTON_LEFT:transform.mouse.refreshButton(0, _action); break;
-			case GLFW_MOUSE_BUTTON_MIDDLE:transform.mouse.refreshButton(1, _action); break;
-			case GLFW_MOUSE_BUTTON_RIGHT:transform.mouse.refreshButton(2, _action); break;
+				case GLFW_MOUSE_BUTTON_LEFT:transform.mouse.refreshButton(0, _action); break;
+				case GLFW_MOUSE_BUTTON_MIDDLE:transform.mouse.refreshButton(1, _action); break;
+				case GLFW_MOUSE_BUTTON_RIGHT:transform.mouse.refreshButton(2, _action); break;
 			}
 		}
 		virtual void mousePos(double _x, double _y) override
@@ -498,18 +531,18 @@ namespace OpenGL
 			if (_y != 0.0)
 				transform.scroll.refresh(_y);
 		}
-		virtual void key(GLFWwindow * _window, int _key, int _scancode, int _action, int _mods) override
+		virtual void key(GLFWwindow* _window, int _key, int _scancode, int _action, int _mods) override
 		{
 			switch (_key)
 			{
-			case GLFW_KEY_ESCAPE:
-				if (_action == GLFW_PRESS)
-					glfwSetWindowShouldClose(_window, true);
-				break;
-			case GLFW_KEY_A:transform.key.refresh(0, _action); break;
-			case GLFW_KEY_D:transform.key.refresh(1, _action); break;
-			case GLFW_KEY_W:transform.key.refresh(2, _action); break;
-			case GLFW_KEY_S:transform.key.refresh(3, _action); break;
+				case GLFW_KEY_ESCAPE:
+					if (_action == GLFW_PRESS)
+						glfwSetWindowShouldClose(_window, true);
+					break;
+				case GLFW_KEY_A:transform.key.refresh(0, _action); break;
+				case GLFW_KEY_D:transform.key.refresh(1, _action); break;
+				case GLFW_KEY_W:transform.key.refresh(2, _action); break;
+				case GLFW_KEY_S:transform.key.refresh(3, _action); break;
 			}
 		}
 	};
@@ -522,7 +555,7 @@ int main()
 	{
 		"RayTracing",
 		{
-			{1024,768},
+			{1024,1024},
 			true, false,
 		}
 	};

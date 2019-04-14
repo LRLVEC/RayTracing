@@ -340,7 +340,25 @@ namespace OpenGL
 					}
 				}
 			};
-			/*model.addCylinder
+			model.cylinders.data.cylinders +=
+			{
+				{
+					{5, -20, -10},
+						80,
+					{ 1,0,0 },
+						10,
+					{ 1,0,0 },
+					{
+						1,-1,
+						1,-1,
+						{0,0,0},-1,
+						0,0,
+						{-0.1,0,-0.1},
+						1.33
+					}
+				}
+			};
+			model.addCylinder
 			(
 				{
 					{5 , -20 , -10},
@@ -408,7 +426,7 @@ namespace OpenGL
 						1 / 1.33
 					}
 				}
-			);*/
+			);
 			model.pointLights.data.pointLights +=
 			{
 				{

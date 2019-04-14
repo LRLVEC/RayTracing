@@ -3,10 +3,9 @@
 #define Pi 3.14159265359
 #define offset 0.001
 #define originSamples 8
-
-/*
-	geometry:
-*/
+#define bit(a, b)			((a & (1 << uint(b))) != 0)
+#define setBit(a, b)		(a |= (1 << uint(b)))
+#define clearBit(a, b)		(a &= ~(1 << uint(b)))
 
 struct Ray
 {
@@ -34,7 +33,7 @@ struct Bound
 	vec3 max;
 	int rightChild;
 };
-struct Node
+struct BVHNode
 {
 	Bound bound;
 	uint father;
@@ -42,6 +41,13 @@ struct Node
 	uint geometry;
 	uint geometryNum;
 	vec4 blank;
+};
+struct HitInfo
+{
+	vec3 n;
+	float t;
+	vec2 uv;
+	bool hit;
 };
 
 struct Plane
@@ -106,13 +112,7 @@ struct Stack
 	vec3 ratio;
 	vec3 decayFactor;
 };
-struct Bound
-{
-	vec3 min;
-	int geometry;
-	vec3 max;
-	int num;
-};
+
 
 layout(std140, binding = 0)uniform Size
 {
@@ -170,6 +170,10 @@ layout(std430, binding = 8)buffer DecayOrigin
 	vec3 decayOrigins[originSamples];
 	vec3 decayOrigin;
 };
+layout(std430, binding = 9)buffer BVH
+{
+	BVHNode bvh[];
+};
 
 
 Ray rayAlloctor()
@@ -198,103 +202,189 @@ bool judgeHitBox(Ray ray, Bound bound)
 	vec3 tmax = (bound.max - ray.p0.xyz) / ray.n;
 	vec3 mintt = min(tmin, tmax);
 	tmax = max(tmin, tmax);
-	return(max(mintt.x, max(mintt.y, mintt.z)) < min(tmax.x, min(tmax.y, tmax.z)));
+	float maxt = max(mintt.x, max(mintt.y, mintt.z));
+	if (maxt > 0)
+	{
+		float mint = min(tmax.x, min(tmax.y, tmax.z));
+		return (maxt <= mint) && (ray.t < 0 || maxt <= ray.t);
+	}
+	else
+		return false;
 }
 bool judgeHit(Ray ray)
 {
-	uint n;
-	for (n = 0; n < planeNum; ++n)
+	uint now = 0;
+	uint bvhStack = 0;
+	uint bvhState;
+	int bvhSP = -1;
+	for (;;)
 	{
-		float tt = getPlaneT(ray, planes[n].plane);
-		return tt > 0 && tt < ray.t;
-	}
-	for (n = 0; n < triangleNum; ++n)
-	{
-		float tt = getPlaneT(ray, triangles[n].plane);
-		if (tt > 0 && tt < ray.t)
-			return triangleTest(getTriangleUV(ray.p0.xyz + ray.n * tt, n));
-	}
-	for (n = 0; n < sphereNum; ++n)
-	{
-		vec3 d = spheres[n].sphere.xyz - ray.p0.xyz;
-		float s = spheres[n].sphere.w - dot(cross(d, ray.n), cross(d, ray.n));
-		if (s >= 0)
+		if (judgeHitBox(ray, bvh[now].bound))
 		{
-			s = sqrt(s);
-			float k = dot(d, ray.n);
-			float tt = -1;
-			if (k + s > 0)tt = k + s;
-			if (k > s)tt = k - s;
-			return tt > 0 && tt < ray.t;
+			if (bvh[now].geometry != 0)
+			{
+				uint n = bvh[now].geometryNum;
+				switch (bvh[now].geometry)
+				{
+					/*	for (n = 0; n < planeNum; ++n)
+							{
+								float tt = getPlaneT(ray, planes[n].plane);
+								if (tt > 0 && (tt < ray.t || ray.t < 0))
+								{
+									ray.t = tt;
+									vec3 p1 = ray.p0.xyz + ray.n * ray.t;
+									tempColor = planes[n].color;
+									tempColor.g = ((int(4.2 * p1.x) + int(4.2 * p1.y)) % 2u) * tempColor.g;
+									tempN = planes[n].plane.xyz;
+								}
+						}*/
+					case 2:
+					{
+						float tt = getPlaneT(ray, triangles[n].plane);
+						if (tt > 0 && tt < ray.t)
+						{
+							vec2 uv = getTriangleUV(ray.p0.xyz + ray.n * tt, n);
+							if (triangleTest(uv))return true;
+						}
+						break;
+					}
+					case 3:
+					{
+						vec3 d = spheres[n].sphere.xyz - ray.p0.xyz;
+						float s = spheres[n].sphere.w - dot(cross(d, ray.n), cross(d, ray.n));
+						if (s >= 0)
+						{
+							s = sqrt(s);
+							float k = dot(d, ray.n);
+							float tt = -1;
+							if (k + s > 0)tt = k + s;
+							if (k - s > 0)tt = k - s;
+							if (tt > 0 && tt < ray.t)return true;
+						}
+						break;
+					}
+					case 4:
+					{
+						float tt = getPlaneT(ray, circles[n].plane);
+						if (tt > 0 && tt < ray.t)
+						{
+							vec3 d = ray.p0.xyz + ray.n * tt - circles[n].sphere.xyz;
+							if (dot(d, d) <= circles[n].sphere.w)return true;
+						}
+						break;
+					}
+					case 5:
+					{
+						float nn0 = dot(ray.n, cylinders[n].n);
+						float cnn02 = 1 - nn0 * nn0;
+						if (cnn02 != 0)
+						{
+							vec3 d = ray.p0.xyz - cylinders[n].c;
+							float nd = dot(cylinders[n].n, d);
+							vec3 j = d - nd * cylinders[n].n;
+							float n0j = dot(ray.n, j);
+							float k = n0j * n0j + cnn02 * (cylinders[n].r2 - dot(j, j));
+							if (k > 0)
+							{
+								k = sqrt(k);
+								float tt = -1;
+								float v;
+								if (k - n0j > 0)
+								{
+									tt = (k - n0j) / cnn02;
+									v = nd + nn0 * tt;
+									if (v > cylinders[n].l || v < 0)
+										tt = -1;
+								}
+								if (k + n0j < 0)
+								{
+									float ttt = -(k + n0j) / cnn02;
+									float ut = nd + nn0 * ttt;
+									if (ut <= cylinders[n].l && ut >= 0)
+									{
+										tt = ttt;
+										v = ut;
+									}
+								}
+								if (tt > 0 && tt < ray.t)return true;
+							}
+						}
+						break;
+					}
+					case 6:
+					{
+						vec3 d = ray.p0.xyz - cones[n].c;
+						float nn0 = dot(ray.n, cones[n].n);
+						float dn0 = dot(d, cones[n].n);
+						float dn = dot(d, ray.n);
+						float d2 = dot(d, d);
+						float a = cones[n].c2 - nn0 * nn0;
+						float b = nn0 * dn0 - dn * cones[n].c2;
+						float c = d2 * cones[n].c2 - dn0 * dn0;
+						float s = b * b - a * c;
+						if (s > 0)
+						{
+							s = sqrt(s);
+							float tt = -1;
+							float r2;
+							tt = (b + s) / a;
+							if (tt > 0)
+							{
+								r2 = d2 + tt * tt + 2 * dn * tt;
+								float k = dn0 + nn0 * tt;
+								if (r2 > cones[n].l2 || k < 0)tt = -1;
+							}
+							float ttt = (b - s) / a;
+							if (ttt > 0 && (ttt < tt || (tt < 0)))
+							{
+								float r2t = d2 + ttt * ttt + 2 * dn * ttt;
+								float k = dn0 + nn0 * ttt;
+								if (r2t <= cones[n].l2 && k > 0)
+									tt = ttt;
+							}
+							if (tt > 0 && tt < ray.t)return true;
+						}
+						break;
+					}
+				}
+			}
+			if (bvh[now].bound.leftChild != 0)
+			{
+				setBit(bvhStack, ++bvhSP);
+				if (ray.n[bvh[now].axis] >= 0 || bvh[now].bound.rightChild == 0)
+				{
+					++now;
+					clearBit(bvhState, bvhSP);
+				}
+				else
+				{
+					now = bvh[now].bound.rightChild;
+					setBit(bvhState, bvhSP);
+				}
+				continue;
+			}
 		}
-	}
-	for (n = 0; n < circleNum; ++n)
-	{
-		float tt = getPlaneT(ray, circles[n].plane);
-		if (tt > 0 && tt < ray.t)
+		while (bvhSP >= 0)
 		{
-			vec3 d = ray.p0.xyz + ray.n * tt - circles[n].sphere.xyz;
-			return dot(d, d) <= circles[n].sphere.w;
+			now = bvh[now].father;
+			if (bit(bvhStack, bvhSP))
+			{
+				if (bit(bvhState, bvhSP))
+				{
+					clearBit(bvhStack, bvhSP);
+					++now;
+					break;
+				}
+				else if (bvh[now].bound.rightChild != 0)
+				{
+					clearBit(bvhStack, bvhSP);
+					now = bvh[now].bound.rightChild;
+					break;
+				}
+			}
+			--bvhSP;
 		}
-	}
-	for (n = 0; n < cylinderNum; ++n)
-	{
-		float nn0 = dot(ray.n, cylinders[n].n);
-		float cnn02 = 1 - nn0 * nn0;
-		if (cnn02 == 0)continue;
-		vec3 d = ray.p0.xyz - cylinders[n].c;
-		float nd = dot(cylinders[n].n, d);
-		vec3 j = d - nd * cylinders[n].n;
-		float n0j = dot(ray.n, j);
-		float k = n0j * n0j + cnn02 * (cylinders[n].r2 - dot(j, j));
-		if (k <= 0)continue;
-		k = sqrt(k);
-		float tt = -1;
-		float u;
-		if (k - n0j > 0)
-		{
-			tt = (k - n0j) / cnn02;
-			u = nd + nn0 * tt;
-			if (u > cylinders[n].l || u < 0)
-				tt = -1;
-		}
-		if (k + n0j < 0)
-		{
-			tt = -(k + n0j) / cnn02;
-			u = nd + nn0 * tt;
-			if (u > cylinders[n].l || u < 0)
-				tt = -1;
-		}
-		return  tt > 0 && tt < ray.t;
-	}
-	for (n = 0; n < coneNum; ++n)
-	{
-		vec3 d = ray.p0.xyz - cones[n].c;
-		float nn0 = dot(ray.n, cones[n].n);
-		float dn0 = dot(d, cones[n].n);
-		float dn = dot(d, ray.n);
-		float d2 = dot(d, d);
-		float a = cones[n].c2 - nn0 * nn0;
-		float b = nn0 * dn0 - dn * cones[n].c2;
-		float c = d2 * cones[n].c2 - dn0 * dn0;
-		float s = b * b - a * c;
-		if (s <= 0)continue;
-		s = sqrt(s);
-		float r2;
-		float tt = (b + s) / a;
-		if (tt > 0 && tt < ray.t)
-		{
-			r2 = d2 + tt * tt + 2 * dn * tt;
-			float k = dn0 + nn0 * tt;
-			return r2 < cones[n].l2&& k >= 0;
-		}
-		tt = (b - s) / a;
-		if (tt > 0 && tt < ray.t)
-		{
-			r2 = d2 + tt * tt + 2 * dn * tt;
-			float k = dn0 + nn0 * tt;
-			return r2 < cones[n].l2&& k >= 0;
-		}
+		if (bvhSP < 0)break;
 	}
 	return false;
 }
@@ -304,8 +394,6 @@ vec4 rayTrace(Ray ray)
 	Stack stack[RayTraceDepth];
 	int sp = -1;
 	int depth = 0;
-	float t;
-	uint n = 0;
 	vec3 ratioNow = vec3(1);
 	vec3 answer = vec3(0);
 	Color tempColor;
@@ -313,181 +401,408 @@ vec4 rayTrace(Ray ray)
 	vec3 tempN;
 	vec2 tempUV;
 	vec3 decayNow = decayOrigin;
-	while (true)
+	for (;;)
 	{
-		t = -1;
-		for (n = 0; n < planeNum; ++n)
+		ray.t = -1;
+		uint now = 0;
+		uint bvhStack = 0;
+		uint bvhState;
+		int bvhSP = -1;
+		for (;;)
 		{
-			float tt = getPlaneT(ray, planes[n].plane);
-			if (tt > 0 && (tt < t || t < 0))
+			if (judgeHitBox(ray, bvh[now].bound))
 			{
-				t = tt;
-				vec3 p1 = ray.p0.xyz + ray.n * t;
-				tempColor = planes[n].color;
-				tempColor.g = ((int(4.2 * p1.x) + int(4.2 * p1.y)) % 2u) * tempColor.g;
-				tempN = planes[n].plane.xyz;
-			}
-		}
-		for (n = 0; n < triangleNum; ++n)
-		{
-			float tt = getPlaneT(ray, triangles[n].plane);
-			if (tt > 0 && (tt < t || t < 0))
-			{
-				vec2 uv = getTriangleUV(ray.p0.xyz + ray.n * tt, n);
-				if (triangleTest(uv))
+				if (bvh[now].geometry != 0)
 				{
-					t = tt;
-					tempColor = triangles[n].color;
-					tempN = triangles[n].plane.xyz;
-					tempUV = (1 - uv.x - uv.y) * triangles[n].uv1 + uv.x * triangles[n].uv2 + uv.y * triangles[n].uv3;
-				}
-			}
-		}
-		for (n = 0; n < sphereNum; ++n)
-		{
-			vec3 d = spheres[n].sphere.xyz - ray.p0.xyz;
-			float s = spheres[n].sphere.w - dot(cross(d, ray.n), cross(d, ray.n));
-			if (s >= 0)
-			{
-				s = sqrt(s);
-				float k = dot(d, ray.n);
-				float tt = -1;
-				if (k + s > 0)tt = k + s;
-				if (k > s)tt = k - s;
-				if (tt > 0 && (tt < t || t < 0))
-				{
-					t = tt;
-					tempColor = spheres[n].color;
-					tempN = (ray.p0.xyz + t * ray.n - spheres[n].sphere.xyz) / sqrt(spheres[n].sphere.w);
-					float ne1 = dot(tempN, spheres[n].e1);
-					vec3 nxy = normalize(tempN - ne1 * spheres[n].e1);
-					float u =
-						dot(nxy, cross(spheres[n].e1, spheres[n].e2)) >= 0 ?
-						acos(dot(spheres[n].e2, nxy)) / (2 * Pi) :
-						1 - acos(dot(spheres[n].e2, nxy)) / (2 * Pi);
-					tempUV = vec2(u, 1 - acos(ne1) / Pi);
-				}
-			}
-		}
-		for (n = 0; n < circleNum; ++n)
-		{
-			float tt = getPlaneT(ray, circles[n].plane);
-			if (tt > 0 && (tt < t || t < 0))
-			{
-				vec3 d = ray.p0.xyz + ray.n * tt - circles[n].sphere.xyz;
-				if (dot(d, d) <= circles[n].sphere.w)
-				{
-					t = tt;
-					tempColor = circles[n].color;
-					tempN = circles[n].plane.xyz;
-					vec3 e2 = cross(tempN, circles[n].e1);
-					tempUV = (vec2(1) + vec2(dot(circles[n].e1, d), dot(e2, d)) / sqrt(circles[n].sphere.w)) / 2;
-				}
-			}
-		}
-		for (n = 0; n < cylinderNum; ++n)
-		{
-			float nn0 = dot(ray.n, cylinders[n].n);
-			float cnn02 = 1 - nn0 * nn0;
-			if (cnn02 == 0)continue;
-			vec3 d = ray.p0.xyz - cylinders[n].c;
-			float nd = dot(cylinders[n].n, d);
-			vec3 j = d - nd * cylinders[n].n;
-			float n0j = dot(ray.n, j);
-			float k = n0j * n0j + cnn02 * (cylinders[n].r2 - dot(j, j));
-			if (k <= 0)continue;
-			k = sqrt(k);
-			float tt = -1;
-			float v;
-			if (k - n0j > 0)
-			{
-				tt = (k - n0j) / cnn02;
-				v = nd + nn0 * tt;
-				if (v > cylinders[n].l || v < 0)
-					tt = -1;
-			}
-			if (k + n0j < 0)
-			{
-				float ttt = -(k + n0j) / cnn02;
-				float ut = nd + nn0 * ttt;
-				if (ut <= cylinders[n].l && ut >= 0)
-				{
-					tt = ttt;
-					v = ut;
-				}
-			}
-			if (tt > 0 && (tt < t || t < 0))
-			{
-				t = tt;
-				tempColor = cylinders[n].color;
-				tempN = normalize(d + ray.n * t - cylinders[n].n * v);
-				vec3 e2 = cross(cylinders[n].n, cylinders[n].e1);
-				float u =
-					dot(tempN, e2) >= 0 ?
-					acos(dot(cylinders[n].e1, tempN)) / (2 * Pi) :
-					1 - acos(dot(cylinders[n].e1, tempN)) / (2 * Pi);
-				tempUV = vec2(u, v / cylinders[n].l);
-			}
-		}
-		for (n = 0; n < coneNum; ++n)
-		{
-			vec3 d = ray.p0.xyz - cones[n].c;
-			float nn0 = dot(ray.n, cones[n].n);
-			float dn0 = dot(d, cones[n].n);
-			float dn = dot(d, ray.n);
-			float d2 = dot(d, d);
-			float a = cones[n].c2 - nn0 * nn0;
-			float b = nn0 * dn0 - dn * cones[n].c2;
-			float c = d2 * cones[n].c2 - dn0 * dn0;
-			float s = b * b - a * c;
-			if (s > 0)
-			{
-				s = sqrt(s);
-				float tt = -1;
-				float r2;
-				tt = (b + s) / a;
-				if (tt > 0)
-				{
-					r2 = d2 + tt * tt + 2 * dn * tt;
-					float k = dn0 + nn0 * tt;
-					if (r2 > cones[n].l2 || k < 0)tt = -1;
-				}
-				float ttt = (b - s) / a;
-				if (ttt > 0 && (ttt < tt || (tt < 0)))
-				{
-					float r2t = d2 + ttt * ttt + 2 * dn * ttt;
-					float k = dn0 + nn0 * ttt;
-					if (r2t <= cones[n].l2 && k > 0)
+					uint n = bvh[now].geometryNum;
+					switch (bvh[now].geometry)
 					{
-						tt = ttt;
-						r2 = r2t;
+						/*	for (n = 0; n < planeNum; ++n)
+								{
+									float tt = getPlaneT(ray, planes[n].plane);
+									if (tt > 0 && (tt < ray.t || ray.t < 0))
+									{
+										ray.t = tt;
+										vec3 p1 = ray.p0.xyz + ray.n * ray.t;
+										tempColor = planes[n].color;
+										tempColor.g = ((int(4.2 * p1.x) + int(4.2 * p1.y)) % 2u) * tempColor.g;
+										tempN = planes[n].plane.xyz;
+									}
+							}*/
+						case 2:
+						{
+							float tt = getPlaneT(ray, triangles[n].plane);
+							if (tt > 0 && (tt < ray.t || ray.t < 0))
+							{
+								vec2 uv = getTriangleUV(ray.p0.xyz + ray.n * tt, n);
+								if (triangleTest(uv))
+								{
+									ray.t = tt;
+									tempColor = triangles[n].color;
+									tempN = triangles[n].plane.xyz;
+									tempUV = (1 - uv.x - uv.y) * triangles[n].uv1 + uv.x * triangles[n].uv2 + uv.y * triangles[n].uv3;
+								}
+							}
+							break;
+						}
+						case 3:
+						{
+							vec3 d = spheres[n].sphere.xyz - ray.p0.xyz;
+							float s = spheres[n].sphere.w - dot(cross(d, ray.n), cross(d, ray.n));
+							if (s >= 0)
+							{
+								s = sqrt(s);
+								float k = dot(d, ray.n);
+								float tt = -1;
+								if (k + s > 0)tt = k + s;
+								if (k - s > 0)tt = k - s;
+								if (tt > 0 && (tt < ray.t || ray.t < 0))
+								{
+									ray.t = tt;
+									tempColor = spheres[n].color;
+									tempN = (ray.p0.xyz + ray.t * ray.n - spheres[n].sphere.xyz) / sqrt(spheres[n].sphere.w);
+									float ne1 = dot(tempN, spheres[n].e1);
+									vec3 nxy = normalize(tempN - ne1 * spheres[n].e1);
+									float u =
+										dot(nxy, cross(spheres[n].e1, spheres[n].e2)) >= 0 ?
+										acos(dot(spheres[n].e2, nxy)) / (2 * Pi) :
+										1 - acos(dot(spheres[n].e2, nxy)) / (2 * Pi);
+									tempUV = vec2(u, 1 - acos(ne1) / Pi);
+								}
+							}
+							break;
+						}
+						case 4:
+						{
+							float tt = getPlaneT(ray, circles[n].plane);
+							if (tt > 0 && (tt < ray.t || ray.t < 0))
+							{
+								vec3 d = ray.p0.xyz + ray.n * tt - circles[n].sphere.xyz;
+								if (dot(d, d) <= circles[n].sphere.w)
+								{
+									ray.t = tt;
+									tempColor = circles[n].color;
+									tempN = circles[n].plane.xyz;
+									vec3 e2 = cross(tempN, circles[n].e1);
+									tempUV = (vec2(1) + vec2(dot(circles[n].e1, d), dot(e2, d)) / sqrt(circles[n].sphere.w)) / 2;
+								}
+							}
+							break;
+						}
+						case 5:
+						{
+							float nn0 = dot(ray.n, cylinders[n].n);
+							float cnn02 = 1 - nn0 * nn0;
+							if (cnn02 != 0)
+							{
+								vec3 d = ray.p0.xyz - cylinders[n].c;
+								float nd = dot(cylinders[n].n, d);
+								vec3 j = d - nd * cylinders[n].n;
+								float n0j = dot(ray.n, j);
+								float k = n0j * n0j + cnn02 * (cylinders[n].r2 - dot(j, j));
+								if (k > 0)
+								{
+									k = sqrt(k);
+									float tt = -1;
+									float v;
+									if (k - n0j > 0)
+									{
+										tt = (k - n0j) / cnn02;
+										v = nd + nn0 * tt;
+										if (v > cylinders[n].l || v < 0)
+											tt = -1;
+									}
+									if (k + n0j < 0)
+									{
+										float ttt = -(k + n0j) / cnn02;
+										float ut = nd + nn0 * ttt;
+										if (ut <= cylinders[n].l && ut >= 0)
+										{
+											tt = ttt;
+											v = ut;
+										}
+									}
+									if (tt > 0 && (tt < ray.t || ray.t < 0))
+									{
+										ray.t = tt;
+										tempColor = cylinders[n].color;
+										tempN = normalize(d + ray.n * ray.t - cylinders[n].n * v);
+										vec3 e2 = cross(cylinders[n].n, cylinders[n].e1);
+										float u =
+											dot(tempN, e2) >= 0 ?
+											acos(dot(cylinders[n].e1, tempN)) / (2 * Pi) :
+											1 - acos(dot(cylinders[n].e1, tempN)) / (2 * Pi);
+										tempUV = vec2(u, v / cylinders[n].l);
+									}
+								}
+							}
+							break;
+						}
+						case 6:
+						{
+							vec3 d = ray.p0.xyz - cones[n].c;
+							float nn0 = dot(ray.n, cones[n].n);
+							float dn0 = dot(d, cones[n].n);
+							float dn = dot(d, ray.n);
+							float d2 = dot(d, d);
+							float a = cones[n].c2 - nn0 * nn0;
+							float b = nn0 * dn0 - dn * cones[n].c2;
+							float c = d2 * cones[n].c2 - dn0 * dn0;
+							float s = b * b - a * c;
+							if (s > 0)
+							{
+								s = sqrt(s);
+								float tt = -1;
+								float r2;
+								tt = (b + s) / a;
+								if (tt > 0)
+								{
+									r2 = d2 + tt * tt + 2 * dn * tt;
+									float k = dn0 + nn0 * tt;
+									if (r2 > cones[n].l2 || k < 0)tt = -1;
+								}
+								float ttt = (b - s) / a;
+								if (ttt > 0 && (ttt < tt || (tt < 0)))
+								{
+									float r2t = d2 + ttt * ttt + 2 * dn * ttt;
+									float k = dn0 + nn0 * ttt;
+									if (r2t <= cones[n].l2 && k > 0)
+									{
+										tt = ttt;
+										r2 = r2t;
+									}
+								}
+								if (tt > 0 && (tt < ray.t || ray.t < 0))
+								{
+									ray.t = tt;
+									tempColor = cones[n].color;
+									tempN = normalize(d + ray.n * ray.t - cones[n].n * sqrt(r2 / cones[n].c2));
+									float ne1 = dot(tempN, cones[n].n);
+									vec3 nxy = normalize(tempN - ne1 * cones[n].n);
+									float u =
+										dot(nxy, cross(cones[n].n, cones[n].e1)) >= 0 ?
+										acos(dot(cones[n].e1, nxy)) / (2 * Pi) :
+										1 - acos(dot(cones[n].e1, nxy)) / (2 * Pi);
+									tempUV = vec2(u, 1 - sqrt(r2 / cones[n].l2));
+								}
+							}
+							break;
+						}
 					}
 				}
-				if (tt > 0 && (tt < t || t < 0))
+				if (bvh[now].bound.leftChild != 0)
 				{
-					t = tt;
-					tempColor = cones[n].color;
-					tempN = normalize(d + ray.n * t - cones[n].n * sqrt(r2 / cones[n].c2));
-					float ne1 = dot(tempN, cones[n].n);
-					vec3 nxy = normalize(tempN - ne1 * cones[n].n);
-					float u =
-						dot(nxy, cross(cones[n].n, cones[n].e1)) >= 0 ?
-						acos(dot(cones[n].e1, nxy)) / (2 * Pi) :
-						1 - acos(dot(cones[n].e1, nxy)) / (2 * Pi);
-					tempUV = vec2(u, 1 - sqrt(r2 / cones[n].l2));
+					setBit(bvhStack, ++bvhSP);
+					if (ray.n[bvh[now].axis] >= 0 || bvh[now].bound.rightChild == 0)
+					{
+						++now;
+						clearBit(bvhState, bvhSP);
+					}
+					else
+					{
+						now = bvh[now].bound.rightChild;
+						setBit(bvhState, bvhSP);
+					}
+					continue;
 				}
 			}
+			while (bvhSP >= 0)
+			{
+				now = bvh[now].father;
+				if (bit(bvhStack, bvhSP))
+				{
+					if (bit(bvhState, bvhSP))
+					{
+						clearBit(bvhStack, bvhSP);
+						++now;
+						break;
+					}
+					else if (bvh[now].bound.rightChild != 0)
+					{
+						clearBit(bvhStack, bvhSP);
+						now = bvh[now].bound.rightChild;
+						break;
+					}
+				}
+				--bvhSP;
+			}
+			if (bvhSP < 0)break;
 		}
+		/*{
+			uint n;
+			for (n = 0; n < planeNum; ++n)
+			{
+				float tt = getPlaneT(ray, planes[n].plane);
+				if (tt > 0 && (tt < ray.t || ray.t < 0))
+				{
+					ray.t = tt;
+					vec3 p1 = ray.p0.xyz + ray.n * ray.t;
+					tempColor = planes[n].color;
+					tempColor.g = ((int(4.2 * p1.x) + int(4.2 * p1.y)) % 2u) * tempColor.g;
+					tempN = planes[n].plane.xyz;
+				}
+			}
+			for (n = 0; n < triangleNum; ++n)
+			{
+				float tt = getPlaneT(ray, triangles[n].plane);
+				if (tt > 0 && (tt < ray.t || ray.t < 0))
+				{
+					vec2 uv = getTriangleUV(ray.p0.xyz + ray.n * tt, n);
+					if (triangleTest(uv))
+					{
+						ray.t = tt;
+						tempColor = triangles[n].color;
+						tempN = triangles[n].plane.xyz;
+						tempUV = (1 - uv.x - uv.y) * triangles[n].uv1 + uv.x * triangles[n].uv2 + uv.y * triangles[n].uv3;
+					}
+				}
+			}
+			for (n = 0; n < sphereNum; ++n)
+			{
+				vec3 d = spheres[n].sphere.xyz - ray.p0.xyz;
+				float s = spheres[n].sphere.w - dot(cross(d, ray.n), cross(d, ray.n));
+				if (s >= 0)
+				{
+					s = sqrt(s);
+					float k = dot(d, ray.n);
+					float tt = -1;
+					if (k + s > 0)tt = k + s;
+					if (k > s)tt = k - s;
+					if (tt > 0 && (tt < ray.t || ray.t < 0))
+					{
+						ray.t = tt;
+						tempColor = spheres[n].color;
+						tempN = (ray.p0.xyz + ray.t * ray.n - spheres[n].sphere.xyz) / sqrt(spheres[n].sphere.w);
+						float ne1 = dot(tempN, spheres[n].e1);
+						vec3 nxy = normalize(tempN - ne1 * spheres[n].e1);
+						float u =
+							dot(nxy, cross(spheres[n].e1, spheres[n].e2)) >= 0 ?
+							acos(dot(spheres[n].e2, nxy)) / (2 * Pi) :
+							1 - acos(dot(spheres[n].e2, nxy)) / (2 * Pi);
+						tempUV = vec2(u, 1 - acos(ne1) / Pi);
+					}
+				}
+			}
+			for (n = 0; n < circleNum; ++n)
+			{
+				float tt = getPlaneT(ray, circles[n].plane);
+				if (tt > 0 && (tt < ray.t || ray.t < 0))
+				{
+					vec3 d = ray.p0.xyz + ray.n * tt - circles[n].sphere.xyz;
+					if (dot(d, d) <= circles[n].sphere.w)
+					{
+						ray.t = tt;
+						tempColor = circles[n].color;
+						tempN = circles[n].plane.xyz;
+						vec3 e2 = cross(tempN, circles[n].e1);
+						tempUV = (vec2(1) + vec2(dot(circles[n].e1, d), dot(e2, d)) / sqrt(circles[n].sphere.w)) / 2;
+					}
+				}
+			}
+			for (n = 0; n < cylinderNum; ++n)
+			{
+				float nn0 = dot(ray.n, cylinders[n].n);
+				float cnn02 = 1 - nn0 * nn0;
+				if (cnn02 == 0)continue;
+				vec3 d = ray.p0.xyz - cylinders[n].c;
+				float nd = dot(cylinders[n].n, d);
+				vec3 j = d - nd * cylinders[n].n;
+				float n0j = dot(ray.n, j);
+				float k = n0j * n0j + cnn02 * (cylinders[n].r2 - dot(j, j));
+				if (k <= 0)continue;
+				k = sqrt(k);
+				float tt = -1;
+				float v;
+				if (k - n0j > 0)
+				{
+					tt = (k - n0j) / cnn02;
+					v = nd + nn0 * tt;
+					if (v > cylinders[n].l || v < 0)
+						tt = -1;
+				}
+				if (k + n0j < 0)
+				{
+					float ttt = -(k + n0j) / cnn02;
+					float ut = nd + nn0 * ttt;
+					if (ut <= cylinders[n].l && ut >= 0)
+					{
+						tt = ttt;
+						v = ut;
+					}
+				}
+				if (tt > 0 && (tt < ray.t || ray.t < 0))
+				{
+					ray.t = tt;
+					tempColor = cylinders[n].color;
+					tempN = normalize(d + ray.n * ray.t - cylinders[n].n * v);
+					vec3 e2 = cross(cylinders[n].n, cylinders[n].e1);
+					float u =
+						dot(tempN, e2) >= 0 ?
+						acos(dot(cylinders[n].e1, tempN)) / (2 * Pi) :
+						1 - acos(dot(cylinders[n].e1, tempN)) / (2 * Pi);
+					tempUV = vec2(u, v / cylinders[n].l);
+				}
+			}
+			for (n = 0; n < coneNum; ++n)
+			{
+				vec3 d = ray.p0.xyz - cones[n].c;
+				float nn0 = dot(ray.n, cones[n].n);
+				float dn0 = dot(d, cones[n].n);
+				float dn = dot(d, ray.n);
+				float d2 = dot(d, d);
+				float a = cones[n].c2 - nn0 * nn0;
+				float b = nn0 * dn0 - dn * cones[n].c2;
+				float c = d2 * cones[n].c2 - dn0 * dn0;
+				float s = b * b - a * c;
+				if (s > 0)
+				{
+					s = sqrt(s);
+					float tt = -1;
+					float r2;
+					tt = (b + s) / a;
+					if (tt > 0)
+					{
+						r2 = d2 + tt * tt + 2 * dn * tt;
+						float k = dn0 + nn0 * tt;
+						if (r2 > cones[n].l2 || k < 0)tt = -1;
+					}
+					float ttt = (b - s) / a;
+					if (ttt > 0 && (ttt < tt || (tt < 0)))
+					{
+						float r2t = d2 + ttt * ttt + 2 * dn * ttt;
+						float k = dn0 + nn0 * ttt;
+						if (r2t <= cones[n].l2 && k > 0)
+						{
+							tt = ttt;
+							r2 = r2t;
+						}
+					}
+					if (tt > 0 && (tt < ray.t || ray.t < 0))
+					{
+						ray.t = tt;
+						tempColor = cones[n].color;
+						tempN = normalize(d + ray.n * ray.t - cones[n].n * sqrt(r2 / cones[n].c2));
+						float ne1 = dot(tempN, cones[n].n);
+						vec3 nxy = normalize(tempN - ne1 * cones[n].n);
+						float u =
+							dot(nxy, cross(cones[n].n, cones[n].e1)) >= 0 ?
+							acos(dot(cones[n].e1, nxy)) / (2 * Pi) :
+							1 - acos(dot(cones[n].e1, nxy)) / (2 * Pi);
+						tempUV = vec2(u, 1 - sqrt(r2 / cones[n].l2));
+					}
+				}
+			}
+		}*/
 		if (tempColor.texG >= 0)
 			tempColor.g *= texture(texSmp, vec3(tempUV, tempColor.texG)).xyz;
-		if (t < 0)
+		if (ray.t < 0)
 		{
 			tempColor.g = texture(cubeSmp, ray.n).xyz;
-			t = 0;
+			ray.t = 0;
 		}
-		ratioNow *= exp(decayNow * t);
+		ratioNow *= exp(decayNow * ray.t);
 		answer += tempColor.g * ratioNow;
-		if (t > 0 && depth < RayTraceDepth)
+		if (ray.t > 0 && depth < RayTraceDepth)
 		{
 			if (tempColor.texT >= 0)
 				tempColor.t *= texture(texSmp, vec3(tempUV, tempColor.texT)).xyz;
@@ -522,7 +837,7 @@ vec4 rayTrace(Ray ray)
 					if (any(greaterThanEqual(tempColor.t, vec3(0.05))))
 					{
 						stack[++sp].decayFactor = decayNow - sign(cosi1) * tempColor.decayFactor;
-						stack[sp].p0 = ray.p0 + vec4((t + offset) * ray.n, 0);
+						stack[sp].p0 = ray.p0 + vec4((ray.t + offset) * ray.n, 0);
 						stack[sp].n = (ray.n + (tempColor.n * sign(cosi1) * cosi2 - cosi1) * tempN) / tempColor.n;
 						stack[sp].ratio = tempColor.t;
 						stack[sp].depth = depth + 1;
@@ -534,8 +849,9 @@ vec4 rayTrace(Ray ray)
 				}
 			}
 
-			ray.p0 += vec4((t - offset) * ray.n, 0);
-			for (n = 0; n < pointLightNum; ++n)
+			ray.p0 += vec4((ray.t - offset) * ray.n, 0);
+			uint n = 0;
+			for (; n < pointLightNum; ++n)
 			{
 				vec3 dn = pointLights[n].p - ray.p0.xyz;
 				float tt = dot(dn, dn);
