@@ -400,6 +400,7 @@ vec4 rayTrace(Ray ray)
 	tempColor.texG = -1;
 	vec3 tempN;
 	vec2 tempUV;
+	uvec2 hitObj;
 	vec3 decayNow = decayOrigin;
 	for (;;)
 	{
@@ -412,10 +413,11 @@ vec4 rayTrace(Ray ray)
 		{
 			if (judgeHitBox(ray, bvh[now].bound))
 			{
-				if (bvh[now].geometry != 0)
+				uint geometry = bvh[now].geometry;
+				if (geometry != 0)
 				{
 					uint n = bvh[now].geometryNum;
-					switch (bvh[now].geometry)
+					switch (geometry)
 					{
 						/*	for (n = 0; n < planeNum; ++n)
 								{
@@ -438,7 +440,7 @@ vec4 rayTrace(Ray ray)
 								if (triangleTest(uv))
 								{
 									ray.t = tt;
-									tempColor = triangles[n].color;
+									hitObj = uvec2(geometry, n);
 									tempN = triangles[n].plane.xyz;
 									tempUV = (1 - uv.x - uv.y) * triangles[n].uv1 + uv.x * triangles[n].uv2 + uv.y * triangles[n].uv3;
 								}
@@ -459,7 +461,7 @@ vec4 rayTrace(Ray ray)
 								if (tt > 0 && (tt < ray.t || ray.t < 0))
 								{
 									ray.t = tt;
-									tempColor = spheres[n].color;
+									hitObj = uvec2(geometry, n);
 									tempN = (ray.p0.xyz + ray.t * ray.n - spheres[n].sphere.xyz) / sqrt(spheres[n].sphere.w);
 									float ne1 = dot(tempN, spheres[n].e1);
 									vec3 nxy = normalize(tempN - ne1 * spheres[n].e1);
@@ -481,7 +483,7 @@ vec4 rayTrace(Ray ray)
 								if (dot(d, d) <= circles[n].sphere.w)
 								{
 									ray.t = tt;
-									tempColor = circles[n].color;
+									hitObj = uvec2(geometry, n);
 									tempN = circles[n].plane.xyz;
 									vec3 e2 = cross(tempN, circles[n].e1);
 									tempUV = (vec2(1) + vec2(dot(circles[n].e1, d), dot(e2, d)) / sqrt(circles[n].sphere.w)) / 2;
@@ -525,7 +527,7 @@ vec4 rayTrace(Ray ray)
 									if (tt > 0 && (tt < ray.t || ray.t < 0))
 									{
 										ray.t = tt;
-										tempColor = cylinders[n].color;
+										hitObj = uvec2(geometry, n);
 										tempN = normalize(d + ray.n * ray.t - cylinders[n].n * v);
 										vec3 e2 = cross(cylinders[n].n, cylinders[n].e1);
 										float u =
@@ -575,7 +577,7 @@ vec4 rayTrace(Ray ray)
 								if (tt > 0 && (tt < ray.t || ray.t < 0))
 								{
 									ray.t = tt;
-									tempColor = cones[n].color;
+									hitObj = uvec2(geometry, n);
 									tempN = normalize(d + ray.n * ray.t - cones[n].n * sqrt(r2 / cones[n].c2));
 									float ne1 = dot(tempN, cones[n].n);
 									vec3 nxy = normalize(tempN - ne1 * cones[n].n);
@@ -793,6 +795,17 @@ vec4 rayTrace(Ray ray)
 				}
 			}
 		}*/
+		if (hitObj.x != 0)
+		{
+			switch (hitObj.x)
+			{
+				case 2:tempColor = triangles[hitObj.y].color; break;
+				case 3:tempColor = spheres[hitObj.y].color; break;
+				case 4:tempColor = circles[hitObj.y].color; break;
+				case 5:tempColor = cylinders[hitObj.y].color; break;
+				case 6:tempColor = cones[hitObj.y].color; break;
+			}
+		}
 		if (tempColor.texG >= 0)
 			tempColor.g *= texture(texSmp, vec3(tempUV, tempColor.texG)).xyz;
 		if (ray.t < 0)
