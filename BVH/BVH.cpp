@@ -303,14 +303,14 @@ namespace OpenGL
 					{ 1,0,0 },
 					{
 						1,-1,
-						1,-1,
 						0,-1,
+						0.3,-1,
 						0,-1,
 						{-0.5,0,-0.5},
 						1.33
 					}
 				},
-				{
+				/*{
 					{-10, -30, 10, 60},
 					{ 0,-1,0 },
 					{ 1,0,0 },
@@ -322,7 +322,7 @@ namespace OpenGL
 						{0.5,0,0.5},
 						1 / 1.33
 					}
-				}
+				}*/
 			};
 			model.circles.data.circles +=
 			{
@@ -341,7 +341,7 @@ namespace OpenGL
 					}
 				}
 			};
-			/*model.addCylinder
+			model.addCylinder
 			(
 				{
 					{5 , -20 , -10},
@@ -409,7 +409,7 @@ namespace OpenGL
 						1 / 1.33
 					}
 				}
-			);*/
+			);
 			model.pointLights.data.pointLights +=
 			{
 				{
@@ -448,7 +448,7 @@ namespace OpenGL
 		}
 		virtual void run() override
 		{
-			movement.run();
+			//movement.run();
 			if (sizeChanged)
 			{
 				glViewport(0, 0, frameScale.scale.data[0], frameScale.scale.data[1]);
