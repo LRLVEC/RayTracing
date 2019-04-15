@@ -219,6 +219,7 @@ namespace OpenGL
 		BufferConfig decayOriginStorage;
 		BMPData testBMP;
 		BMPCubeData cubeData;
+		STL stl;
 		Texture texture;
 		TextureCube cube;
 		TextureConfig<TextureStorage3D>textureConfig;
@@ -232,7 +233,7 @@ namespace OpenGL
 			sizeChanged(true),
 			frameScale(),
 			transform({ {60.0},{0.1,0.9,0.1},{0.5},{0,0,10},700.0 }),
-			model({ {ShaderStorageBuffer,0}, {1,2}, {3}, {4},{5},{6},{7},{3} }),
+			model({ {ShaderStorageBuffer,0},{1,2},{3},{4},{5},{6},{7},{3},{9} }),
 			frameSizeBuffer(&frameScale),
 			transBuffer(&transform.bufferData),
 			decayOriginBuffer(&decayOriginData),
@@ -241,6 +242,7 @@ namespace OpenGL
 			decayOriginStorage(&decayOriginBuffer, ShaderStorageBuffer, 8),
 			testBMP("resources\\Haja1.bmp"),
 			cubeData("resources\\vendetta\\"),
+			stl(sm.folder.find("resources/Stanford_bunny_simplified.stl").readSTL()),
 			texture(&testBMP, 1),
 			cube(&cubeData, 2, RGBA32f, 1, cubeData.bmp[0].header.width, cubeData.bmp[0].header.height),
 			textureConfig(&texture, Texture2DArray, RGBA32f, 1, testBMP.bmp.header.width, testBMP.bmp.header.height, 1),
@@ -295,7 +297,7 @@ namespace OpenGL
 					}
 				},
 			};*/
-			model.spheres.data.spheres +=
+			/*model.spheres.data.spheres +=
 			{
 				{
 					{-10, -30, 10, 64},
@@ -322,13 +324,30 @@ namespace OpenGL
 						{0.5,0,0.5},
 						1 / 1.33
 					}
-				}*/
-			};
+				}
+			};*/
+			/*for (int c0(0); c0 < 3; ++c0)
+				for (int c1(0); c1 < 3; ++c1)
+					for (int c2(0); c2 < 3; ++c2)
+						model.spheres.data.spheres.pushBack
+						({
+							{-10 - 5.0f * c0, -30.0f - 5.0f * c1, 10 - 5.0f * c2, 4},
+							{ 0,-1,0 },
+							{ 1,0,0 },
+							{
+								1,-1,
+								1,-1,
+								0,-1,
+								0,-1,
+								{-0.5,0,-0.5},
+								1.33
+							}
+							});*/
 			model.circles.data.circles +=
 			{
 				{
-					{ 0, -1, 0, 0 },
-					{ 0,0,0 },
+					{ 0, 0, -1, 0 },
+					{ 0,0,-10 },
 						2500,
 					{ 1,0,0 },
 					{
@@ -341,91 +360,121 @@ namespace OpenGL
 					}
 				}
 			};
-			model.addCylinder
-			(
-				{
-					{5 , -20 , -10},
-					80,
-					{ 1,0,0 },
-					10,
-					{ 1,0,0 },
-					{
-						1,-1,
-						1,-1,
-						{0,0,0},-1,
-						0,0,
-						{-0.1,0,-0.1},
-						1.33
-					}
-				}
-			);
-			model.addCylinder
-			(
-				{
-					{5.2 , -20 , -10},
-					76,
-					{ 1,0,0 },
-					9.6,
-					{ 1,0,0 },
-					{
-						1,-1,
-						1,-1,
-						{0,0,0},-1,
-						0,0,
-						{0.1,0,0.1},
-						1 / 1.33
-					}
-				}
-			);
+			//model.cylinders.data.cylinders +=
+			//{
+			//	{
+			//		{5, -20, -10},
+			//			80,
+			//		{ 1,0,0 },
+			//			10,
+			//		{ 1,0,0 },
+			//		{
+			//			1,-1,
+			//			1,-1,
+			//			{0,0,0},-1,
+			//			0,0,
+			//			{-0.1,0,-0.1},
+			//			1.33
+			//		}
+			//	}
+			//};
+			//model.addCylinder
+			//(
+			//	{
+			//		{5 , -20 , -10},
+			//		80,
+			//		{ 1,0,0 },
+			//		10,
+			//		{ 1,0,0 },
+			//		{
+			//			1,-1,
+			//			1,-1,
+			//			{0,0,0},-1,
+			//			0,0,
+			//			{-0.1,0,-0.1},
+			//			1.33
+			//		}
+			//	}
+			//);
+			//model.addCylinder
+			//(
+			//	{
+			//		{5.2 , -20 , -10},
+			//		76,
+			//		{ 1,0,0 },
+			//		9.6,
+			//		{ 1,0,0 },
+			//		{
+			//			1,-1,
+			//			1,-1,
+			//			{0,0,0},-1,
+			//			0,0,
+			//			{0.1,0,0.1},
+			//			1 / 1.33
+			//		}
+			//	}
+			//);
 
-			model.addCone
-			(
-				{
-					{10, -40, 10},0.75,
-					{ 0,1,0 },100,
-					{ 1,0,0 },
-					{
-						1,-1,
-						1,-1,
-						0,-1,
-						0,-1,
-						{0,-0.3,-0.3},
-						1.33
-					}
-				}
-			);
-			model.addCone
-			(
-				{
-					{10, -39, 10},0.75,
-					{ 0,1,0 },75,
-					{ 1,0,0 },
-					{
-						1,-1,
-						1,-1,
-						0,-1,
-						0,-1,
-						{0,0.3,0.3},
-						1 / 1.33
-					}
-				}
-			);
+			//model.addCone
+			//(
+			//	{
+			//		{10, -40, 10},0.75,
+			//		{ 0,1,0 },100,
+			//		{ 1,0,0 },
+			//		{
+			//			1,-1,
+			//			1,-1,
+			//			0,-1,
+			//			0,-1,
+			//			{0,-0.3,-0.3},
+			//			1.33
+			//		}
+			//	}
+			//);
+			//model.addCone
+			//(
+			//	{
+			//		{10, -39, 10},0.75,
+			//		{ 0,1,0 },75,
+			//		{ 1,0,0 },
+			//		{
+			//			1,-1,
+			//			1,-1,
+			//			0,-1,
+			//			0,-1,
+			//			{0,0.3,0.3},
+			//			1 / 1.33
+			//		}
+			//	}
+			//);
 			model.pointLights.data.pointLights +=
 			{
 				{
-					{600, 600, 600},
-					{ 0,-100,0 }
+					{8000, 8000, 8000},
+					{ 0,0,400 }
 				},
-				{
-					{100, 100, 100},
-					{ -20,-40,20 }
-				},
-				{
-					{100, 100, 100},
-					{ 20,-40,-20 }
-				}
+					/*{
+						{100, 100, 100},
+						{ -20,-40,20 }
+					},
+					{
+						{100, 100, 100},
+						{ 20,-40,-20 }
+					}*/
 			};
-
+			model.addSTL
+			(
+				stl,
+				{
+					1,-1,
+					1,-1,
+					0,-1,
+					0,-1,
+					{-0.5,0,-0.5},
+					1.5
+				},
+				stl.triangles.length
+			);
 			model.planes.numChanged = true;
 			model.triangles.numChanged = true;
 			model.spheres.numChanged = true;
@@ -483,9 +532,9 @@ namespace OpenGL
 		{
 			switch (_button)
 			{
-			case GLFW_MOUSE_BUTTON_LEFT:transform.mouse.refreshButton(0, _action); break;
-			case GLFW_MOUSE_BUTTON_MIDDLE:transform.mouse.refreshButton(1, _action); break;
-			case GLFW_MOUSE_BUTTON_RIGHT:transform.mouse.refreshButton(2, _action); break;
+				case GLFW_MOUSE_BUTTON_LEFT:transform.mouse.refreshButton(0, _action); break;
+				case GLFW_MOUSE_BUTTON_MIDDLE:transform.mouse.refreshButton(1, _action); break;
+				case GLFW_MOUSE_BUTTON_RIGHT:transform.mouse.refreshButton(2, _action); break;
 			}
 		}
 		virtual void mousePos(double _x, double _y) override
@@ -497,18 +546,18 @@ namespace OpenGL
 			if (_y != 0.0)
 				transform.scroll.refresh(_y);
 		}
-		virtual void key(GLFWwindow * _window, int _key, int _scancode, int _action, int _mods) override
+		virtual void key(GLFWwindow* _window, int _key, int _scancode, int _action, int _mods) override
 		{
 			switch (_key)
 			{
-			case GLFW_KEY_ESCAPE:
-				if (_action == GLFW_PRESS)
-					glfwSetWindowShouldClose(_window, true);
-				break;
-			case GLFW_KEY_A:transform.key.refresh(0, _action); break;
-			case GLFW_KEY_D:transform.key.refresh(1, _action); break;
-			case GLFW_KEY_W:transform.key.refresh(2, _action); break;
-			case GLFW_KEY_S:transform.key.refresh(3, _action); break;
+				case GLFW_KEY_ESCAPE:
+					if (_action == GLFW_PRESS)
+						glfwSetWindowShouldClose(_window, true);
+					break;
+				case GLFW_KEY_A:transform.key.refresh(0, _action); break;
+				case GLFW_KEY_D:transform.key.refresh(1, _action); break;
+				case GLFW_KEY_W:transform.key.refresh(2, _action); break;
+				case GLFW_KEY_S:transform.key.refresh(3, _action); break;
 			}
 		}
 	};
@@ -521,26 +570,23 @@ int main()
 	{
 		"RayTracing",
 		{
-			{1024,768},
+			{480,480},
 			true, false,
 		}
 	};
 	Window::WindowManager wm(winPara);
 	OpenGL::RayTrace test;
 	wm.init(0, &test);
-	glfwSwapInterval(1);
+	glfwSwapInterval(0);
 	FPS fps;
 	fps.refresh();
-	//int temp(0);
-	//glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &temp);
-	//::printf("%d\n", temp);
 	while (!wm.close())
 	{
 		wm.pullEvents();
 		wm.render();
 		wm.swapBuffers();
-		//fps.refresh();
-		//fps.printFPS(1);
+		fps.refresh();
+		fps.printFPS(1);
 	}
 	return 0;
 }

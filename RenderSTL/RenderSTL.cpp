@@ -65,7 +65,7 @@ namespace OpenGL
 			Renderer(SourceManager* _sourceManage)
 				:
 				Program(_sourceManage, "Triangle", Vector<VertexAttrib*>{&positions}),
-				model(_sourceManage->folder.find("resources/star.stl").readSTL()),
+				model(_sourceManage->folder.find("resources/Stanford_bunny_simplified.stl").readSTL()),
 
 				modelPostions(&model),
 				modelNormals(&model),
