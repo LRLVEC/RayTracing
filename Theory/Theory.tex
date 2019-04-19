@@ -5,6 +5,7 @@
 \usepackage{harpoon}
 \usepackage{amsmath}
 \usepackage{amssymb}
+\usepackage{graphicx}
 % \usepackage{mathpazo}
 \geometry{a4paper, left=1cm, right=1cm, top=2cm, bottom=2cm}
 \setlength{\parindent}{1cm}
@@ -28,16 +29,20 @@
         入人眼.而现有计算机图形学的基本渲染方法却是光栅化,即利用空间投影变换将各种基本
         图形元素(如三角形)投影到屏幕坐标然后上色等等.然而这种做法有先天性的巨大缺陷:在
         实现折射反射及阴影等效果的时候需要利用各种所谓的技巧才能不太精确的模拟真实情况.\\
-        \indent 而光线追踪算法弥补了这些传统图形学的局限性.一般来说光线追踪算法分两种:\\
+        \indent 而光线追踪算法突破了这些传统图形学的局限性.一般来说光线追踪算法分两种:\\
         \indent 1.正向光线追踪:完全按照真实世界的几何光学模型,模拟的光线从光源发出,经过
         折射反射等等作用进入人眼从而被看到.而由于一般只有少量从光源发出的光线被人眼看到,
         所以这种方法浪费了巨大的计算能力.\\
         \indent 2.反向光线追踪:利用几何光线的光路可逆性,将原来的光线的方向改变从人眼出发,
-        极大的降低了所需要的光线数量.\\
-        \indent 对于反向光线追踪我们获取了光线命中的图元的自发光颜色并将其与现有光线颜色
-        混合,直到最终没有与任何图元相交.而如果有同时存在折射和反射的界面,则将分出一束折
-        射光线并以同样的方式计算颜色,然后叠加.对于物体之间的漫反射,由于目前尚未采用蒙特
-        卡洛随机采样来进行路径追踪,故在此忽略\dots,但是对于光源的漫反射我们仍然会计算.\\
+        极大的降低了所需要的光线数量.但是在路径追踪里,通常也需要与正向追踪结合来加快寻找
+        光源的速度.\\
+        \indent 对于反向光线追踪我们获取了光线命中的图元的自发光颜色(如果是光源)并将其与
+        现有光线颜色按照当前光线所占比例混合,直到最终没有与任何图元相交(取天空盒子的背景
+        颜色).而对于反射系数不为0的界面,计算出新的法向代替原法向然后重复这一过程.而对于折
+        射光线,则将分出一束折射光线然后重复.由于glsl语言不支持递归,所以这里需要对栈进行模
+        拟.但是由渲染方程可知物体之间是存在漫反射和焦散效果的,但是由于目前尚未采用蒙特卡
+        洛随机采样来进行路径追踪(性能是原因之一),故在此忽略\dots,但是对于光源的漫反射我们
+        仍然会计算.\\
     \section{理论推导}
         \subsection{基本模型的数学描述}
             由于计算机只认识数,所以我们要将当前的各种物理模型转换成数学语言.这里涉及到基本的矢
@@ -45,9 +50,10 @@
             \subsubsection{颜色模型}
                 虽然自然生活中光的波长是连续分布的,但是在这里采用显示器的描述方式,即用$(R,G,B)$的混合来描述千千万万种个颜色.
                 而一个物体的光学属性则十分复杂,这里仅仅考虑其表面的自发光颜色$g$(glow),表面的反射颜色$r$(reflect),透射
-                颜色$t$(transmission)和折射率$n$.所以用类$Color:\{r,t,g,n\}$来储存颜色信息.
+                颜色$t$(transmission),对光源的漫反射系数$d$(diffuse)和折射率$n$.所以用类$Color:\{r,t,g,d,n\}$来储存颜色信息.
+                而这些信息有可能随着在几何图元上的位置的不同而变化,因此有必要建立一个纹理坐标,
+                使\includegraphics[width=0.5cm]{Opengl_Tiny.jpg}能够从纹理数组读取这些信息.
             \subsubsection{光线的基本模型}
-                首先要将光线从物理模型变成数学上的量.这里采用比较简单而且对GPU友好的表示方式.
                 一根光线由出发点$\vec{p_0}$,方向$\vec{n}$(已经归一化),颜色构成.为了方便GPU优化计算,这里的
                 $\vec{p_0}$加上一个$w=1$分量构成$p^\mu=(\vec{p_0},1)$.\\
                 \indent 而颜色一般由$(R,G,B)$三个分量来表示.由于我们用的是反向光线追踪,
@@ -60,24 +66,62 @@
             \subsubsection{平面模型}
                 这里平面的定义为一个无穷大的三维中的二维平面,由三维笛卡尔坐标方程来描述:
                 \begin{equation}\label{eq:plane}
-                    Ax+By+Cz+W=0;
+                    Ax+By+Cz+W=0.
                 \end{equation}
                 为简化描述,我们用
                 \begin{equation}
                     n_p^\mu=(\vec{n_p},W)=(A,B,C,W)
                 \end{equation}
-                来描述这个平面,其中$\vec{n_p}$又是该平面的法向(保证已经归一化).
+                来描述这个平面,其中$\vec{n_p}$也是该平面的法向(保证已经归一化).
             \subsubsection{三角形模型}
-                这里三角形用空间中三个点$\vec{p_1},\vec{p_2},\vec{p_3}$来定义,并且法向$\vec{n_p}$由顺序$p_1,p_2,p_3$
-                按照右手螺旋法则定义为正方向.由这些顶点可以计算出$\vec{n_p}$(以归一化)和该三角形所在的平面$n_p^\mu$.
-                而在三角形平面内的点可以用仿射坐标$(u,v)$来表示,并且该坐标的单位向量为$\vec{e_1}=\vec{p_1 p_2},\vec{e_2}
-                =\vec{p_1 p_3}$表示.这样的描述有利于后续的相交测试和贴图计算等等.
+                这里三角形用空间中三个点$\vec{p_0},\vec{p_1},\vec{p_2}$来定义,并且法向$\vec{n_p}$由顺序$p_0,p_1,p_2$
+                按照右手螺旋法则定义为正方向.由这些顶点可以计算出$\vec{n_p}$(已归一化)和该三角形所在的平面$n_p^\mu$.
+                而在三角形平面内的点可以用仿射坐标$\vec{t'}=(u',v')$来表示,并且该坐标的单位向量为$\vec{e_0}=\vec{p_0 p_1},
+                \vec{e_1}=\vec{p_0 p_2}$.三角形的三个顶点又具有其在纹理图片上的纹理坐标
+                \begin{equation}
+                    \left\{
+                        \begin{aligned}
+                            \vec{t_0}=(u_0,v_0)\\
+                            \vec{t_1}=(u_1,v_1)\\
+                            \vec{t_2}=(u_2,v_2)
+                        \end{aligned}
+                    \right.
+                \end{equation}
+                从$(u',v')$计算实际纹理坐标$\vec{t}$可由以下公式得出:
+                \begin{equation}
+                    \vec{t}=u'\vec{t_1}+v'\vec{t_2}+(1-u'-v')\vec{t_0}.
+                \end{equation}
             \subsubsection{球形模型}
                 设球心的位矢为$\vec{p_1}$,半径为$R$.为方便GPU储存与计算,用$p_1^\mu=(\vec{p_1},R^2)$来储该球的几何特征.
+                纹理坐标这么表示:定义一个球的z方向(类似于地球的极轴,从地心指向北极点为正方向),定义一个x方向,根据右手系
+                建立球坐标系$(r,\theta,\phi)$.而纹理坐标$(u,v)$由$\theta$和$\phi$经过归一化得到:
+                \begin{equation}
+                    \left\{
+                        \begin{array}{l}
+                            u=\frac{\phi}{2\pi}\\
+                            v=1-\frac{\theta}{\pi}
+                        \end{array}
+                    \right..
+                \end{equation}
             \subsubsection{圆盘模型}
                 类似于所有平面图形,圆盘由其所在平面$p^\mu=(\vec{n},W)$,圆心坐标和圆半径$p_1^\mu=(\vec{p_1},R^2)$组成.而
                 为了计算纹理坐标,我们还要破坏其轴对称性,即在圆盘平面内架一个$uv$坐标系.因此首先在平面内指定一个方向
-                为$u$坐标正方向$e_1$,然后由法向$\vec{n}$计算出另一个坐标的单位向量$e_2$.
+                为$u$坐标正方向$e_0$,然后由法向$\vec{n}$计算出另一个坐标的单位向量$e_1$.设焦点相对圆心的位置为$\vec{d}$,
+                则该点的纹理坐标为:
+                \begin{equation}
+                    \left\{
+                        \begin{array}{l}
+                            u=\frac{\vec{d}\cdot\vec{e_0}}{2 R}+\frac{1}{2}\\
+                            v=\frac{\vec{d}\cdot\vec{e_1}}{2 R}+\frac{1}{2}
+                        \end{array}
+                    \right..
+                \end{equation}
+            \subsubsection{圆柱模型}
+                这里的圆柱只描述其侧面(底面和顶面都是由圆来描述).圆柱可以由一个圆柱底面圆心坐标$\vec{c}$,圆柱轴线
+                方向$\vec{n}$(从底面圆心到顶面圆心为正方向),圆柱半径$R$和原址高度$l$这些参数表述.而侧面方程为:
+                \begin{equation}
+                    
+                \end{equation}
         \subsection{相交测试的推导}
             如果我们想要求光线与几何图元的相交点,则必须求出方程\ref{eq:r}中的$t$.
             \subsubsection{平面}
@@ -103,29 +147,29 @@
                 则:
                 \begin{equation}
                     \left\{
-                        \begin{aligned}
+                        \begin{array}{l}
                             \vec{d}\cdot\vec{e_1} = {\left| \vec{e_1} \right|}^2u + \left(\vec{e_1}\cdot \vec{e_2}\right)v\\
                             \vec{d}\cdot\vec{e_2} = \left(\vec{e_1}\cdot \vec{e_2}\right)u + {\left| \vec{e_2} \right|}^2v
-                        \end{aligned}
+                        \end{array}
                     \right.,
                 \end{equation}
                 由此可以解出:
                 \begin{equation}
                     \left\{
-                        \begin{aligned}
+                        \begin{array}{l}
                             u = \vec{k_1}\cdot\vec{d}\\
                             v = \vec{k_2}\cdot\vec{d}
-                        \end{aligned}
+                        \end{array}
                     \right.
                     ,
                 \end{equation}
                 其中:
                 \begin{equation}
                     \left\{
-                        \begin{aligned}
+                        \begin{array}{l}
                             \vec{k_1}=\frac{{\left| \vec{e_2} \right|}^2\vec{e_1}-\left(\vec{e_1}\cdot\vec{e_2}\right)\vec{e_2}}{s}\\
                             \vec{k_2}=\frac{{\left| \vec{e_1} \right|}^2\vec{e_2}-\left(\vec{e_1}\cdot\vec{e_2}\right)\vec{e_1}}{s}
-                        \end{aligned}
+                        \end{array}
                     \right.,
                 \end{equation}
                 \begin{equation}
@@ -134,11 +178,11 @@
                 而判断交点是否在三角形内则可由以下条件判断:
                 \begin{equation}
                     \left\{
-                        \begin{aligned}
+                        \begin{array}{l}
                             u  \geqslant 0\\
                             v  \geqslant 0\\
                             u+v\leqslant 1
-                        \end{aligned}
+                        \end{array}
                     \right..
                 \end{equation}
             \subsubsection{球形}
@@ -159,20 +203,20 @@
                 由此可以解出:
                 \begin{equation}
                     \left\{
-                        \begin{aligned}
+                        \begin{array}{l}
                             t_1=\vec{n}\cdot\vec{d}+\sqrt{R^2-\left(\left|\vec{d}\right|^2-\left(\vec{n}\cdot\vec{d}\right)^2\right)}\\
                             t_2=\vec{n}\cdot\vec{d}-\sqrt{R^2-\left(\left|\vec{d}\right|^2-\left(\vec{n}\cdot\vec{d}\right)^2\right)}
-                        \end{aligned}
+                        \end{array}
                     \right..
                 \end{equation}
                 由于$\left|\vec{d}\times\vec{n}\right|^2=\left|\vec{d}\right|^2-\left(\vec{n}\cdot\vec{d}\right)^2$,
                 故:
                 \begin{equation}
                     \left\{
-                        \begin{aligned}
+                        \begin{array}{l}
                             t_1=\vec{n}\cdot\vec{d}+s\\
                             t_2=\vec{n}\cdot\vec{d}-s
-                        \end{aligned}
+                        \end{array}
                     \right..
                 \end{equation}
                 当然只有其中一个解是最近的相交点于是最小的正解即为我们所求的$t$.
