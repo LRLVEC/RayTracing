@@ -70,18 +70,6 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-<<<<<<< HEAD
-    <IncludePath>E:\files\C++\include;$(IncludePath)</IncludePath>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>E:\files\C++\include;$(IncludePath)</IncludePath>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>E:\files\C++\include;$(IncludePath)</IncludePath>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>E:\files\C++\include;$(IncludePath)</IncludePath>
-=======
     <IncludePath>D:\files\C++\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -92,7 +80,6 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>D:\files\C++\include;$(IncludePath)</IncludePath>
->>>>>>> b5e640255209d2a0eca8a5a9b56d4d53c5014d5d
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -109,11 +96,6 @@
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-<<<<<<< HEAD
-      <StackReserveSize>
-      </StackReserveSize>
-=======
->>>>>>> b5e640255209d2a0eca8a5a9b56d4d53c5014d5d
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -127,11 +109,6 @@
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-<<<<<<< HEAD
-      <StackReserveSize>
-      </StackReserveSize>
-=======
->>>>>>> b5e640255209d2a0eca8a5a9b56d4d53c5014d5d
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -145,11 +122,6 @@
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-<<<<<<< HEAD
-      <StackReserveSize>
-      </StackReserveSize>
-=======
->>>>>>> b5e640255209d2a0eca8a5a9b56d4d53c5014d5d
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -167,11 +139,6 @@
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-<<<<<<< HEAD
-      <StackReserveSize>
-      </StackReserveSize>
-=======
->>>>>>> b5e640255209d2a0eca8a5a9b56d4d53c5014d5d
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

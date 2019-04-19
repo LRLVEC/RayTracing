@@ -2,10 +2,7 @@
 #define RayTraceDepth 8
 #define Pi 3.14159265359
 #define offset 0.001
-<<<<<<< HEAD
 #define minColor 0.01
-=======
->>>>>>> b5e640255209d2a0eca8a5a9b56d4d53c5014d5d
 #define originSamples 8
 #define bit(a, b)			((a & (1 << uint(b))) != 0)
 #define setBit(a, b)		(a |= (1 << uint(b)))
@@ -400,11 +397,6 @@ vec4 rayTrace(Ray ray)
 	int depth = 0;
 	vec3 ratioNow = vec3(1);
 	vec3 answer = vec3(0);
-<<<<<<< HEAD
-=======
-	Color tempColor;
-	tempColor.texG = -1;
->>>>>>> b5e640255209d2a0eca8a5a9b56d4d53c5014d5d
 	vec3 tempN;
 	vec2 tempUV;
 	uvec2 hitObj;
@@ -457,12 +449,8 @@ vec4 rayTrace(Ray ray)
 						case 3:
 						{
 							vec3 d = spheres[n].sphere.xyz - ray.p0.xyz;
-<<<<<<< HEAD
 							vec3 c = cross(d, ray.n);
 							float s = spheres[n].sphere.w - dot(c, c);
-=======
-							float s = spheres[n].sphere.w - dot(cross(d, ray.n), cross(d, ray.n));
->>>>>>> b5e640255209d2a0eca8a5a9b56d4d53c5014d5d
 							if (s >= 0)
 							{
 								s = sqrt(s);
@@ -642,176 +630,8 @@ vec4 rayTrace(Ray ray)
 			}
 			if (bvhSP < 0)break;
 		}
-<<<<<<< HEAD
 		Color tempColor;
 		tempColor.texG = -1;
-=======
-		/*{
-			uint n;
-			for (n = 0; n < planeNum; ++n)
-			{
-				float tt = getPlaneT(ray, planes[n].plane);
-				if (tt > 0 && (tt < ray.t || ray.t < 0))
-				{
-					ray.t = tt;
-					vec3 p1 = ray.p0.xyz + ray.n * ray.t;
-					tempColor = planes[n].color;
-					tempColor.g = ((int(4.2 * p1.x) + int(4.2 * p1.y)) % 2u) * tempColor.g;
-					tempN = planes[n].plane.xyz;
-				}
-			}
-			for (n = 0; n < triangleNum; ++n)
-			{
-				float tt = getPlaneT(ray, triangles[n].plane);
-				if (tt > 0 && (tt < ray.t || ray.t < 0))
-				{
-					vec2 uv = getTriangleUV(ray.p0.xyz + ray.n * tt, n);
-					if (triangleTest(uv))
-					{
-						ray.t = tt;
-						tempColor = triangles[n].color;
-						tempN = triangles[n].plane.xyz;
-						tempUV = (1 - uv.x - uv.y) * triangles[n].uv1 + uv.x * triangles[n].uv2 + uv.y * triangles[n].uv3;
-					}
-				}
-			}
-			for (n = 0; n < sphereNum; ++n)
-			{
-				vec3 d = spheres[n].sphere.xyz - ray.p0.xyz;
-				float s = spheres[n].sphere.w - dot(cross(d, ray.n), cross(d, ray.n));
-				if (s >= 0)
-				{
-					s = sqrt(s);
-					float k = dot(d, ray.n);
-					float tt = -1;
-					if (k + s > 0)tt = k + s;
-					if (k > s)tt = k - s;
-					if (tt > 0 && (tt < ray.t || ray.t < 0))
-					{
-						ray.t = tt;
-						tempColor = spheres[n].color;
-						tempN = (ray.p0.xyz + ray.t * ray.n - spheres[n].sphere.xyz) / sqrt(spheres[n].sphere.w);
-						float ne1 = dot(tempN, spheres[n].e1);
-						vec3 nxy = normalize(tempN - ne1 * spheres[n].e1);
-						float u =
-							dot(nxy, cross(spheres[n].e1, spheres[n].e2)) >= 0 ?
-							acos(dot(spheres[n].e2, nxy)) / (2 * Pi) :
-							1 - acos(dot(spheres[n].e2, nxy)) / (2 * Pi);
-						tempUV = vec2(u, 1 - acos(ne1) / Pi);
-					}
-				}
-			}
-			for (n = 0; n < circleNum; ++n)
-			{
-				float tt = getPlaneT(ray, circles[n].plane);
-				if (tt > 0 && (tt < ray.t || ray.t < 0))
-				{
-					vec3 d = ray.p0.xyz + ray.n * tt - circles[n].sphere.xyz;
-					if (dot(d, d) <= circles[n].sphere.w)
-					{
-						ray.t = tt;
-						tempColor = circles[n].color;
-						tempN = circles[n].plane.xyz;
-						vec3 e2 = cross(tempN, circles[n].e1);
-						tempUV = (vec2(1) + vec2(dot(circles[n].e1, d), dot(e2, d)) / sqrt(circles[n].sphere.w)) / 2;
-					}
-				}
-			}
-			for (n = 0; n < cylinderNum; ++n)
-			{
-				float nn0 = dot(ray.n, cylinders[n].n);
-				float cnn02 = 1 - nn0 * nn0;
-				if (cnn02 == 0)continue;
-				vec3 d = ray.p0.xyz - cylinders[n].c;
-				float nd = dot(cylinders[n].n, d);
-				vec3 j = d - nd * cylinders[n].n;
-				float n0j = dot(ray.n, j);
-				float k = n0j * n0j + cnn02 * (cylinders[n].r2 - dot(j, j));
-				if (k <= 0)continue;
-				k = sqrt(k);
-				float tt = -1;
-				float v;
-				if (k - n0j > 0)
-				{
-					tt = (k - n0j) / cnn02;
-					v = nd + nn0 * tt;
-					if (v > cylinders[n].l || v < 0)
-						tt = -1;
-				}
-				if (k + n0j < 0)
-				{
-					float ttt = -(k + n0j) / cnn02;
-					float ut = nd + nn0 * ttt;
-					if (ut <= cylinders[n].l && ut >= 0)
-					{
-						tt = ttt;
-						v = ut;
-					}
-				}
-				if (tt > 0 && (tt < ray.t || ray.t < 0))
-				{
-					ray.t = tt;
-					tempColor = cylinders[n].color;
-					tempN = normalize(d + ray.n * ray.t - cylinders[n].n * v);
-					vec3 e2 = cross(cylinders[n].n, cylinders[n].e1);
-					float u =
-						dot(tempN, e2) >= 0 ?
-						acos(dot(cylinders[n].e1, tempN)) / (2 * Pi) :
-						1 - acos(dot(cylinders[n].e1, tempN)) / (2 * Pi);
-					tempUV = vec2(u, v / cylinders[n].l);
-				}
-			}
-			for (n = 0; n < coneNum; ++n)
-			{
-				vec3 d = ray.p0.xyz - cones[n].c;
-				float nn0 = dot(ray.n, cones[n].n);
-				float dn0 = dot(d, cones[n].n);
-				float dn = dot(d, ray.n);
-				float d2 = dot(d, d);
-				float a = cones[n].c2 - nn0 * nn0;
-				float b = nn0 * dn0 - dn * cones[n].c2;
-				float c = d2 * cones[n].c2 - dn0 * dn0;
-				float s = b * b - a * c;
-				if (s > 0)
-				{
-					s = sqrt(s);
-					float tt = -1;
-					float r2;
-					tt = (b + s) / a;
-					if (tt > 0)
-					{
-						r2 = d2 + tt * tt + 2 * dn * tt;
-						float k = dn0 + nn0 * tt;
-						if (r2 > cones[n].l2 || k < 0)tt = -1;
-					}
-					float ttt = (b - s) / a;
-					if (ttt > 0 && (ttt < tt || (tt < 0)))
-					{
-						float r2t = d2 + ttt * ttt + 2 * dn * ttt;
-						float k = dn0 + nn0 * ttt;
-						if (r2t <= cones[n].l2 && k > 0)
-						{
-							tt = ttt;
-							r2 = r2t;
-						}
-					}
-					if (tt > 0 && (tt < ray.t || ray.t < 0))
-					{
-						ray.t = tt;
-						tempColor = cones[n].color;
-						tempN = normalize(d + ray.n * ray.t - cones[n].n * sqrt(r2 / cones[n].c2));
-						float ne1 = dot(tempN, cones[n].n);
-						vec3 nxy = normalize(tempN - ne1 * cones[n].n);
-						float u =
-							dot(nxy, cross(cones[n].n, cones[n].e1)) >= 0 ?
-							acos(dot(cones[n].e1, nxy)) / (2 * Pi) :
-							1 - acos(dot(cones[n].e1, nxy)) / (2 * Pi);
-						tempUV = vec2(u, 1 - sqrt(r2 / cones[n].l2));
-					}
-				}
-			}
-		}*/
->>>>>>> b5e640255209d2a0eca8a5a9b56d4d53c5014d5d
 		if (hitObj.x != 0)
 		{
 			switch (hitObj.x)
@@ -836,15 +656,9 @@ vec4 rayTrace(Ray ray)
 		{
 			if (tempColor.texT >= 0)
 				tempColor.t *= texture(texSmp, vec3(tempUV, tempColor.texT)).xyz;
-<<<<<<< HEAD
 			tempColor.t *= ratioNow;
 			float cosi1 = dot(ray.n, tempN);
 			if (any(greaterThanEqual(tempColor.t, vec3(minColor))))
-=======
-			float cosi1 = dot(ray.n, tempN);
-			tempColor.t *= ratioNow;
-			if (any(greaterThanEqual(tempColor.t, vec3(0.05))))
->>>>>>> b5e640255209d2a0eca8a5a9b56d4d53c5014d5d
 			{
 				if (cosi1 > 0) tempColor.n = 1 / tempColor.n;
 				float sini1 = sqrt(1 - cosi1 * cosi1);
@@ -861,7 +675,6 @@ vec4 rayTrace(Ray ray)
 					else
 					{
 						float cosadd = abs(cosi1) * cosi2;
-<<<<<<< HEAD
 						float sinadd = sini1 * cosi2;
 						float cosminus = cosadd + sini1 * sini2;
 						float sinminus = sinadd - abs(cosi1) * sini2;
@@ -872,18 +685,6 @@ vec4 rayTrace(Ray ray)
 						tempColor.t *= abs(cosi2 * pow(2 * sini2 * cosi1 * tempColor.n / sinadd, 2) * (1 + ahh) / (2 * cosi1));
 					}
 					if (any(greaterThanEqual(tempColor.t, vec3(minColor))))
-=======
-						float cosminus = cosadd + sini1 * sini2;
-						float sinadd = sini1 * cosi2;
-						float sinminus = sinadd - abs(cosi1) * sini2;
-						cosadd = 2 * cosadd - cosminus;
-						sinadd = 2 * sinadd - sinminus;
-						float ahh = 1 / pow(cosminus, 2);
-						tempColor.r *= (1 + pow(cosadd, 2) * ahh) * pow(sinminus / sinadd, 2) / 2;
-						tempColor.t *= abs(cosi2 * pow(2 * sini2 * cosi1 * tempColor.n / sinadd, 2) * (1 + ahh) / (2 * cosi1));
-					}
-					if (any(greaterThanEqual(tempColor.t, vec3(0.05))))
->>>>>>> b5e640255209d2a0eca8a5a9b56d4d53c5014d5d
 					{
 						stack[++sp].decayFactor = decayNow - sign(cosi1) * tempColor.decayFactor;
 						stack[sp].p0 = ray.p0 + vec4((ray.t + offset) * ray.n, 0);
@@ -897,10 +698,6 @@ vec4 rayTrace(Ray ray)
 					tempColor.r = vec3(1);
 				}
 			}
-<<<<<<< HEAD
-=======
-
->>>>>>> b5e640255209d2a0eca8a5a9b56d4d53c5014d5d
 			ray.p0 += vec4((ray.t - offset) * ray.n, 0);
 			uint n = 0;
 			for (; n < pointLightNum; ++n)
@@ -915,18 +712,10 @@ vec4 rayTrace(Ray ray)
 					answer += max(-20 * sign(dot(ray.n, tempN)) * dot(tempN, dn) / tt, 0) * pointLights[n].color * tempColor.d * ratioNow;
 				}
 			}
-<<<<<<< HEAD
 			if (tempColor.texR >= 0)
 				tempColor.r *= texture(texSmp, vec3(tempUV, tempColor.texR)).xyz;
 			ratioNow *= tempColor.r;
 			if (any(greaterThanEqual(ratioNow, vec3(minColor))))
-=======
-
-			if (tempColor.texR >= 0)
-				tempColor.r *= texture(texSmp, vec3(tempUV, tempColor.texR)).xyz;
-			ratioNow *= tempColor.r;
-			if (any(greaterThanEqual(ratioNow, vec3(0.05))))
->>>>>>> b5e640255209d2a0eca8a5a9b56d4d53c5014d5d
 			{
 				ray.n -= 2 * cosi1 * tempN;
 				++depth;

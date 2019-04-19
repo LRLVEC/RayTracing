@@ -232,11 +232,7 @@ namespace OpenGL
 			sm(),
 			sizeChanged(true),
 			frameScale(),
-<<<<<<< HEAD
 			transform({ {60.0},{0.4,0.9,0.1},{2},{0,0,10},700.0 }),
-=======
-			transform({ {60.0},{0.1,0.9,0.1},{0.5},{0,0,10},700.0 }),
->>>>>>> b5e640255209d2a0eca8a5a9b56d4d53c5014d5d
 			model({ {ShaderStorageBuffer,0},{1,2},{3},{4},{5},{6},{7},{3},{9} }),
 			frameSizeBuffer(&frameScale),
 			transBuffer(&transform.bufferData),
@@ -246,11 +242,7 @@ namespace OpenGL
 			decayOriginStorage(&decayOriginBuffer, ShaderStorageBuffer, 8),
 			testBMP("resources\\Haja1.bmp"),
 			cubeData("resources\\vendetta\\"),
-<<<<<<< HEAD
-			stl(sm.folder.find("resources/¿ËÀ³ÒòÆ¿_1.stl").readSTL()),
-=======
-			stl(sm.folder.find("resources/Stanford_bunny_simplified.stl").readSTL()),
->>>>>>> b5e640255209d2a0eca8a5a9b56d4d53c5014d5d
+			stl(sm.folder.find("resources/compound_j74_smp.stl").readSTL()),
 			texture(&testBMP, 1),
 			cube(&cubeData, 2, RGBA32f, 1, cubeData.bmp[0].header.width, cubeData.bmp[0].header.height),
 			textureConfig(&texture, Texture2DArray, RGBA32f, 1, testBMP.bmp.header.width, testBMP.bmp.header.height, 1),
@@ -376,24 +368,14 @@ namespace OpenGL
 			model.circles.data.circles +=
 			{
 				{
-<<<<<<< HEAD
 					{ 0, -1, 0, 0 },
 					{ 0,0,0 },
 						4900,
-=======
-					{ 0, 0, -1, 0 },
-					{ 0,0,-10 },
-						2500,
->>>>>>> b5e640255209d2a0eca8a5a9b56d4d53c5014d5d
 					{ 1,0,0 },
 					{
 						0,-1,
 						0,-1,
-<<<<<<< HEAD
 						0.5,-1,
-=======
-						0.5,0,
->>>>>>> b5e640255209d2a0eca8a5a9b56d4d53c5014d5d
 						0,-1,
 						0,
 						1.5
@@ -454,10 +436,7 @@ namespace OpenGL
 			//		}
 			//	}
 			//);
-<<<<<<< HEAD
-=======
 
->>>>>>> b5e640255209d2a0eca8a5a9b56d4d53c5014d5d
 			//model.addCone
 			//(
 			//	{
@@ -493,7 +472,6 @@ namespace OpenGL
 			model.pointLights.data.pointLights +=
 			{
 				{
-<<<<<<< HEAD
 					{4000, 4000, 4000},
 					{ 0,-300,0 }
 				},
@@ -513,38 +491,17 @@ namespace OpenGL
 							{3000,3000, 3000},
 							{ 0,0,-400 }
 						},*/
-=======
-					{8000, 8000, 8000},
-					{ 0,0,400 }
-				},
-					/*{
-						{100, 100, 100},
-						{ -20,-40,20 }
-					},
-					{
-						{100, 100, 100},
-						{ 20,-40,-20 }
-					}*/
->>>>>>> b5e640255209d2a0eca8a5a9b56d4d53c5014d5d
 			};
 			model.addSTL
 			(
 				stl,
 				{
 					1,-1,
-<<<<<<< HEAD
 					0,-1,
 					0,-1,
 					0,-1,
 					0,//{ -0.03,0,-0.03 },
 					1
-=======
-					1,-1,
-					0,-1,
-					0,-1,
-					{-0.5,0,-0.5},
-					1.5
->>>>>>> b5e640255209d2a0eca8a5a9b56d4d53c5014d5d
 				},
 				stl.triangles.length
 			);
@@ -658,13 +615,8 @@ int main()
 		wm.pullEvents();
 		wm.render();
 		wm.swapBuffers();
-<<<<<<< HEAD
-		//fps.refresh();
-		//fps.printFPS(1);
-=======
 		fps.refresh();
 		fps.printFPS(1);
->>>>>>> b5e640255209d2a0eca8a5a9b56d4d53c5014d5d
 	}
 	return 0;
 }
