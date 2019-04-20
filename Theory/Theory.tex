@@ -52,7 +52,7 @@
                 而一个物体的光学属性则十分复杂,这里仅仅考虑其表面的自发光颜色$g$(glow),表面的反射颜色$r$(reflect),透射
                 颜色$t$(transmission),对光源的漫反射系数$d$(diffuse)和折射率$n$.所以用类$Color:\{r,t,g,d,n\}$来储存颜色信息.
                 而这些信息有可能随着在几何图元上的位置的不同而变化,因此有必要建立一个纹理坐标,
-                使\includegraphics[width=0.5cm]{Opengl_Tiny.jpg}能够从纹理数组读取这些信息.
+                使\includegraphics[width=0.5cm]{./Opengl_Tiny.jpg}能够从纹理数组读取这些信息.
             \subsubsection{光线的基本模型}
                 一根光线由出发点$\vec{p_0}$,方向$\vec{n}$(已经归一化),颜色构成.为了方便GPU优化计算,这里的
                 $\vec{p_0}$加上一个$w=1$分量构成$p^\mu=(\vec{p_0},1)$.\\
@@ -120,8 +120,24 @@
                 这里的圆柱只描述其侧面(底面和顶面都是由圆来描述).圆柱可以由一个圆柱底面圆心坐标$\vec{c}$,圆柱轴线
                 方向$\vec{n}$(从底面圆心到顶面圆心为正方向),圆柱半径$R$和原址高度$l$这些参数表述.而侧面方程为:
                 \begin{equation}
-                    
+                    \left|\left(\vec{r}-\vec{c}\right) \times \vec{n} \right|=R,
                 \end{equation}
+                且满足:
+                \begin{equation}
+                    0 \leqslant \left(\vec{r}-\vec{c}\right) \cdot \vec{n} \leqslant l.
+                \end{equation}
+                至于纹理坐标,可以建立以下纹理坐标:以$\vec{c}$为坐标原点,以$\vec{n}$为z轴,再指定一个方向$\vec{e_0}$为
+                x轴正方向,建立右手柱坐标系\\$(r,\theta,z)$.然后纹理坐标为:
+                \begin{equation}
+                    \left\{
+                        \begin{array}{l}
+                            u=\frac{\theta}{2 \pi}\\
+                            v=\frac{z}{l}
+                        \end{array}
+                    \right..
+                \end{equation}
+            \subsubsection{圆锥模型}
+                啊哈哈
         \subsection{相交测试的推导}
             如果我们想要求光线与几何图元的相交点,则必须求出方程\ref{eq:r}中的$t$.
             \subsubsection{平面}
