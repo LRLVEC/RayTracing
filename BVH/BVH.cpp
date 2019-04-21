@@ -232,7 +232,7 @@ namespace OpenGL
 			sm(),
 			sizeChanged(true),
 			frameScale(),
-			transform({ {60.0},{0.4,0.9,0.1},{2},{0,0,10},700.0 }),
+			transform({ {60.0},{0.4,0.9,0.1},{2},{0,0,1},700.0 }),
 			model({ {ShaderStorageBuffer,0},{1,2},{3},{4},{5},{6},{7},{3},{9} }),
 			frameSizeBuffer(&frameScale),
 			transBuffer(&transform.bufferData),
@@ -437,38 +437,38 @@ namespace OpenGL
 			//	}
 			//);
 
-			//model.addCone
-			//(
-			//	{
-			//		{10, -40, 10},0.75,
-			//		{ 0,1,0 },100,
-			//		{ 1,0,0 },
-			//		{
-			//			1,-1,
-			//			1,-1,
-			//			0,-1,
-			//			0,-1,
-			//			{0,-0.3,-0.3},
-			//			1.33
-			//		}
-			//	}
-			//);
-			//model.addCone
-			//(
-			//	{
-			//		{10, -39, 10},0.75,
-			//		{ 0,1,0 },75,
-			//		{ 1,0,0 },
-			//		{
-			//			1,-1,
-			//			1,-1,
-			//			0,-1,
-			//			0,-1,
-			//			{0,0.3,0.3},
-			//			1 / 1.33
-			//		}
-			//	}
-			//);
+			model.addCone
+			(
+				{
+					{10, -40, 10},0.75,
+					{ 0,1,0 },100,
+					{ 1,0,0 },
+					{
+						0,-1,
+						0,-1,
+						1,0,
+						0,-1,
+						{0,-0.1,-0.1},
+						1.33
+					}
+				}
+			);
+			/*model.addCone
+			(
+				{
+					{10, -39, 10},0.75,
+					{ 0,1,0 },75,
+					{ 1,0,0 },
+					{
+						1,-1,
+						1,-1,
+						0,-1,
+						0,-1,
+						{0,0.1,0.1},
+						1 / 1.33
+					}
+				}
+			);*/
 			model.pointLights.data.pointLights +=
 			{
 				{
@@ -492,19 +492,19 @@ namespace OpenGL
 							{ 0,0,-400 }
 						},*/
 			};
-			model.addSTL
-			(
-				stl,
-				{
-					1,-1,
-					0,-1,
-					0,-1,
-					0,-1,
-					0,//{ -0.03,0,-0.03 },
-					1
-				},
-				stl.triangles.length
-			);
+			//model.addSTL
+			//(
+			//	stl,
+			//	{
+			//		1,-1,
+			//		0,-1,
+			//		0,-1,
+			//		0,-1,
+			//		0,//{ -0.03,0,-0.03 },
+			//		1
+			//	},
+			//	stl.triangles.length
+			//);
 			model.planes.numChanged = true;
 			model.triangles.numChanged = true;
 			model.spheres.numChanged = true;

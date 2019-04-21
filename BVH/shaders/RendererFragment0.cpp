@@ -1,7 +1,7 @@
 #version 450 core
 #define RayTraceDepth 8
 #define Pi 3.14159265359
-#define offset 0.001
+#define offset 0.005
 #define minColor 0.01
 #define originSamples 8
 #define bit(a, b)			((a & (1 << uint(b))) != 0)
@@ -544,30 +544,31 @@ vec4 rayTrace(Ray ray)
 						{
 							vec3 d = ray.p0.xyz - cones[n].c;
 							float nn0 = dot(ray.n, cones[n].n);
-							float dn0 = dot(d, cones[n].n);
-							float dn = dot(d, ray.n);
-							float d2 = dot(d, d);
-							float a = cones[n].c2 - nn0 * nn0;
-							float b = nn0 * dn0 - dn * cones[n].c2;
-							float c = d2 * cones[n].c2 - dn0 * dn0;
+							float dn = dot(d, cones[n].n);
+							vec3 j = dn * cones[n].n - cones[n].c2 * d;
+							float c = dot(d, j);
+							float b = dot(ray.n, j);
+							float a = nn0 * nn0 - cones[n].c2;
 							float s = b * b - a * c;
 							if (s > 0)
 							{
 								s = sqrt(s);
 								float tt = -1;
 								float r2;
-								tt = (b + s) / a;
+								tt = (s - b) / a;
+								float d2 = dot(d, d);
+								float dn0 = dot(d, ray.n);
 								if (tt > 0)
 								{
-									r2 = d2 + tt * tt + 2 * dn * tt;
-									float k = dn0 + nn0 * tt;
+									r2 = d2 + tt * tt + 2 * dn0 * tt;
+									float k = dn + nn0 * tt;
 									if (r2 > cones[n].l2 || k < 0)tt = -1;
 								}
-								float ttt = (b - s) / a;
+								float ttt = (-b - s) / a;
 								if (ttt > 0 && (ttt < tt || (tt < 0)))
 								{
-									float r2t = d2 + ttt * ttt + 2 * dn * ttt;
-									float k = dn0 + nn0 * ttt;
+									float r2t = d2 + ttt * ttt + 2 * dn0 * ttt;
+									float k = dn + nn0 * ttt;
 									if (r2t <= cones[n].l2 && k > 0)
 									{
 										tt = ttt;
@@ -578,9 +579,9 @@ vec4 rayTrace(Ray ray)
 								{
 									ray.t = tt;
 									hitObj = uvec2(geometry, n);
-									tempN = normalize(d + ray.n * ray.t - cones[n].n * sqrt(r2 / cones[n].c2));
-									float ne1 = dot(tempN, cones[n].n);
-									vec3 nxy = normalize(tempN - ne1 * cones[n].n);
+									tempN = ((d + ray.n * ray.t) * sqrt(cones[n].c2 / r2) - cones[n].n) /
+										sqrt(1 - cones[n].c2);
+									vec3 nxy = normalize(d + ray.n * ray.t - cones[n].n * sqrt(r2 * cones[n].c2));
 									float u =
 										dot(nxy, cross(cones[n].n, cones[n].e1)) >= 0 ?
 										acos(dot(cones[n].e1, nxy)) / (2 * Pi) :
