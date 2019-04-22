@@ -258,30 +258,6 @@ namespace OpenGL
 			cube.bindUnit();
 			glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 			
-			model.circles.data.circles +=
-			{
-				{
-					{ 0, -1, 0, 0 },
-					{ 0,0,0 },
-						4900,
-					{ 1,0,0 },
-					{
-						0,-1,
-						0,-1,
-						0.5,-1,
-						0,-1,
-						0,
-						1.5
-					}
-				}
-			};
-			model.pointLights.data.pointLights +=
-			{
-				{
-					{4000, 4000, 4000},
-					{ 0,-300,0 }
-				},
-			};
 			//model.addSTL
 			//(
 			//	stl,
