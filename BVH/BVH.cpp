@@ -365,7 +365,7 @@ namespace OpenGL
 								1.33
 							}
 							});*/
-			model.circles.data.circles +=
+			/*model.circles.data.circles +=
 			{
 				{
 					{ 0, -1, 0, 0 },
@@ -381,7 +381,7 @@ namespace OpenGL
 						1.5
 					}
 				}
-			};
+			};*/
 			//model.cylinders.data.cylinders +=
 			//{
 			//	{
@@ -444,9 +444,9 @@ namespace OpenGL
 					{ 0,1,0 },100,
 					{ 1,0,0 },
 					{
+						1,-1,
+						1,-1,
 						0,-1,
-						0,-1,
-						1,0,
 						0,-1,
 						{0,-0.1,-0.1},
 						1.33
