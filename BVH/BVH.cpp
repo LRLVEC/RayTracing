@@ -242,7 +242,7 @@ namespace OpenGL
 			decayOriginStorage(&decayOriginBuffer, ShaderStorageBuffer, 8),
 			testBMP("resources\\Haja1.bmp"),
 			cubeData("resources\\room\\"),
-			stl(sm.folder.find("resources/°²ÄÝÅ®ÍõÌÉÒÎ.stl").readSTL()),
+			stl(sm.folder.find("resources/dragon.stl").readSTL()),
 			texture(&testBMP, 1),
 			cube(&cubeData, 2, RGBA32f, 1, cubeData.bmp[0].header.width, cubeData.bmp[0].header.height),
 			textureConfig(&texture, Texture2DArray, RGBA32f, 1, testBMP.bmp.header.width, testBMP.bmp.header.height, 1),
@@ -257,23 +257,40 @@ namespace OpenGL
 			texture.bindUnit();
 			cube.bindUnit();
 			glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+			model.circles.data.circles +=
+			{
+				{
+					{0,0,1,0},
+					{0,0,0},
+					50,
+					{1,0,0},
+					{
+						0,-1,
+						0,-1,
+						1,-1,
+						0,-1,
+						0,
+						1
+					}
+				}
+			};
 			model.pointLights.data.pointLights +=
 			{
 				{
 					{4000, 4000, 4000},
-					{ 0,-300,0 }
+					{ 0,0,300 }
 				}
 			};
 			model.addSTL
 			(
 				stl,
 				{
-					0,-1,
-					0,-1,
+					1,-1,
 					1,-1,
 					0,-1,
-					0,
-					1
+					0,-1,
+					{0, 0, -0.1},
+					1.5
 				},
 				stl.triangles.length
 			);
