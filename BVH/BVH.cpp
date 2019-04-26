@@ -232,7 +232,7 @@ namespace OpenGL
 			sm(),
 			sizeChanged(true),
 			frameScale(),
-			transform({ {60.0},{0.4,0.9,0.1},{2},{0,0,1},700.0 }),
+			transform({ {60.0},{0.4,0.9,0.1},{0.5},{0,0,1},700.0 }),
 			model({ {ShaderStorageBuffer,0},{1,2},{3},{4},{5},{6},{7},{3},{9} }),
 			frameSizeBuffer(&frameScale),
 			transBuffer(&transform.bufferData),
@@ -242,7 +242,7 @@ namespace OpenGL
 			decayOriginStorage(&decayOriginBuffer, ShaderStorageBuffer, 8),
 			testBMP("resources\\Haja1.bmp"),
 			cubeData("resources\\room\\"),
-			stl(sm.folder.find("resources/compound_j74_smp.stl").readSTL()),
+			stl(sm.folder.find("resources/°²ÄÝÅ®ÍõÌÉÒÎ.stl").readSTL()),
 			texture(&testBMP, 1),
 			cube(&cubeData, 2, RGBA32f, 1, cubeData.bmp[0].header.width, cubeData.bmp[0].header.height),
 			textureConfig(&texture, Texture2DArray, RGBA32f, 1, testBMP.bmp.header.width, testBMP.bmp.header.height, 1),
@@ -257,14 +257,6 @@ namespace OpenGL
 			texture.bindUnit();
 			cube.bindUnit();
 			glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
-
-			/*model.circles.data.circles +=
-			{
-				{
-
-				}
-			};*/
-
 			model.pointLights.data.pointLights +=
 			{
 				{
@@ -276,11 +268,11 @@ namespace OpenGL
 			(
 				stl,
 				{
+					0,-1,
+					0,-1,
 					1,-1,
 					0,-1,
-					0,-1,
-					0,-1,
-					0,//{ -0.03,0,-0.03 },
+					0,
 					1
 				},
 				stl.triangles.length
