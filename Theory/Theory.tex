@@ -463,14 +463,69 @@
             \subsubsection{镜面反射}
                 考虑法向$\overrightarrow{n_0}$的变化:
                 \begin{equation}
-                    \overrightarrow{n_0}'=\overrightarrow{n_0}-2\left(\overrightarrow{n_{hit}}\cdot\overrightarrow{n_0}\right)\overrightarrow{n_{hit}}.
+                    \overrightarrow{n_0}'=\overrightarrow{n_0}-2\left(\overrightarrow{n_{hit}}
+                    \cdot\overrightarrow{n_0}\right)\overrightarrow{n_{hit}}.
                 \end{equation}
                 而起始点为:
                 \begin{equation}
-                    \overrightarrow{p_0}'=\overrightarrow{p_0}+\overrightarrow{n_0}t.
+                    \overrightarrow{p_0}'=\overrightarrow{p_0}+\overrightarrow{n_0}\left(t-\delta\right).
                 \end{equation}
                 为保证继续进行相交测试时不会重新与该物体在该点相交,故实际上要将$t$稍微减少$\delta$.
+                对于光学效果的模拟,要考虑两种情况:\\
+                \indent 1.没有折射,即无需计算菲涅尔效应带来的修正.\\
+                \indent 2.有折射,则需要计算该修正.\\
+                \indent 而修正为:
+                \begin{equation}
+                    t'=\frac{\left(1+\frac{\cos{\left(i_1+i_0\right)}}{\cos{\left(i_1-i_0\right)}}^2\right)
+                    \left(\frac{\sin{\left(i_1-i_0\right)}}{\sin{\left(i_1+i_0\right)}}\right)^2}{2}t.
+                \end{equation}
+                注意到当$i_1$和$i_0$都趋于0时,数值计算可能不精确,于是求极限:
+                \begin{equation}
+                    \lim_{i_1,i_0\rightarrow 0}\frac{\left(1+\frac{\cos{\left(i_1+i_0\right)}}{\cos{\left(i_1-i_0\right)}}^2\right)
+                    \left(\frac{\sin{\left(i_1-i_0\right)}}{\sin{\left(i_1+i_0\right)}}\right)^2}{2}=
+                    \left(\frac{n-1}{n+1}\right)^2
+                \end{equation}
             \subsubsection{折射}
-                这里需要考虑$\overrightarrow{n_{hit}}$与$\overrightarrow{n_0}$的方向一致性,
-                若
+                这里需要考虑$\overrightarrow{n_{hit}}$与$\overrightarrow{n_0}$的方向一致性.由折射定律
+                \begin{equation}
+                    \sin{i_0}=n\sin{i_1}
+                \end{equation}
+                可以求出$i_1$.经过计算得到:\\
+                \indent 1.$\overrightarrow{n_{hit}}\cdot\overrightarrow{n_0}<0$:
+                \begin{equation}
+                    \overrightarrow{n_0}'=\frac{\overrightarrow{n_0}-
+                    \left(n\cos{i_1}+\cos{i_0}\right)\overrightarrow{n_{hit}}}{n}
+                \end{equation}
+                \indent 2.$\overrightarrow{n_{hit}}\cdot\overrightarrow{n_0}>0$:
+                \begin{equation}
+                    \overrightarrow{n_0}'=\frac{\overrightarrow{n_0}+
+                    \left(n\cos{i_1}-\cos{i_0}\right)\overrightarrow{n_{hit}}}{n}
+                \end{equation}
+                \indent 于是综合得到:
+                \begin{equation}
+                    \overrightarrow{n_0}'=\frac{\overrightarrow{n_0}+
+                    \left(sign\left(\overrightarrow{n_{hit}}\cdot\overrightarrow{n_0}\right)n\cos{i_1}-
+                    \cos{i_0}\right)\overrightarrow{n_{hit}}}{n}.
+                \end{equation}
+                而起始点为:
+                \begin{equation}
+                    \overrightarrow{p_0}'=\overrightarrow{p_0}+\overrightarrow{n_0}\left(t+\delta\right).
+                \end{equation}
+                为保证继续进行相交测试时不会重新与该物体在该点相交,故实际上要将$t$稍微增加$\delta$.\\
+                \indent 计算菲涅尔透射率:
+                \begin{equation}
+                    t'=\frac{\cos{i_1}\cos{i_0}\left(\frac{2n\sin{i_1}}{\sin{\left(i_0+i_1\right)}}\right)^2
+                    \left(1+\frac{1}{\cos^2\left(i_1-i_0\right)}\right)}{2}t.
+                \end{equation}
+                同理,在$i_1$和$i_0$都趋于0时,计算极限:
+                \begin{equation}
+                    \lim_{i_1,i_0\rightarrow 0}\frac{\cos{i_1}\cos{i_0}\left(\frac{2n\sin{i_1}}
+                    {\sin{\left(i_0+i_1\right)}}\right)^2\left(1+\frac{1}{\cos^2\left(i_1-i_0\right)}\right)}{2}=
+                    \left(\frac{2n^2}{1+n}\right)^2.
+                \end{equation}
+            \subsubsection{点光源漫反射}
+                这里采用简化的模型:若交点与点光源之间没有其他图元之间遮挡,则认为可以被光源照到.因此,
+                首先计算出相交位置
+                $\overrightarrow{p_0}'=\overrightarrow{p_0}+\overrightarrow{n_0}\left(t-\delta\right)$
+                ($t$减少$\delta$是因为防止面元后侧的光源干扰)然后对所有光源逐一判断是否有图元遮挡.
 \end{document}
