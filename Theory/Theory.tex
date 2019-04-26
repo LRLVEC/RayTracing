@@ -1,0 +1,476 @@
+\documentclass[UTF8]{ctexart}
+\usepackage{geometry}
+\usepackage{indentfirst}
+\usepackage{hyperref}
+\usepackage{harpoon}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+% \usepackage{mathpazo}
+\geometry{a4paper, left=1cm, right=1cm, top=2cm, bottom=2cm}
+\setlength{\parindent}{1cm}
+\renewcommand
+\contentsname{Content}
+\title{光线追踪算法理论}
+\author{段元兴}
+\date{\today}
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+\setcounter{page}{1}
+\newpage
+\tableofcontents
+\newpage
+    \section{摘要}
+        作为Computer Graphics的圣杯---光线追踪,是一个十分古老但是热门的算法.
+        接下来将简要的介绍实时光线追踪算法的基本实现.
+    \section{基本原理}
+        \subsection{概述}
+            \indent 真实世界的几何光学模型是光线从光源发出,经过折射,镜面反射,漫反射等方式进
+            入人眼.而现有计算机图形学的基本渲染方法却是光栅化,即利用空间投影变换将各种基本
+            图形元素(如三角形)投影到屏幕坐标然后上色等等.然而这种做法有先天性的巨大缺陷:在
+            实现折射反射及阴影等效果的时候需要利用各种所谓的技巧才能不太精确的模拟真实情况.\\
+            \indent 而模拟实际光线的光线追踪算法突破了这些传统图形学的局限性.
+        \subsection{正反向光线追踪}
+            一般来说光线追踪算法分两种:\\
+            \indent 1.正向光线追踪:完全按照真实世界的几何光学模型,模拟的光线从光源发出,经过
+            折射反射等等作用进入人眼从而被看到.而由于一般只有少量从光源发出的光线被人眼看到,
+            所以这种方法浪费了巨大的计算能力.\\
+            \indent 2.反向光线追踪:利用几何光线的光路可逆性,将原来的光线的方向改变从人眼出发,
+            极大的降低了所需要的光线数量.但是在路径追踪里,通常也需要与正向追踪结合来加快寻找
+            光源的速度.
+        \subsection{物理模型}
+            \indent 光线追踪里最基本的两个模型是光线和物体.人眼投射出光线,而光线在物体表面之
+            间和内部传播,而物体则对其有镜面反射,漫反射,折射和体积吸收等效果.光线和物体的特征
+            主要有几何特征和光学特征.光线的几何特征包括其初始点,方向和与物体碰撞时经过的距离;
+            而物体的几何特征则包括面元位置和表面法向.光线的光学特征有其颜色和占进入人眼光线
+            的比例,物体的光学特征则包括其镜面反射率,漫反射率,透射率,体积吸收率和折射率.\\
+            \indent 光线追踪的主要任务有两个:\\
+            \indent 1.计算光线与物体的碰撞,即找到第一个与光线碰撞的物体.\\
+            \indent 2.计算光线与物体表面的相互作用,包括计算光线的颜色特征变化和几何特征变化.\\
+            \indent 对于任务1,最基本的想法是逐一对所有物体进行相交测试,找到距离最近的交点.不
+            过如果合理利用物体之间的空间关系则可以大大加速这个过程,例如假如物体$a$在物体$b$内
+            部,而光线未与$b$相交,则对$a$的相交测试完全可以省去.而我们又可以加入一些假象的物体,
+            即包围盒,将一些物体包围起来,使得未与包围盒相交的光线不可能与其内的物体相交.还可以
+            对空间进行划分,使得光线背后的物体无需测试.总之有很多可以对测交过程加速的算法.我们
+            这里选取BVH (Bounding volume hierarchy)加速算法\\
+            \indent 对于任务2,直接利用相关公式计算即可.
+        \subsection{在计算机GPU上利用OpenGL实现}
+            \indent 目前光线追踪算法的实现大多是在CPU上实现的,自然是可以利用高级编程语言带来的各种方
+            便的语法.但是由于在这里的模型中光线与光线是无关的,故可以利用GPU的强大的并行性来加
+            速.基本的想法是对于投影平面上的每一个像素点生成一根光线然后交给fragment着色器实现
+            对其的追踪,获取的颜色则直接作为该像素点的颜色.追踪的过程包括:\\
+            \indent 1.从眼睛到投影屏幕之间投射一根光线,寻找第一个交点.若有交点,进行步骤2,否则返回天空盒子的颜色.\\
+            \indent 2.计算当前光线与物体之间的光学相互作用:\\
+            \indent \indent a.如果存在漫反射,计算光源与交点是否有物体遮挡,如果没有则计算光源对交点的光照;\\
+            \indent \indent b.如果存在折射,计算折射光线并将其压栈,计算折射对镜面反射率的影响;\\
+            \indent \indent c.如果存在镜面反射,计算反射光线并将其设为当前光线.\\
+            \indent 3.计算当前光线的第一个交点,若有交点,进行步骤2,否则退栈(若未栈空)或结束追踪(栈空).\\
+            \indent 当然栈深度是有限的,所以在达到栈深的时候即使有折射或反射光线也不能压栈.\\
+            \indent 所以光线追踪实现主要包括:对栈和递归的模拟(由于glsl不支持递归),对包围盒的遍
+            历,相交测试的计算,光学效果的计算.\\
+            \indent 考虑到实现实时最大的问题:性能,自然要对shader程序优化(效果可以非常明显,例如
+            从compute shader移植到 fragment shader之后性能提高了160\%).当然这样下来我们画出来的
+            图片并不是无偏的,由于在漫反射时仅仅计算了对光源的漫反射而未考虑其他物体的影响.这可
+            以通过分布式蒙特卡洛光线追踪解决,但是考虑到性能和后期降噪处理的复杂度,这里略去.所以
+            物体之间的漫反射和焦散效果等等这里是看不到的.
+    \section{理论推导}
+        \subsection{基本模型的数学描述}
+            由于计算机只认识数,所以我们要将当前的各种物理模型转换成数学语言.这里涉及到基本的矢量计算.
+            \subsubsection{颜色模型}
+                虽然自然生活中光的波长是连续分布的,但是在这里采用显示器的描述方式,即用$(R,G,B)$的混合来描述千千万万种个颜色.
+                而一个物体的光学属性则十分复杂,这里仅仅考虑其表面的自发光颜色$g$(glow),表面的反射颜色$r$(reflect),透射
+                颜色$t$(transmission),对光源的漫反射系数$d$(diffuse)和折射率$n_0$.所以用类$Color:\{r,t,g,d,n_0\}$来储存颜色信息.
+                而这些信息有可能随着在几何图元上的位置的不同而变化,因此有必要建立一个纹理坐标,
+                使\includegraphics[width=0.5cm]{./Opengl_Tiny.jpg}能够从纹理数组读取这些信息.
+            \subsubsection{光线模型}
+                一根光线由出发点$\overrightarrow{p_0}$,方向$\overrightarrow{n_0}$(已经归一化),颜色构成.为了方便GPU优化计算,这里的
+                $\overrightarrow{p_0}$加上一个$w=1$分量构成$p^\mu=(\overrightarrow{p_0},1)$.\\
+                \indent 而颜色一般由$(R,G,B)$三个分量来表示.由于我们用的是反向光线追踪,
+                所以还需要一个强度因子$(k_R,k_G,k_B)$来表示当前光线占总光线强度的比例.\\
+                \indent 光线经过的所有点可以由:
+                \begin{equation}\label{eq:r}
+                    r^\mu=p_0^\mu+t\overrightarrow{n_0},t>0
+                \end{equation}
+                来表述.
+            \subsubsection{点光源模型}
+                一个点光源由其位置和颜色表示.
+            \subsubsection{平面模型}
+                这里平面的定义为一个无穷大的三维中的二维平面,由三维笛卡尔坐标方程来描述:
+                \begin{equation}\label{eq:plane}
+                    Ax+By+Cz+W=0.
+                \end{equation}
+                为简化描述,我们用
+                \begin{equation}
+                    n_p^\mu=(\overrightarrow{n_p},W)=(A,B,C,W)
+                \end{equation}
+                来描述这个平面,其中$\overrightarrow{n_p}$也是该平面的法向(保证已经归一化).
+            \subsubsection{三角形模型}
+                这里三角形用空间中三个点$\overrightarrow{p_0},\overrightarrow{c},\overrightarrow{p_2}$来定义,
+                并且法向$\overrightarrow{n_p}$由顺序$p_0,c,p_2$按照右手螺旋法则定义为正方向.由这些顶点可以计
+                算出$\overrightarrow{n_p}$(已归一化)和该三角形所在的平面$n_p^\mu$.而在三角形平面内的点可以用仿
+                射坐标$\overrightarrow{t'}=(u',v')$来表示,并且该坐标的单位向量为
+                $\overrightarrow{e_0}=\overrightarrow{p_0 c},\overrightarrow{e_1}=\overrightarrow{p_0 p_2}$.
+                三角形的三个顶点又具有其在纹理图片上的纹理坐标
+                \begin{equation}
+                    \left\{
+                        \begin{aligned}
+                            \overrightarrow{t_0}=(u_0,v_0)\\
+                            \overrightarrow{t_1}=(u_1,v_1)\\
+                            \overrightarrow{t_2}=(u_2,v_2)
+                        \end{aligned}
+                    \right.
+                \end{equation}
+                从$(u',v')$计算实际纹理坐标$\overrightarrow{t}$可由以下公式得出:
+                \begin{equation}\label{eq:triangleTexcood}
+                    \overrightarrow{t}=u'\overrightarrow{t_1}+v'\overrightarrow{t_2}+(1-u'-v')\overrightarrow{t_0}.
+                \end{equation}
+            \subsubsection{球形模型}
+                设球心的位矢为$\overrightarrow{c}$,半径为$R$.为方便GPU储存与计算,用$c^\mu=(\overrightarrow{c},R^2)$来储该球的几何特征.
+                纹理坐标这么表示:定义一个球的z方向$\overrightarrow{e_2}$(类似于地球的极轴,从地心指向北极点为正方向),指定一个方向$\overrightarrow{e_0}$作为x正方向,
+                根据右手系建立球坐标系$(r,\theta,\phi)$.而纹理坐标$(u,v)$由$\theta$和$\phi$经过归一化得到:
+                \begin{equation}\label{eq:sphereTexcood}
+                    \left\{
+                        \begin{array}{l}
+                            u=\frac{\phi}{2\pi}\\
+                            v=1-\frac{\theta}{\pi}
+                        \end{array}
+                    \right..
+                \end{equation}
+            \subsubsection{圆盘模型}
+                类似于所有平面图形,圆盘由其所在平面$p^\mu=(\overrightarrow{n_0},W)$,圆心坐标和圆半径$c^\mu=(\overrightarrow{c},R^2)$组成.而
+                为了计算纹理坐标,我们还要破坏其轴对称性,即在圆盘平面内架一个$uv$坐标系.因此首先在平面内指定一个方向
+                为$u$坐标正方向$\overrightarrow{e_0}$,然后由法向$\overrightarrow{n_0}$计算出另一个坐标的单位向量$\overrightarrow{e_1}$.设焦点相
+                对圆心的位置为$\overrightarrow{d}$,
+                则该点的纹理坐标为:
+                \begin{equation}\label{eq:circleTexcood}
+                    \left\{
+                        \begin{array}{l}
+                            u=\frac{\overrightarrow{d}\cdot\overrightarrow{e_0}}{2 R}+\frac{1}{2}\\
+                            v=\frac{\overrightarrow{d}\cdot\overrightarrow{e_1}}{2 R}+\frac{1}{2}
+                        \end{array}
+                    \right..
+                \end{equation}
+            \subsubsection{圆柱模型}
+                这里的圆柱只描述其侧面(底面和顶面都是由圆来描述).圆柱可以由一个圆柱底面圆心坐标$\overrightarrow{c}$,圆柱轴线
+                方向$\overrightarrow{n}$(从底面圆心到顶面圆心为正方向),圆柱半径$R$和圆柱高度$l$这些参数表述.而侧面方程为:
+                \begin{equation}\label{eq:cylinder}
+                    \left|\left(\overrightarrow{r}-\overrightarrow{c}\right) \times \overrightarrow{n} \right|=R,
+                \end{equation}
+                且满足:
+                \begin{equation}\label{eq:cylinderCond}
+                    0 \leqslant \left(\overrightarrow{r}-\overrightarrow{c}\right) \cdot \overrightarrow{n} \leqslant l.
+                \end{equation}
+                至于纹理坐标,可以建立以下纹理坐标:以$\overrightarrow{c}$为坐标原点,以$\overrightarrow{n}$为z轴,再指定一个方向$\overrightarrow{e_0}$为
+                x轴正方向,建立右手柱坐标系\\$(r,\theta,z)$,$\overrightarrow{e_1}$为y轴.然后纹理坐标为:
+                \begin{equation}\label{eq:cylinderTexcood}
+                    \left\{
+                        \begin{array}{l}
+                            u=\frac{\theta}{2 \pi}\\
+                            v=\frac{z}{l}
+                        \end{array}
+                    \right..
+                \end{equation}
+            \subsubsection{圆锥模型}
+                这里的圆锥只描述其侧面(底面由圆来描述).圆锥可以由一个锥尖坐标$\overrightarrow{c}$,圆锥轴线方向$\overrightarrow{n_0}$(从锥尖到
+                底面圆心为正方向),半顶角$\alpha$和母线长度$l$这些参数描述.而侧面方程为:
+                \begin{equation}\label{eq:cone}
+                    \left(\overrightarrow{r}-\overrightarrow{c}\right)\cdot\overrightarrow{n}=
+                    \cos\alpha\left|\overrightarrow{r}-\overrightarrow{c}\right|
+                \end{equation}
+                且满足:
+                \begin{equation}\label{eq:coneTexcood}
+                    0\leqslant\left(\overrightarrow{r}-\overrightarrow{c}\right)\cdot\overrightarrow{n}
+                    \leqslant l cos(\alpha).
+                \end{equation}
+                而纹理坐标可以这么建立:以底面圆心为坐标原点,以$-\overrightarrow{n_0}$为z轴,选定一个方向$e_0$作为x轴,按照右手系建立
+                极坐标系$(人,\theta,z)$,而纹理坐标为:
+                \begin{equation}
+                    \left\{
+                        \begin{array}{l}
+                            u=\frac{\theta}{2 \pi}\\
+                            v=\frac{z}{l cos(\alpha)}
+                        \end{array}
+                    \right..
+                \end{equation}
+            \subsubsection{包围盒模型}
+                为了加速相交测试,我们采用矩形包围盒模型(类似的还有球形包围盒等等).一个矩形包围盒包括其坐标最小点$\overrightarrow{p_{min}}$和
+                坐标最大点$\overrightarrow{p_{max}}$.
+        \subsection{相交测试的推导}
+            如果我们想要求光线与几何图元的相交点,则必须求出方程\ref{eq:r}中的$t$,相应的纹理坐标也能计算得出.而
+            为了进一步计算反射折射光线,还要计算出该位置图元的法向$\overrightarrow{n_{hit}}$.
+            \subsubsection{平面}
+                方程\ref{eq:plane}即可以写成:
+                \begin{equation}
+                    r^\mu n_0^\mu=0,
+                \end{equation}
+                代入方程\ref{eq:r},故
+                \begin{equation}
+                    (p_0^\mu+t\overrightarrow{n_0})n_0^\mu=0.
+                \end{equation}
+                由此可以解出$t$:
+                \begin{equation}\label{eq:plane's t}
+                    t=-\frac{p_0^\mu n_p^\mu}{\overrightarrow{n_0} \cdot \overrightarrow{n_p}}.
+                \end{equation}
+                法向$\overrightarrow{n_{hit}}$就是$\overrightarrow{n_p}$.
+            \subsubsection{三角形}
+                光线若与一个三角形相交,则必先与该三角形所在的平面相交.由方程\ref{eq:plane's t}可求得
+                $t$,由方程\ref{eq:r}可知位置矢量$r^\mu$.而为判断该交点是否在三角形内部,我们首先要计算
+                该焦点在平面内的仿射坐标$(u',v')$.设交点$\overrightarrow{r}$到三角形顶点$c$的位矢为:
+                \begin{equation}
+                    \overrightarrow{d}=\overrightarrow{r}-\overrightarrow{c}=u'\overrightarrow{e_1}+v'\overrightarrow{e_2}.
+                \end{equation}
+                则:
+                \begin{equation}
+                    \left\{
+                        \begin{array}{l}
+                            \overrightarrow{d}\cdot\overrightarrow{e_1} = {\left| \overrightarrow{e_1} \right|}^2u' + \left(\overrightarrow{e_1}\cdot \overrightarrow{e_2}\right)v'\\
+                            \overrightarrow{d}\cdot\overrightarrow{e_2} = \left(\overrightarrow{e_1}\cdot \overrightarrow{e_2}\right)u' + {\left| \overrightarrow{e_2} \right|}^2v'
+                        \end{array}
+                    \right.,
+                \end{equation}
+                由此可以解出:
+                \begin{equation}
+                    \left\{
+                        \begin{array}{l}
+                            u' = \overrightarrow{k_1}\cdot\overrightarrow{d}\\
+                            v' = \overrightarrow{k_2}\cdot\overrightarrow{d}
+                        \end{array}
+                    \right.,
+                \end{equation}
+                其中:
+                \begin{equation}
+                    \left\{
+                        \begin{array}{l}
+                            \overrightarrow{k_1}=\frac{{\left| \overrightarrow{e_2} \right|}^2\overrightarrow{e_1}-\left(\overrightarrow{e_1}\cdot\overrightarrow{e_2}\right)\overrightarrow{e_2}}{s}\\
+                            \overrightarrow{k_2}=\frac{{\left| \overrightarrow{e_1} \right|}^2\overrightarrow{e_2}-\left(\overrightarrow{e_1}\cdot\overrightarrow{e_2}\right)\overrightarrow{e_1}}{s}
+                        \end{array}
+                    \right.,
+                \end{equation}
+                \begin{equation}
+                    s=\left| \overrightarrow{e_1} \times \overrightarrow{e_2} \right|^2.
+                \end{equation}
+                而判断交点是否在三角形内则可由以下条件判断:
+                \begin{equation}
+                    \left\{
+                        \begin{array}{l}
+                            u'  \geqslant 0\\
+                            v'  \geqslant 0\\
+                            u'+v'\leqslant 1
+                        \end{array}
+                    \right..
+                \end{equation}
+                法向$\overrightarrow{n_{hit}}$就是$\overrightarrow{n_p}$,纹理坐标$(u,v)$可以由
+                方程\ref{eq:triangleTexcood}得出.
+            \subsubsection{球形}
+                光线若与一个球相交,则该直线到球心的距离小于$R$.而这个距离平方可以表示为
+                $\left|\left(\overrightarrow{c}-\overrightarrow{p_0}\right)\times\overrightarrow{n_0}\right|^2$.
+                令$\overrightarrow{d}=\overrightarrow{c}-\overrightarrow{p_0}$,
+                则有:
+                \begin{equation}
+                    s^2=R^2-\left|\overrightarrow{d}\times\overrightarrow{n_0}\right|^2 \geqslant 0.
+                \end{equation}
+                球的方程为:
+                \begin{equation}
+                    \left|\overrightarrow{r}-\overrightarrow{c}\right|^2=R^2,
+                \end{equation}
+                代入方程\ref{eq:r}可得:
+                \begin{equation}
+                    \left|\overrightarrow{n_0}t-\overrightarrow{d}\right|^2=R^2,
+                \end{equation}
+                由此可以解出:
+                \begin{equation}
+                    \left\{
+                        \begin{array}{l}
+                            t_1=\overrightarrow{n_0}\cdot\overrightarrow{d}+
+                            \sqrt{R^2-\left(\left|\overrightarrow{d}\right|^2-
+                            \left(\overrightarrow{n_0}\cdot\overrightarrow{d}\right)^2\right)}\\
+                            t_2=\overrightarrow{n_0}\cdot\overrightarrow{d}-
+                            \sqrt{R^2-\left(\left|\overrightarrow{d}\right|^2-
+                            \left(\overrightarrow{n_0}\cdot\overrightarrow{d}\right)^2\right)}
+                        \end{array}
+                    \right..
+                \end{equation}
+                由于$\left|\overrightarrow{d}\times\overrightarrow{n_0}\right|^2=
+                \left|\overrightarrow{d}\right|^2-\left(\overrightarrow{n_0}\cdot\overrightarrow{d}\right)^2$,
+                故:
+                \begin{equation}
+                    \left\{
+                        \begin{array}{l}
+                            t_1=\overrightarrow{n_0}\cdot\overrightarrow{d}+s\\
+                            t_2=\overrightarrow{n_0}\cdot\overrightarrow{d}-s
+                        \end{array}
+                    \right..
+                \end{equation}
+                当然只有其中一个解是最近的相交点,于是最小的正解即为我们所求的$t$.
+                而法向:
+                \begin{equation}
+                    \overrightarrow{n_{hit}}=\frac{\overrightarrow{r}-\overrightarrow{c}}{R}.
+                \end{equation}
+                计算$\overrightarrow{n_{hit}}$在$xOy$平面上的投影:
+                \begin{equation}
+                    \cos\theta=\overrightarrow{n_{hit}}\cdot\overrightarrow{e_2};
+                \end{equation}
+                \begin{equation}
+                    \overrightarrow{n_{xy}}=normalize\left(\overrightarrow{n_{hit}}-\overrightarrow{e_2}\cos\theta\right),
+                \end{equation}
+                则:
+                \begin{equation}
+                    \theta=\arccos\left(\overrightarrow{n_{hit}}\cdot\overrightarrow{e_2}\right);
+                \end{equation}
+                \begin{equation}
+                    \phi=
+                    \left\{
+                        \begin{array}{ll}
+                            \arccos(\overrightarrow{n_{xy}}\cdot\overrightarrow{e_0}),
+                            &{\overrightarrow{n_{xy}}\cdot\overrightarrow{e_1}\geqslant0}\\
+                            2\pi-\arccos(\overrightarrow{n_{xy}}\cdot\overrightarrow{e_0}),
+                            &{\overrightarrow{n_{xy}}\cdot\overrightarrow{e_1}<0}
+                        \end{array}
+                    \right..
+                \end{equation}
+                纹理坐标则可以用\ref{eq:sphereTexcood}计算得到.
+            \subsubsection{圆盘}
+                同三角形,首先计算出相交位置$r^\mu$.然后判断是否在圆盘内:
+                \begin{equation}
+                    \overrightarrow{d}=\overrightarrow{r}-\overrightarrow{c},\\
+                    \left| \overrightarrow{d} \right|^2<R^2.
+                \end{equation}
+                纹理坐标按照\ref{eq:circleTexcood}计算即可,法向$\overrightarrow{n_{hit}}$即$\overrightarrow{n_p}$.
+            \subsubsection{圆柱}
+                将\ref{eq:r}代入\ref{eq:cylinder}并展开可得:
+                \begin{equation}
+                    \left[1-\left(\overrightarrow{n_0}\cdot\overrightarrow{n}\right)\right]t^2+
+                    2\left(\overrightarrow{n_0}\cdot\overrightarrow{j}\right)t
+                    +\overrightarrow{d}\cdot\overrightarrow{j}-R^2=0,
+                \end{equation}
+                其中:
+                \begin{equation}
+                    \overrightarrow{j}=\overrightarrow{d}-
+                    \left(\overrightarrow{n}\cdot\overrightarrow{d}\right)\overrightarrow{n}.
+                \end{equation}
+                令$a=1-\left(\overrightarrow{n_0}\cdot\overrightarrow{n}\right)$,
+                $b=\overrightarrow{n_0}\cdot\overrightarrow{j}$,
+                $c=R^2-\overrightarrow{d}\cdot\overrightarrow{j}$;
+                由此可以解得:
+                \begin{equation}
+                    \left\{
+                        \begin{array}{l}
+                            t_1=\frac{-b-\sqrt{b^2+ac}}{a}\\
+                            t_2=\frac{-b+\sqrt{b^2+ac}}{a}
+                        \end{array}
+                    \right..
+                \end{equation}
+                考虑到约束\ref{eq:cylinderCond}并代入$\overrightarrow{r}$可得:
+                \begin{equation}
+                    z=\overrightarrow{d}\cdot\overrightarrow{n}+
+                    \left(\overrightarrow{n_0}\cdot\overrightarrow{n}\right)t;
+                \end{equation}
+                \begin{equation}
+                    0\leqslant z\leqslant l.
+                \end{equation}
+                于是最小的满足约束条件的正解即为我们所求的$t$.
+                法向$\overrightarrow{n_{hit}}=\frac{\overrightarrow{d}+\overrightarrow{n_0}t-\overrightarrow{n}z}{R}$;
+                而纹理坐标则可以由\ref{eq:cylinderTexcood}得到,其中
+                \begin{equation}
+                    \theta=
+                    \left\{
+                        \begin{array}{ll}
+                            \arccos(\overrightarrow{n_{hit}}\cdot\overrightarrow{e_0}),
+                            &{\overrightarrow{n_{hit}}\cdot\overrightarrow{e_1}\geqslant0}\\
+                            2\pi-\arccos(\overrightarrow{n_{hit}}\cdot\overrightarrow{e_0}),
+                            &{\overrightarrow{n_{hit}}\cdot\overrightarrow{e_1}<0}
+                        \end{array}
+                    \right..
+                \end{equation}
+            \subsubsection{圆锥}
+                将\ref{eq:r}代入\ref{eq:cone}并展开可得:
+                \begin{equation}
+                    \left[\left(\overrightarrow{n_0}\cdot\overrightarrow{n}\right)-\cos^2\alpha\right]t^2+
+                    2 \left(\overrightarrow{j}\cdot\overrightarrow{n_0}\right)t+
+                    \overrightarrow{j}\cdot\overrightarrow{d}=0;
+                \end{equation}
+                其中:
+                \begin{equation}
+                    \overrightarrow{j}=
+                    \left(\overrightarrow{d}\cdot\overrightarrow{n}\right)\overrightarrow{n}-
+                    \overrightarrow{d}\cos^2\alpha.
+                \end{equation}
+                令$a=\left(\overrightarrow{n_0}\cdot\overrightarrow{n}\right)-\cos^2\alpha$,
+                $b=\overrightarrow{j}\cdot\overrightarrow{n_0}$,
+                $c=\overrightarrow{j}\cdot\overrightarrow{d}$;
+                则解为:
+                \begin{equation}
+                    \left\{
+                        \begin{array}{l}
+                            t_1=\frac{-b-\sqrt{b^2-ac}}{a}\\
+                            t_2=\frac{-b+\sqrt{b^2-ac}}{a}
+                        \end{array}
+                    \right..
+                \end{equation}
+                令$\overrightarrow{r_d}=\overrightarrow{r}-\overrightarrow{c}$,则:
+                \begin{equation}
+                    \overrightarrow{n_{hit}}=\frac{\frac{\overrightarrow{r_d}}
+                    {\left|\overrightarrow{r_d}\right|}\cos\alpha-\overrightarrow{n}}
+                    {\sqrt{1-\cos^2\alpha}}.
+                \end{equation}
+                而$\overrightarrow{n_{hit}}$在$xOy$平面上的投影
+                \begin{equation}
+                    \overrightarrow{n_{xy}}=\frac{\frac{\overrightarrow{r_d}}{\left|\overrightarrow{r_d}\right|}-
+                    \overrightarrow{n}\cos\alpha}{\sqrt{1-\cos^2\alpha}}.
+                \end{equation}
+                故:
+                \begin{equation}
+                    \theta=
+                    \left\{
+                        \begin{array}{ll}
+                            \arccos(\overrightarrow{n_{xy}}\cdot\overrightarrow{e_0}),
+                            &{\overrightarrow{n_{xy}}\cdot\overrightarrow{e_1}\geqslant0}\\
+                            2\pi-\arccos(\overrightarrow{n_{xy}}\cdot\overrightarrow{e_0}),
+                            &{\overrightarrow{n_{xy}}\cdot\overrightarrow{e_1}<0}
+                        \end{array}
+                    \right.;
+                \end{equation}
+                \begin{equation}
+                    v=1-\frac{\left|\overrightarrow{r_d}\right|}{l}.
+                \end{equation}
+            \subsubsection{包围盒}
+                给定一个线段$L=\left\{\overrightarrow{r}=\overrightarrow{p_0}+\overrightarrow{n_0}t|t\in\left(0,t_0\right]\right\}$,
+                (当$t_0<0$时视为$t_0=+\infty$原光线,即一条射线).光线与包围盒的相交的定义为$Box\cap L\neq\varnothing$.可以用如下方法判断:\\
+                \indent 1.若$\overrightarrow{p_0}$在包围盒内,则一定相交.即:
+                    \begin{equation}
+                        \left\{
+                            \begin{array}{l}
+                                min_x\leqslant {p_0}_x\leqslant max_x\\
+                                min_y\leqslant {p_0}_y\leqslant max_y\\
+                                min_z\leqslant {p_0}_z\leqslant max_z
+                            \end{array}
+                        \right..
+                    \end{equation}
+                \indent 2.计算光线与包围盒的各个平面的六个交点获得三个相交区间:
+                    $\left({t_x}_0,{t_x}_1\right),\left({t_y}_0,{t_y}_1\right),\left({t_z}_0,{t_z}_1\right)$.\\
+                \indent 3.求这三个相交区间的交集$\left(t_{min},t_{max}\right)$.若交集非空且$t_{max}>0$,
+                    则当$t_{min}<t_0$时相交.
+        \subsection{光线效果的模拟}
+            为了达到真实的光学效果,需要计算光线传播过程中的镜面反射,与光源的漫反射和折射组成.
+            而且对于玻璃材质,需要考虑光学的菲涅尔公式才能真实模拟光线的透射率和反射率.设光线
+            与某个几何图元相交,得到以下参数:\\
+            \indent 1.几何图元的法向$\overrightarrow{n_{hit}}$\\
+            \indent 2.光线入射方向$\overrightarrow{n_0}$\\
+            \indent 3.光线传播的距离$t$\\
+            \indent 4.几何图元的折射率$n$\\
+            \indent 5.几何图元的颜色信息$c$
+            \subsubsection{镜面反射}
+                考虑法向$\overrightarrow{n_0}$的变化:
+                \begin{equation}
+                    \overrightarrow{n_0}'=\overrightarrow{n_0}-2\left(\overrightarrow{n_{hit}}\cdot\overrightarrow{n_0}\right)\overrightarrow{n_{hit}}.
+                \end{equation}
+                而起始点为:
+                \begin{equation}
+                    \overrightarrow{p_0}'=\overrightarrow{p_0}+\overrightarrow{n_0}t.
+                \end{equation}
+                为保证继续进行相交测试时不会重新与该物体在该点相交,故实际上要将$t$稍微减少$\delta$.
+            \subsubsection{折射}
+                这里需要考虑$\overrightarrow{n_{hit}}$与$\overrightarrow{n_0}$的方向一致性,
+                若
+\end{document}

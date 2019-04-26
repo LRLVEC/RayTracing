@@ -232,7 +232,7 @@ namespace OpenGL
 			sm(),
 			sizeChanged(true),
 			frameScale(),
-			transform({ {60.0},{0.1,0.9,0.1},{0.5},{0,0,10},700.0 }),
+			transform({ {60.0},{0.4,0.9,0.1},{2},{0,0,1},700.0 }),
 			model({ {ShaderStorageBuffer,0},{1,2},{3},{4},{5},{6},{7},{3},{9} }),
 			frameSizeBuffer(&frameScale),
 			transBuffer(&transform.bufferData),
@@ -241,8 +241,8 @@ namespace OpenGL
 			transUniform(&transBuffer, UniformBuffer, 1),
 			decayOriginStorage(&decayOriginBuffer, ShaderStorageBuffer, 8),
 			testBMP("resources\\Haja1.bmp"),
-			cubeData("resources\\lake\\"),
-			//stl(sm.folder.find("resources/Stanford_bunny_simplified.stl").readSTL()),
+			cubeData("resources\\room\\"),
+			//stl(sm.folder.find("resources/compound_j74_smp.stl").readSTL()),
 			texture(&testBMP, 1),
 			cube(&cubeData, 2, RGBA32f, 1, cubeData.bmp[0].header.width, cubeData.bmp[0].header.height),
 			textureConfig(&texture, Texture2DArray, RGBA32f, 1, testBMP.bmp.header.width, testBMP.bmp.header.height, 1),
@@ -257,224 +257,44 @@ namespace OpenGL
 			texture.bindUnit();
 			cube.bindUnit();
 			glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
-
-			/*model.triangles.trianglesOrigin.trianglesOrigin +=
-			{
-				{
-					{
-						{20, -5, 20 },
-						{ 30,-5,20 },
-						{ 20,-5,10 }
-					},
-						{ 0,0 },
-						{ 1,0 },
-						{ 0,1 },
-					{
-						0, -1,
-						0, -1,
-						0.5, 0,
-						0,-1,
-						0,
-						1
-					}
-				},
-				{
-					{
-						{30, -5, 10},
-						{ 20,-5,10},
-						{ 30,-5,20 }
-					},
-					{ 1,1 },
-					{ 0,1 },
-					{ 1,0 },
-					{
-						0, -1,
-						0, -1,
-						0.5, 0,
-						0,-1,
-						0,
-						1
-					}
-				},
-			};*/
-			/*model.spheres.data.spheres +=
-			{
-				{
-					{-10, -30, 10, 64},
-					{ 0,-1,0 },
-					{ 1,0,0 },
-					{
-						1,-1,
-						0,-1,
-						0.3,-1,
-						0,-1,
-						{-0.5,0,-0.5},
-						1.33
-					}
-				},
-				/*{
-					{-10, -30, 10, 60},
-					{ 0,-1,0 },
-					{ 1,0,0 },
-					{
-						{0,0,0},-1,
-						{1,1,1},-1,
-						0,-1,
-						0,-1,
-						{0.5,0,0.5},
-						1 / 1.33
-					}
-				}
-			};*/
-			/*for (int c0(0); c0 < 3; ++c0)
-				for (int c1(0); c1 < 3; ++c1)
-					for (int c2(0); c2 < 3; ++c2)
-						model.spheres.data.spheres.pushBack
-						({
-							{-10 - 5.0f * c0, -30.0f - 5.0f * c1, 10 - 5.0f * c2, 4},
-							{ 0,-1,0 },
-							{ 1,0,0 },
-							{
-								1,-1,
-								1,-1,
-								0,-1,
-								0,-1,
-								{-0.5,0,-0.5},
-								1.33
-							}
-							});*/
+			
 			model.circles.data.circles +=
 			{
 				{
-					{ 0, 0, -1, 0 },
-					{ 0,0,-10 },
-						2500,
+					{ 0, -1, 0, 0 },
+					{ 0,0,0 },
+						4900,
 					{ 1,0,0 },
 					{
 						0,-1,
 						0,-1,
-						0.5,0,
+						0.5,-1,
 						0,-1,
 						0,
 						1.5
 					}
 				}
 			};
-			//model.cylinders.data.cylinders +=
-			//{
-			//	{
-			//		{5, -20, -10},
-			//			80,
-			//		{ 1,0,0 },
-			//			10,
-			//		{ 1,0,0 },
-			//		{
-			//			1,-1,
-			//			1,-1,
-			//			{0,0,0},-1,
-			//			0,0,
-			//			{-0.1,0,-0.1},
-			//			1.33
-			//		}
-			//	}
-			//};
-			//model.addCylinder
-			//(
-			//	{
-			//		{5 , -20 , -10},
-			//		80,
-			//		{ 1,0,0 },
-			//		10,
-			//		{ 1,0,0 },
-			//		{
-			//			1,-1,
-			//			1,-1,
-			//			{0,0,0},-1,
-			//			0,0,
-			//			{-0.1,0,-0.1},
-			//			1.33
-			//		}
-			//	}
-			//);
-			//model.addCylinder
-			//(
-			//	{
-			//		{5.2 , -20 , -10},
-			//		76,
-			//		{ 1,0,0 },
-			//		9.6,
-			//		{ 1,0,0 },
-			//		{
-			//			1,-1,
-			//			1,-1,
-			//			{0,0,0},-1,
-			//			0,0,
-			//			{0.1,0,0.1},
-			//			1 / 1.33
-			//		}
-			//	}
-			//);
-
-			//model.addCone
-			//(
-			//	{
-			//		{10, -40, 10},0.75,
-			//		{ 0,1,0 },100,
-			//		{ 1,0,0 },
-			//		{
-			//			1,-1,
-			//			1,-1,
-			//			0,-1,
-			//			0,-1,
-			//			{0,-0.3,-0.3},
-			//			1.33
-			//		}
-			//	}
-			//);
-			//model.addCone
-			//(
-			//	{
-			//		{10, -39, 10},0.75,
-			//		{ 0,1,0 },75,
-			//		{ 1,0,0 },
-			//		{
-			//			1,-1,
-			//			1,-1,
-			//			0,-1,
-			//			0,-1,
-			//			{0,0.3,0.3},
-			//			1 / 1.33
-			//		}
-			//	}
-			//);
 			model.pointLights.data.pointLights +=
 			{
 				{
-					{8000, 8000, 8000},
-					{ 0,0,400 }
+					{4000, 4000, 4000},
+					{ 0,-300,0 }
 				},
-					/*{
-						{100, 100, 100},
-						{ -20,-40,20 }
-					},
-					{
-						{100, 100, 100},
-						{ 20,-40,-20 }
-					}*/
 			};
-			model.addSTL
-			(
-				stl,
-				{
-					1,-1,
-					1,-1,
-					0,-1,
-					0,-1,
-					{-0.5,0,-0.5},
-					1.5
-				},
-				stl.triangles.length
-			);
+			//model.addSTL
+			//(
+			//	stl,
+			//	{
+			//		1,-1,
+			//		0,-1,
+			//		0,-1,
+			//		0,-1,
+			//		0,//{ -0.03,0,-0.03 },
+			//		1
+			//	},
+			//	stl.triangles.length
+			//);
 			model.planes.numChanged = true;
 			model.triangles.numChanged = true;
 			model.spheres.numChanged = true;
