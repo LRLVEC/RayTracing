@@ -241,7 +241,7 @@ namespace OpenGL
 			transUniform(&transBuffer, UniformBuffer, 1),
 			decayOriginStorage(&decayOriginBuffer, ShaderStorageBuffer, 8),
 			testBMP("resources\\Haja1.bmp"),
-			cubeData("resources\\room\\"),
+			cubeData("resources\\lake\\"),
 			//stl(sm.folder.find("resources/Stanford_bunny_simplified.stl").readSTL()),
 			texture(&testBMP, 1),
 			cube(&cubeData, 2, RGBA32f, 1, cubeData.bmp[0].header.width, cubeData.bmp[0].header.height),
