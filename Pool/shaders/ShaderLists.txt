@@ -19,3 +19,11 @@ Program:	DecayOrigin
 {
 	Compute		0
 }
+Program:	WaterAcceleration
+{
+	Compute		0
+}
+Program:	WaterPosition
+{
+	Compute		0
+}

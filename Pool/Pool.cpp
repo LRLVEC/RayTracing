@@ -7,6 +7,7 @@
 #include <GL/_Texture.h>
 #include <_STL.h>
 #include <_BMP.h>
+#include <random>
 
 namespace OpenGL
 {
@@ -32,7 +33,7 @@ namespace OpenGL
 			{
 				init();
 			}
-			virtual void initBufferData()
+			virtual void initBufferData()override
 			{
 			}
 			virtual void run()override
@@ -40,6 +41,225 @@ namespace OpenGL
 				glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 				glClear(GL_COLOR_BUFFER_BIT);
 				glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+			}
+		};
+		struct WaterSimulation :Computers
+		{
+			struct Water
+			{
+				struct WaterAttribs :Buffer::Data
+				{
+					struct Parameters
+					{
+						float k;
+						float dt;
+						unsigned int groupSizeX;
+						unsigned int groupSizeY;
+						unsigned int groupNumX;
+						unsigned int groupNumY;
+						float z0;
+						float dx;
+						float dzMax;
+					};
+					Parameters para;
+					RayTracing::Model::Color color;
+
+					WaterAttribs(Parameters const& _para)
+						:
+						Data(StaticDraw),
+						para(_para)
+					{
+					}
+					virtual void* pointer()override
+					{
+						return &para;
+					}
+					virtual unsigned int size()override
+					{
+						return 16;
+					}
+				};
+				struct WaterData :Buffer::Data
+				{
+					struct WaterPoint
+					{
+						float z;
+						float v;
+						float a;
+						float blank;
+					};
+					Vector<WaterPoint>waterPoints;
+
+					WaterData(WaterAttribs* attribs)
+						:
+						Data(DynamicDraw)
+					{
+						std::mt19937 mt;
+						std::uniform_real_distribution<float>
+							randReal(-attribs->para.dzMax / 2, attribs->para.dzMax / 2);
+						for (int c0(0); c0 < attribs->para.groupNumY * attribs->para.groupSizeY; ++c0)
+							for (int c1(0); c1 < attribs->para.groupNumX * attribs->para.groupSizeX; ++c1)
+								waterPoints.pushBack({ attribs->para.z0 + randReal(mt),0,0 });
+					}
+					virtual void* pointer()override
+					{
+						return waterPoints.data;
+					}
+					virtual unsigned int size()override
+					{
+						return waterPoints.length * sizeof(WaterPoint);
+					}
+				};
+				struct Info
+				{
+					int attribIndex;
+					int dataIndex;
+				};
+				//make sure that the water triangles are always at the head of the 
+				//triangles...
+				WaterAttribs attribs;
+				Buffer attribsBuffer;
+				BufferConfig attribsConfig;
+				WaterData data;
+				Buffer dataBuffer;
+				BufferConfig dataConfig;
+				Water(Info const& _info, WaterAttribs::Parameters const& _para)
+					:
+					attribs(_para),
+					attribsBuffer(&attribs),
+					attribsConfig(&attribsBuffer, UniformBuffer, _info.attribIndex),
+					data(&attribs),
+					dataBuffer(&data),
+					dataConfig(&dataBuffer, ShaderStorageBuffer, _info.dataIndex)
+				{
+				}
+				void dataInit()
+				{
+					attribsConfig.dataInit();
+					dataConfig.dataInit();
+				}
+			};
+			struct AccelerationCalc :Program
+			{
+				Water::WaterAttribs* attribs;
+				AccelerationCalc(SourceManager* _sm, Water::WaterAttribs* _attribs)
+					:
+					Program(_sm, "WaterAcceleration"),
+					attribs(_attribs)
+				{
+					init();
+				}
+				virtual void initBufferData()override
+				{
+				}
+				virtual void run()override
+				{
+					glDispatchCompute(attribs->para.groupNumX, attribs->para.groupNumY, 1);
+				}
+			};
+			struct PositionCalc :Program
+			{
+				Water::WaterAttribs* attribs;
+				PositionCalc(SourceManager* _sm, Water::WaterAttribs* _attribs)
+					:
+					Program(_sm, "WaterPosition"),
+					attribs(_attribs)
+				{
+					init();
+				}
+				virtual void initBufferData()override
+				{
+				}
+				virtual void run()override
+				{
+					glDispatchCompute(attribs->para.groupNumX, attribs->para.groupNumY, 1);
+				}
+			};
+			Water water;
+			AccelerationCalc accelerationCalc;
+			PositionCalc positionCalc;
+
+			WaterSimulation(SourceManager* _sm, Water::Info const& _info, Water::WaterAttribs::Parameters const& _para)
+				:
+				water(_info, _para),
+				accelerationCalc(_sm, &water.attribs),
+				positionCalc(_sm, &water.attribs)
+			{
+
+			}
+			virtual void initBufferData()override
+			{
+			}
+			virtual void run()override
+			{
+				accelerationCalc.use();
+				accelerationCalc.run();
+				positionCalc.use();
+				positionCalc.run();
+			}
+			void dataInit()
+			{
+				water.dataInit();
+			}
+			void initModel(RayTracing::Model& _model, float x0, float y0, RayTracing::Model::Color color)
+			{
+				Vector<RayTracing::Model::Triangles::TriangleOriginData::TriangleOrigin>temp;
+				for (int c0(0); c0 < water.attribs.para.groupNumY * water.attribs.para.groupSizeY - 1; ++c0)
+				{
+					for (int c1(0); c1 < water.attribs.para.groupNumX * water.attribs.para.groupSizeX - 1; ++c1)
+						temp.pushBack
+						({
+							{
+								{
+									x0 + water.attribs.para.dx * c1,
+									y0 + water.attribs.para.dx * c0,
+									water.attribs.para.z0 - water.attribs.para.dzMax
+								},
+								{
+									x0 + water.attribs.para.dx * (c1 + 1),
+									y0 + water.attribs.para.dx * c0,
+									water.attribs.para.z0 - water.attribs.para.dzMax
+								},
+								{
+									x0 + water.attribs.para.dx * c1,
+									y0 + water.attribs.para.dx * (c0 + 1),
+									water.attribs.para.z0 + water.attribs.para.dzMax
+								}
+							},
+							0,0,0,
+							color
+							});
+					for (int c1(0); c1 < water.attribs.para.groupNumX * water.attribs.para.groupSizeX - 1; ++c1)
+						temp.pushBack
+						({
+							{
+								{
+									x0 + water.attribs.para.dx * (c1 + 1),
+									y0 + water.attribs.para.dx * (c0 + 1),
+									water.attribs.para.z0 - water.attribs.para.dzMax
+								},
+								{
+									x0 + water.attribs.para.dx * c1,
+									y0 + water.attribs.para.dx * (c0 + 1),
+									water.attribs.para.z0 - water.attribs.para.dzMax
+								},
+								{
+									x0 + water.attribs.para.dx * (c1 + 1),
+									y0 + water.attribs.para.dx * c0 ,
+									water.attribs.para.z0 + water.attribs.para.dzMax
+								}
+							},
+							0,0,0,
+							color
+							});
+				}
+				if (_model.triangles.trianglesOrigin.trianglesOrigin.length)
+				{
+					temp += _model.triangles.trianglesOrigin.trianglesOrigin;
+					_model.triangles.trianglesOrigin.trianglesOrigin = temp;
+				}
+				else
+					_model.triangles.trianglesOrigin.trianglesOrigin = temp;
 			}
 		};
 		struct TracerInit :Computers
@@ -151,10 +371,10 @@ namespace OpenGL
 				decayOriginCalc(_sm)
 			{
 			}
-			virtual void initBufferData()
+			virtual void initBufferData()override
 			{
 			}
-			virtual void run()
+			virtual void run()override
 			{
 				if (!trianglePre.model->triangles.GPUUpToDate)
 				{
@@ -171,37 +391,6 @@ namespace OpenGL
 					decayOriginCalc.run();
 				}
 				trianglePre.model->upToDate();
-			}
-		};
-		struct Movement
-		{
-			RayTracing::Model* model;
-			float t;
-
-			Movement(RayTracing::Model* _model)
-				:
-				model(_model),
-				t(0)
-			{
-			}
-			void sphereRun()
-			{
-				model->spheres.data.spheres[0].sphere[1] += sin(t);
-				model->spheres.data.spheres[1].sphere[1] += sin(t);
-				model->spheres.upToDate = false;
-			}
-			void pointLightRun()
-			{
-				model->pointLights.data.pointLights[0].p[0] = 3 * sin(t);
-				model->pointLights.data.pointLights[0].p[2] += 0.2 * sin(t);
-				model->pointLights.upToDate = false;
-			}
-			void run()
-			{
-				t += 0.1;
-				//pointLightRun();
-				sphereRun();
-				model->dataInit();
 			}
 		};
 
@@ -225,7 +414,7 @@ namespace OpenGL
 		TextureConfig<TextureStorage3D>textureConfig;
 		TracerInit tracerInit;
 		Renderer renderer;
-		Movement movement;
+		WaterSimulation waterSim;
 
 		RayTrace()
 			:
@@ -248,7 +437,7 @@ namespace OpenGL
 			textureConfig(&texture, Texture2DArray, RGBA32f, 1, testBMP.bmp.header.width, testBMP.bmp.header.height, 1),
 			tracerInit(&sm, &frameScale, &model, &transform),
 			renderer(&sm),
-			movement(&model)
+			waterSim(&sm, { 4,10 }, { 0.01,0.1,8,8,1,1,0.6,1.0 / 7,0.1 })
 		{
 			textureConfig.dataRefresh(0, TextureInputBGRInt, TextureInputUByte, 0, 0, 0, testBMP.bmp.header.width, testBMP.bmp.header.height, 1);
 			cube.dataInit(0, TextureInputBGRInt, TextureInputUByte);
@@ -260,22 +449,31 @@ namespace OpenGL
 			model.pointLights.data.pointLights +=
 			{
 				{
-					{0.1, 0.1, 0},
-					{ 1.7,1.7,4.2 }
+					{0.2, 0, 0},
+					{ 0.2,0.2,4.2 }
 				},
 				{
-					{0.1, 0, 0.1},
-					{ 1.7,-1.7,4.2 }
+					{0, 0.2, 0},
+					{ 0.2,-0.2,4.2 }
 				},
 				{
-					{0, 0.1, 0.1},
-					{ -1.7,1.7,4.2 }
+					{0, 0, 0.2},
+					{ -0.2,0.2,4.2 }
 				},
-				/*{
-					{0.1, 0.1, 0},
-					{ -1.5,-1.5,4 }
-				},*/
+						/*{
+													{0.1, 0.1, 0},
+													{ -1.5,-1.5,4 }
+												},*/
 			};
+			waterSim.initModel(model, -0.5, -0.5,
+				{
+					0,-1,
+					0,-1,
+					1,-1,
+					0,-1,
+					0,//{ -0.03,0,-0.03 },
+					1
+				});
 			model.addSTL
 			(
 				stl,
@@ -289,6 +487,7 @@ namespace OpenGL
 				},
 				stl.triangles.length
 			);
+
 			model.planes.numChanged = true;
 			model.triangles.numChanged = true;
 			model.spheres.numChanged = true;
@@ -308,10 +507,14 @@ namespace OpenGL
 			transUniform.dataInit();
 			decayOriginStorage.dataInit();
 			model.dataInit();
+			waterSim.dataInit();
+			waterSim.positionCalc.use();
+			waterSim.positionCalc.run();
 		}
 		virtual void run() override
 		{
-			//movement.run();
+			waterSim.run();
+			tracerInit.trianglePre.model->triangles.GPUUpToDate = false;
 			if (sizeChanged)
 			{
 				glViewport(0, 0, frameScale.scale.data[0], frameScale.scale.data[1]);
@@ -384,7 +587,7 @@ int main()
 	{
 		"RayTracing",
 		{
-			{480,480},
+			{240,240},
 			true, false,
 		}
 	};
@@ -399,8 +602,8 @@ int main()
 		wm.pullEvents();
 		wm.render();
 		wm.swapBuffers();
-		fps.refresh();
-		fps.printFPS(1);
+		//fps.refresh();
+		//fps.printFPS(1);
 	}
 	return 0;
 }
