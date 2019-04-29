@@ -178,12 +178,14 @@ namespace OpenGL
 			Water water;
 			AccelerationCalc accelerationCalc;
 			PositionCalc positionCalc;
+			unsigned int n;
 
-			WaterSimulation(SourceManager* _sm, Water::Info const& _info, Water::WaterAttribs::Parameters const& _para)
+			WaterSimulation(SourceManager* _sm, Water::Info const& _info, Water::WaterAttribs::Parameters const& _para, unsigned int _n)
 				:
 				water(_info, _para),
 				accelerationCalc(_sm, &water.attribs),
-				positionCalc(_sm, &water.attribs)
+				positionCalc(_sm, &water.attribs),
+				n(_n)
 			{
 
 			}
@@ -192,10 +194,13 @@ namespace OpenGL
 			}
 			virtual void run()override
 			{
-				accelerationCalc.use();
-				accelerationCalc.run();
-				positionCalc.use();
-				positionCalc.run();
+				for (int c0(0); c0 < n; ++c0)
+				{
+					accelerationCalc.use();
+					accelerationCalc.run();
+					positionCalc.use();
+					positionCalc.run();
+				}
 			}
 			void dataInit()
 			{
@@ -437,7 +442,7 @@ namespace OpenGL
 			textureConfig(&texture, Texture2DArray, RGBA32f, 1, testBMP.bmp.header.width, testBMP.bmp.header.height, 1),
 			tracerInit(&sm, &frameScale, &model, &transform),
 			renderer(&sm),
-			waterSim(&sm, { 4,10 }, { 0.01,0.1,8,8,1,1,0.6,1.0 / 7,0.1 })
+			waterSim(&sm, { 4,10 }, { 0.01,0.05,8,8,4,4,0.4,1.0 / 31,0.03 }, 3)
 		{
 			textureConfig.dataRefresh(0, TextureInputBGRInt, TextureInputUByte, 0, 0, 0, testBMP.bmp.header.width, testBMP.bmp.header.height, 1);
 			cube.dataInit(0, TextureInputBGRInt, TextureInputUByte);
@@ -449,21 +454,9 @@ namespace OpenGL
 			model.pointLights.data.pointLights +=
 			{
 				{
-					{0.2, 0, 0},
-					{ 0.2,0.2,4.2 }
-				},
-				{
-					{0, 0.2, 0},
-					{ 0.2,-0.2,4.2 }
-				},
-				{
-					{0, 0, 0.2},
-					{ -0.2,0.2,4.2 }
-				},
-						/*{
-													{0.1, 0.1, 0},
-													{ -1.5,-1.5,4 }
-												},*/
+					{0.02, 0.02, 0.02},
+					{ 0,0,1.2 }
+				}
 			};
 			waterSim.initModel(model, -0.5, -0.5,
 				{
@@ -587,7 +580,7 @@ int main()
 	{
 		"RayTracing",
 		{
-			{240,240},
+			{480,480},
 			true, false,
 		}
 	};
