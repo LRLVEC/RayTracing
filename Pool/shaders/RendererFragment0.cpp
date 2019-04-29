@@ -671,19 +671,18 @@ vec4 rayTrace(Ray ray)
 					{
 						float nadd1 = 1 / (tempColor.n + 1);
 						tempColor.r *= pow((tempColor.n - 1) * nadd1, 2);
-						tempColor.t *= pow(2 * nadd1 * pow(tempColor.n, 2), 2);
+						tempColor.t *= pow(2 * nadd1, 2) * tempColor.n;
 					}
 					else
 					{
-						float cosadd = abs(cosi1) * cosi2;
-						float sinadd = sini1 * cosi2;
-						float cosminus = cosadd + sini1 * sini2;
-						float sinminus = sinadd - abs(cosi1) * sini2;
-						cosadd = 2 * cosadd - cosminus;
-						float ahh = 1 / pow(cosminus, 2);
-						sinadd = 2 * sinadd - sinminus;
-						tempColor.r *= (1 + pow(cosadd, 2) * ahh) * pow(sinminus / sinadd, 2) / 2;
-						tempColor.t *= abs(cosi2 * cosi1 * pow(2 * sini2 * tempColor.n * tempColor.n / sinadd, 2) * (1 + ahh) / 2);
+						float a1 = cosi2 + tempColor.n * abs(cosi1);
+						float a2 = tempColor.n * cosi2 + abs(cosi1);
+						tempColor.r *=
+							(
+								pow((tempColor.n * abs(cosi1) - cosi2) / a1, 2) +
+								pow((abs(cosi1) - tempColor.n * cosi2) / a2, 2)
+								) / 2;
+						tempColor.t *= 2 * tempColor.n * pow(cosi1, 2) * (1 / pow(a1, 2) + 1 / pow(a2, 2));
 					}
 					if (any(greaterThanEqual(tempColor.t, vec3(minColor))))
 					{

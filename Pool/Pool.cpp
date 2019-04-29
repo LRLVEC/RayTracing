@@ -97,9 +97,18 @@ namespace OpenGL
 						std::mt19937 mt;
 						std::uniform_real_distribution<float>
 							randReal(-attribs->para.dzMax / 2, attribs->para.dzMax / 2);
+						float cX((attribs->para.groupNumX * attribs->para.groupSizeX - 1) / 2);
+						float cY((attribs->para.groupNumY * attribs->para.groupSizeY - 1) / 2);
 						for (int c0(0); c0 < attribs->para.groupNumY * attribs->para.groupSizeY; ++c0)
 							for (int c1(0); c1 < attribs->para.groupNumX * attribs->para.groupSizeX; ++c1)
-								waterPoints.pushBack({ attribs->para.z0 + randReal(mt),0,0 });
+								waterPoints.pushBack
+								(
+									{
+										attribs->para.z0 + attribs->para.dzMax *
+										cos(8 * (pow(c1 - cX,2) + pow(c0 - cY,2)) / (cX * cX + cY * cY)) / 2,
+										0,0
+									}
+						);
 					}
 					virtual void* pointer()override
 					{
@@ -187,7 +196,6 @@ namespace OpenGL
 				positionCalc(_sm, &water.attribs),
 				n(_n)
 			{
-
 			}
 			virtual void initBufferData()override
 			{
@@ -434,7 +442,7 @@ namespace OpenGL
 			frameSizeUniform(&frameSizeBuffer, UniformBuffer, 0),
 			transUniform(&transBuffer, UniformBuffer, 1),
 			decayOriginStorage(&decayOriginBuffer, ShaderStorageBuffer, 8),
-			testBMP("resources/Haja1.bmp"),
+			testBMP("resources/pool.bmp"),
 			cubeData("resources/room/"),
 			stl(sm.folder.find("resources/pool.stl").readSTL()),
 			texture(&testBMP, 1),
@@ -442,7 +450,7 @@ namespace OpenGL
 			textureConfig(&texture, Texture2DArray, RGBA32f, 1, testBMP.bmp.header.width, testBMP.bmp.header.height, 1),
 			tracerInit(&sm, &frameScale, &model, &transform),
 			renderer(&sm),
-			waterSim(&sm, { 4,10 }, { 0.01,0.05,8,8,4,4,0.4,1.0 / 31,0.03 }, 3)
+			waterSim(&sm, { 4,10 }, { 0.002,0.05,8,8,6,6,0.4,(1.0 - 0.02) / (8 * 6 - 1),0.1 }, 200)
 		{
 			textureConfig.dataRefresh(0, TextureInputBGRInt, TextureInputUByte, 0, 0, 0, testBMP.bmp.header.width, testBMP.bmp.header.height, 1);
 			cube.dataInit(0, TextureInputBGRInt, TextureInputUByte);
@@ -454,19 +462,20 @@ namespace OpenGL
 			model.pointLights.data.pointLights +=
 			{
 				{
-					{0.02, 0.02, 0.02},
-					{ 0,0,1.2 }
+					{0.1, 0.1, 0.1},
+					{ 0,0,2.2 }
 				}
 			};
-			waterSim.initModel(model, -0.5, -0.5,
+			waterSim.initModel(model, -0.5 + 0.01, -0.5 + 0.01,
 				{
-					0,-1,
-					0,-1,
+					1,-1,
 					1,-1,
 					0,-1,
-					0,//{ -0.03,0,-0.03 },
-					1
+					0,-1,
+					0,
+					1.33
 				});
+			unsigned int k(model.triangles.trianglesOrigin.trianglesOrigin.length);
 			model.addSTL
 			(
 				stl,
@@ -480,7 +489,39 @@ namespace OpenGL
 				},
 				stl.triangles.length
 			);
+			for (int c0(0); c0 < 4; ++c0)
+			{
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0].uv1 = { 5,0 };
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0].uv2 = { 5,1.5 };
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0].uv3 = { 0,0 };
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0].color.d = 0;
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0].color.g = 1;
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0].color.texG = 0;
 
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0 + 1].uv1 = { 0,1.5 };
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0 + 1].uv2 = { 0,0 };
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0 + 1].uv3 = { 5,1.5 };
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0 + 1].color.d = 0;
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0 + 1].color.g = 1;
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0 + 1].color.texG = 0;
+			}
+
+			model.triangles.trianglesOrigin.trianglesOrigin[k + 16].uv1 = { 5,0 };
+			model.triangles.trianglesOrigin.trianglesOrigin[k + 16].uv2 = { 0,0 };
+			model.triangles.trianglesOrigin.trianglesOrigin[k + 16].uv3 = { 5,5 };
+			model.triangles.trianglesOrigin.trianglesOrigin[k + 16].color.g = 1;
+			model.triangles.trianglesOrigin.trianglesOrigin[k + 16].color.texG = 0;
+			model.triangles.trianglesOrigin.trianglesOrigin[k + 17].uv1 = { 0,5 };
+			model.triangles.trianglesOrigin.trianglesOrigin[k + 17].uv2 = { 5,5 };
+			model.triangles.trianglesOrigin.trianglesOrigin[k + 17].uv3 = { 0,0 };
+			model.triangles.trianglesOrigin.trianglesOrigin[k + 17].color.g = 1;
+			model.triangles.trianglesOrigin.trianglesOrigin[k + 17].color.texG = 0;
+			/*stl.triangles.traverse
+			([](STL::Triangle const& a)
+				{
+					a.print();
+					return true;
+				});*/
 			model.planes.numChanged = true;
 			model.triangles.numChanged = true;
 			model.spheres.numChanged = true;
@@ -580,7 +621,7 @@ int main()
 	{
 		"RayTracing",
 		{
-			{360,360},
+			{720,480},
 			true, false,
 		}
 	};
