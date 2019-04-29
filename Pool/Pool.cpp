@@ -580,7 +580,7 @@ int main()
 	{
 		"RayTracing",
 		{
-			{480,480},
+			{360,360},
 			true, false,
 		}
 	};
