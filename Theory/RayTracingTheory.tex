@@ -80,7 +80,7 @@
             \subsubsection{颜色模型}
                 虽然自然生活中光的波长是连续分布的,但是在这里采用显示器的描述方式,即用$(R,G,B)$的混合来描述千千万万种个颜色.
                 而一个物体的光学属性则十分复杂,这里仅仅考虑其表面的自发光颜色$g$(glow),表面的反射颜色$r$(reflect),透射
-                颜色$t$(transmission),对光源的漫反射系数$d$(diffuse)和折射率$n_0$.所以用类$Color:\{r,t,g,d,n_0\}$来储存颜色信息.
+                颜色$t$(transmission),对光源的漫反射系数$d$(diffuse)和折射率$n$.所以用类$Color:\{r,t,g,d,n\}$来储存颜色信息.
                 而这些信息有可能随着在几何图元上的位置的不同而变化,因此有必要建立一个纹理坐标,
                 使\includegraphics[width=0.5cm]{./Opengl_Tiny.jpg}能够从纹理数组读取这些信息.
             \subsubsection{光线模型}
@@ -261,7 +261,9 @@
                     \right..
                 \end{equation}
                 法向$\overrightarrow{n_{hit}}$就是$\overrightarrow{n_p}$,纹理坐标$(u,v)$可以由
-                方程\ref{eq:triangleTexcood}得出.
+                方程\ref{eq:triangleTexcood}得出.\\
+                \indent 由此可以看出在少量的预计算下三角形的相交测试可以非常简单.而这些预计算又可以由GPU以并行化
+                的方式快速完成,达到加速的目的.
             \subsubsection{球形}
                 光线若与一个球相交,则该直线到球心的距离小于$R$.而这个距离平方可以表示为
                 $\left|\left(\overrightarrow{c}-\overrightarrow{p_0}\right)\times\overrightarrow{n_0}\right|^2$.
@@ -459,7 +461,9 @@
             \indent 2.光线入射方向$\overrightarrow{n_0}$\\
             \indent 3.光线传播的距离$t$\\
             \indent 4.几何图元的折射率$n$\\
-            \indent 5.几何图元的颜色信息$c$
+            \indent 5.几何图元的颜色信息$c$\\
+            \indent 之后需要据此计算出该光线的颜色$c$,其中包括$c_r$(镜面反射),$c_t$(透射),
+            $c_d$(点光源漫反射)和$c_g$(面元自发光).
             \subsubsection{镜面反射}
                 考虑法向$\overrightarrow{n_0}$的变化:
                 \begin{equation}
@@ -476,21 +480,26 @@
                 \indent 2.有折射,则需要计算该修正.\\
                 \indent 而修正为:
                 \begin{equation}
-                    t'=\frac{\left(1+\frac{\cos{\left(i_1+i_0\right)}}{\cos{\left(i_1-i_0\right)}}^2\right)
-                    \left(\frac{\sin{\left(i_1-i_0\right)}}{\sin{\left(i_1+i_0\right)}}\right)^2}{2}t.
+                    r'=\frac{r}{2}\left[\left(\frac{n\cos{i_0}-\cos{i_1}}{\cos{i_1}+n\cos{i_0}}\right)^2+
+                        \left(\frac{\cos{i_0}-n\cos{i_1}}{n\cos{i_1}+\cos{i_0}}\right)^2\right].
                 \end{equation}
                 注意到当$i_1$和$i_0$都趋于0时,数值计算可能不精确,于是求极限:
                 \begin{equation}
-                    \lim_{i_1,i_0\rightarrow 0}\frac{\left(1+\frac{\cos{\left(i_1+i_0\right)}}{\cos{\left(i_1-i_0\right)}}^2\right)
-                    \left(\frac{\sin{\left(i_1-i_0\right)}}{\sin{\left(i_1+i_0\right)}}\right)^2}{2}=
-                    \left(\frac{n-1}{n+1}\right)^2
+                    \lim_{i_0,i_1\rightarrow 0}\frac{1}{2}\left[\left(\frac{n\cos{i_0}-\cos{i_1}}{\cos{i_1}+n\cos{i_0}}\right)^2+
+                    \left(\frac{\cos{i_0}-n\cos{i_1}}{n\cos{i_1}+\cos{i_0}}\right)^2\right]=
+                    \left(\frac{n-1}{n+1}\right)^2.
+                \end{equation}
+                而我们所需要的$c_r$则可以由拟递归获取的反射光线颜色$c'$得到:
+                \begin{equation}
+                    c_r=r'c'.
                 \end{equation}
             \subsubsection{折射}
-                这里需要考虑$\overrightarrow{n_{hit}}$与$\overrightarrow{n_0}$的方向一致性.由折射定律
+                由折射定律
                 \begin{equation}
                     \sin{i_0}=n\sin{i_1}
                 \end{equation}
-                可以求出$i_1$.经过计算得到:\\
+                可以求出$i_1$.这里需要考虑$\overrightarrow{n_{hit}}$与$\overrightarrow{n_0}$
+                的方向一致性.经过计算得到:\\
                 \indent 1.$\overrightarrow{n_{hit}}\cdot\overrightarrow{n_0}<0$:
                 \begin{equation}
                     \overrightarrow{n_0}'=\frac{\overrightarrow{n_0}-
@@ -514,18 +523,29 @@
                 为保证继续进行相交测试时不会重新与该物体在该点相交,故实际上要将$t$稍微增加$\delta$.\\
                 \indent 计算菲涅尔透射率:
                 \begin{equation}
-                    t'=\frac{\cos{i_1}\cos{i_0}\left(\frac{2n\sin{i_1}}{\sin{\left(i_0+i_1\right)}}\right)^2
-                    \left(1+\frac{1}{\cos^2\left(i_1-i_0\right)}\right)}{2}t.
+                    t'=2t\cos^2{i_0}\left[\frac{1}{\left(\cos{i_1}+n\cos{i_0}\right)^2}+
+                    \frac{1}{\left(n\cos{i_1}+\cos{i_0}\right)^2}\right].
                 \end{equation}
                 同理,在$i_1$和$i_0$都趋于0时,计算极限:
                 \begin{equation}
-                    \lim_{i_1,i_0\rightarrow 0}\frac{\cos{i_1}\cos{i_0}\left(\frac{2n\sin{i_1}}
-                    {\sin{\left(i_0+i_1\right)}}\right)^2\left(1+\frac{1}{\cos^2\left(i_1-i_0\right)}\right)}{2}=
-                    \left(\frac{2n^2}{1+n}\right)^2.
+                    \lim_{i_0,i_1\rightarrow 0}2\cos^2{i_0}\left[\frac{1}{\left(\cos{i_1}+n\cos{i_0}\right)^2}+
+                    \frac{1}{\left(n\cos{i_1}+\cos{i_0}\right)^2}\right]=
+                    \left(\frac{2}{1+n}\right)^2.
+                \end{equation}
+                而我们所需要的$c_t$则可以由拟递归获取的折射光线颜色$c'$得到:
+                \begin{equation}
+                    c_t=t'c'.
                 \end{equation}
             \subsubsection{点光源漫反射}
                 这里采用简化的模型:若交点与点光源之间没有其他图元之间遮挡,则认为可以被光源照到.因此,
                 首先计算出相交位置
                 $\overrightarrow{p_0}'=\overrightarrow{p_0}+\overrightarrow{n_0}\left(t-\delta\right)$
-                ($t$减少$\delta$是因为防止面元后侧的光源干扰)然后对所有光源逐一判断是否有图元遮挡.
+                ($t$减少$\delta$是为防止面元后侧的光源干扰)然后对所有光源逐一判断是否有图元遮挡.若对某个点光
+                源没有遮挡关系,则在该面源处对该点光源可视,于是按点光源光强衰减和照朗伯体模型计算光照强度:
+                \begin{equation}
+                    c_d=c_l\frac{\overrightarrow{r}\cdot\overrightarrow{n_hit}}{\left|\overrightarrow{r}\right|^3}.
+                \end{equation}
+                其中$c_l$是点光源发光强度,$\overrightarrow{r}$是从面源到点光源的位矢.
+            \subsubsection{自发光}
+                这个属于物体固有属性,直接读取就行.一般发光体的自发光强与角度无关.
 \end{document}
