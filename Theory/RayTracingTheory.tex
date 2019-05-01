@@ -463,7 +463,8 @@
             \indent 4.几何图元的折射率$n$\\
             \indent 5.几何图元的颜色信息$c$\\
             \indent 之后需要据此计算出该光线的颜色$c$,其中包括$c_r$(镜面反射),$c_t$(透射),
-            $c_d$(点光源漫反射)和$c_g$(面元自发光).
+            $c_d$(点光源漫反射)和$c_g$(面元自发光).得到颜色后考虑到光线在某些介质中传播时
+            会发生损耗,故还要计算这个衰减.
             \subsubsection{镜面反射}
                 考虑法向$\overrightarrow{n_0}$的变化:
                 \begin{equation}
@@ -480,13 +481,13 @@
                 \indent 2.有折射,则需要计算该修正.\\
                 \indent 而修正为:
                 \begin{equation}
-                    r'=\frac{r}{2}\left[\left(\frac{n\cos{i_0}-\cos{i_1}}{\cos{i_1}+n\cos{i_0}}\right)^2+
-                        \left(\frac{\cos{i_0}-n\cos{i_1}}{n\cos{i_1}+\cos{i_0}}\right)^2\right].
+                    r'=\frac{r}{2}\left[\left(\frac{\cos{i_1}-n\cos{i_0}}{n\cos{i_0}+\cos{i_1}}\right)^2+
+                        \left(\frac{n\cos{i_1}-\cos{i_0}}{\cos{i_0}+n\cos{i_1}}\right)^2\right].
                 \end{equation}
                 注意到当$i_1$和$i_0$都趋于0时,数值计算可能不精确,于是求极限:
                 \begin{equation}
-                    \lim_{i_0,i_1\rightarrow 0}\frac{1}{2}\left[\left(\frac{n\cos{i_0}-\cos{i_1}}{\cos{i_1}+n\cos{i_0}}\right)^2+
-                    \left(\frac{\cos{i_0}-n\cos{i_1}}{n\cos{i_1}+\cos{i_0}}\right)^2\right]=
+                    \lim_{i_0,i_1\rightarrow 0}\frac{1}{2}\left[\left(\frac{\cos{i_1}-n\cos{i_0}}{n\cos{i_0}+\cos{i_1}}\right)^2+
+                    \left(\frac{n\cos{i_1}-\cos{i_0}}{\cos{i_0}+n\cos{i_1}}\right)^2\right]=
                     \left(\frac{n-1}{n+1}\right)^2.
                 \end{equation}
                 而我们所需要的$c_r$则可以由拟递归获取的反射光线颜色$c'$得到:
@@ -513,8 +514,8 @@
                 \indent 于是综合得到:
                 \begin{equation}
                     \overrightarrow{n_0}'=\frac{\overrightarrow{n_0}+
-                    \left(sign\left(\overrightarrow{n_{hit}}\cdot\overrightarrow{n_0}\right)n\cos{i_1}-
-                    \cos{i_0}\right)\overrightarrow{n_{hit}}}{n}.
+                    \left[sign\left(\overrightarrow{n_{hit}}\cdot\overrightarrow{n_0}\right)n\cos{i_1}-
+                    \cos{i_0}\right]\overrightarrow{n_{hit}}}{n}.
                 \end{equation}
                 而起始点为:
                 \begin{equation}
@@ -523,14 +524,14 @@
                 为保证继续进行相交测试时不会重新与该物体在该点相交,故实际上要将$t$稍微增加$\delta$.\\
                 \indent 计算菲涅尔透射率:
                 \begin{equation}
-                    t'=2t\cos^2{i_0}\left[\frac{1}{\left(\cos{i_1}+n\cos{i_0}\right)^2}+
-                    \frac{1}{\left(n\cos{i_1}+\cos{i_0}\right)^2}\right].
+                    t'=2nt\cos^2{i_0}\cos^2{i_1}\left[\frac{1}{\left(n\cos{i_0}+\cos{i_1}\right)^2}+
+                    \frac{1}{\left(\cos{i_0}+n\cos{i_1}\right)^2}\right].
                 \end{equation}
                 同理,在$i_1$和$i_0$都趋于0时,计算极限:
                 \begin{equation}
-                    \lim_{i_0,i_1\rightarrow 0}2\cos^2{i_0}\left[\frac{1}{\left(\cos{i_1}+n\cos{i_0}\right)^2}+
-                    \frac{1}{\left(n\cos{i_1}+\cos{i_0}\right)^2}\right]=
-                    \left(\frac{2}{1+n}\right)^2.
+                    \lim_{i_0,i_1\rightarrow 0}2nt\cos^2{i_0}\cos^2{i_1}\left[\frac{1}{\left(n\cos{i_0}+\cos{i_1}\right)^2}+
+                    \frac{1}{\left(\cos{i_0}+n\cos{i_1}\right)^2}\right]=
+                    n\left(\frac{2}{1+n}\right)^2.
                 \end{equation}
                 而我们所需要的$c_t$则可以由拟递归获取的折射光线颜色$c'$得到:
                 \begin{equation}
@@ -548,4 +549,21 @@
                 其中$c_l$是点光源发光强度,$\overrightarrow{r}$是从面源到点光源的位矢.
             \subsubsection{自发光}
                 这个属于物体固有属性,直接读取就行.一般发光体的自发光强与角度无关.
+            \subsubsection{衰减}
+                在透明物体中传播的光线会发生衰减现象.为更加真实的模拟,采用了指数衰减模型:
+                \begin{equation}
+                    I=I_0e^{-\alpha t}.
+                \end{equation}
+                其中$\alpha$为衰减系数.\\
+                \indent 但是对衰减系数的获取是存在一定困难的,因为我们没有引入体积光模型,所以
+                所有的光学信息都要从物体的表面获取.这导致我们无法直接获得相机位置处的衰减系数.\\
+                \indent 一种解决办法是进行预计算,即从相机处发出一根光线,一直沿直线传播,将沿途的
+                衰减系数相加减(用光线与法线的夹角判断是进入还是穿出物体)以获得最终的相机点的衰减
+                系数.一般由于精度问题,这样计算出来的衰减系数可能会随着在空间中移动而突变.所以还
+                需要随机发出多根光线来计算然后取最多的那个结果作为实际的衰减系数.\\
+            \subsubsection{杂项}
+                \indent 考虑到在计算菲涅尔公式的时候计算的是光功率密度,而这个值与相机所在位置的折
+                射率有关.但是真实情况是眼角膜所在的折射率是固定的(显然眼角膜不是直接暴露在空气中
+                或水中),所以要对这个进行修正,这又要求获取当前相机位置处的折射率.同理可以由上面的
+                方法解决.
 \end{document}

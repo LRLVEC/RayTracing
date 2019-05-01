@@ -50,7 +50,7 @@ void main()
 {
 	uint index = gl_GlobalInvocationID.x + gl_NumWorkGroups.x * 8 * gl_GlobalInvocationID.y;
 	float z = water[index].z -= dt * (water[index].v + water[index].a / 2);
-	water[index].v *= 0.99995;
+	water[index].v *= 0.999955;
 	water[index].v += water[index].a;
 	uint triangleIndex = gl_GlobalInvocationID.x +
 		gl_GlobalInvocationID.y * 2 * (gl_NumWorkGroups.x * 8 - 1);
