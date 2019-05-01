@@ -185,8 +185,8 @@ void main()
 	ray.n = normalize
 	(vec3
 	(
-		0.1 * random(r0.xy + vec2(gl_GlobalInvocationID.x & 1)),
-		0.1 * random(r0.yz + vec2((gl_GlobalInvocationID.x & 2) / 2)),
+		0 * random(r0.xy + vec2(gl_GlobalInvocationID.x & 1)),
+		0 * random(r0.yz + vec2((gl_GlobalInvocationID.x & 2) / 2)),
 		1//abs(random(r0.zx + vec2((gl_GlobalInvocationID.x & 4) / 4)))
 	));
 	vec3 decayTemp = vec3(0);
@@ -235,7 +235,7 @@ void main()
 									ray.t = tt;
 									float dn = dot(ray.n, triangles[n].plane.xyz);
 									decayNow = triangles[n].color.decayFactor * sign(dn);
-									nNow = dn > 0?triangles[n].color.n : 1 / triangles[n].color.n;
+									nNow = dn > 0 ? triangles[n].color.n : 1 / triangles[n].color.n;
 								}
 							}
 							break;
@@ -256,7 +256,7 @@ void main()
 									ray.t = tt;
 									float dn = dot(ray.n, (ray.p0.xyz + ray.t * ray.n - spheres[n].sphere.xyz) / sqrt(spheres[n].sphere.w));
 									decayNow = spheres[n].color.decayFactor * sign(dn);
-									nNow = dn > 0?spheres[n].color.n : 1 / spheres[n].color.n;
+									nNow = dn > 0 ? spheres[n].color.n : 1 / spheres[n].color.n;
 								}
 							}
 							break;
@@ -272,7 +272,7 @@ void main()
 									ray.t = tt;
 									float dn = dot(ray.n, circles[n].plane.xyz);
 									decayNow = circles[n].color.decayFactor * sign(dn);
-									nNow = dn > 0?circles[n].color.n : 1 / circles[n].color.n;
+									nNow = dn > 0 ? circles[n].color.n : 1 / circles[n].color.n;
 								}
 							}
 							break;
@@ -315,7 +315,7 @@ void main()
 										ray.t = tt;
 										float dn = dot(ray.n, normalize(d + ray.n * ray.t - cylinders[n].n * v));
 										decayNow = cylinders[n].color.decayFactor * sign(dn);
-										nNow = dn > 0?cylinders[n].color.n : 1 / cylinders[n].color.n;
+										nNow = dn > 0 ? cylinders[n].color.n : 1 / cylinders[n].color.n;
 									}
 								}
 							}
@@ -360,7 +360,7 @@ void main()
 									ray.t = tt;
 									float dn = dot(ray.n, normalize(d + ray.n * ray.t - cones[n].n * sqrt(r2 / cones[n].c2)));
 									decayNow = cones[n].color.decayFactor * sign(dn);
-									nNow = dn > 0?cones[n].color.n : 1 / cones[n].color.n;
+									nNow = dn > 0 ? cones[n].color.n : 1 / cones[n].color.n;
 								}
 							}
 							break;

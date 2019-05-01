@@ -105,7 +105,7 @@ namespace OpenGL
 								(
 									{
 										attribs->para.z0 + attribs->para.dzMax *
-										sin(4 * c1 / cX) / 2,
+										cos(4 * (pow(c1 - cX,2) + pow(c0 - cY,2)) / ((cX * cX + cY * cY))) / 2,
 										0,0
 									}
 						);
@@ -450,7 +450,7 @@ namespace OpenGL
 			textureConfig(&texture, Texture2DArray, RGBA32f, 1, testBMP.bmp.header.width, testBMP.bmp.header.height, 1),
 			tracerInit(&sm, &frameScale, &model, &transform),
 			renderer(&sm),
-			waterSim(&sm, { 4,10 }, { 0.002,0.05,8,8,6,6,0.4,(1.0 - 0.02) / (8 * 6 - 1),0.1 }, 200)
+			waterSim(&sm, { 4,10 }, { 0.002,0.05,8,8,6,6,0.4,(1.0 - 0.01) / (8 * 6 - 1),0.1 }, 150)
 		{
 			textureConfig.dataRefresh(0, TextureInputBGRInt, TextureInputUByte, 0, 0, 0, testBMP.bmp.header.width, testBMP.bmp.header.height, 1);
 			cube.dataInit(0, TextureInputBGRInt, TextureInputUByte);
@@ -466,13 +466,13 @@ namespace OpenGL
 					{ 0,0,2.2 }
 				}
 			};
-			waterSim.initModel(model, -0.5 + 0.01, -0.5 + 0.01,
+			waterSim.initModel(model, -0.5 + 0.005, -0.5 + 0.005,
 				{
 					1,-1,
 					1,-1,
 					0,-1,
 					0,-1,
-					0,
+					-2,
 					1.6
 				});
 			unsigned int k(model.triangles.trianglesOrigin.trianglesOrigin.length);
@@ -513,19 +513,37 @@ namespace OpenGL
 			model.triangles.trianglesOrigin.trianglesOrigin[k + 16].uv3 = { 5,5 };
 			model.triangles.trianglesOrigin.trianglesOrigin[k + 16].color.g = 1;
 			model.triangles.trianglesOrigin.trianglesOrigin[k + 16].color.texG = 0;
+			model.triangles.trianglesOrigin.trianglesOrigin[k + 16].color.decayFactor = -2;
 			model.triangles.trianglesOrigin.trianglesOrigin[k + 16].color.n = 1.6;
 			model.triangles.trianglesOrigin.trianglesOrigin[k + 17].uv1 = { 0,5 };
 			model.triangles.trianglesOrigin.trianglesOrigin[k + 17].uv2 = { 5,5 };
 			model.triangles.trianglesOrigin.trianglesOrigin[k + 17].uv3 = { 0,0 };
 			model.triangles.trianglesOrigin.trianglesOrigin[k + 17].color.g = 1;
 			model.triangles.trianglesOrigin.trianglesOrigin[k + 17].color.texG = 0;
+			model.triangles.trianglesOrigin.trianglesOrigin[k + 17].color.decayFactor = -2;
 			model.triangles.trianglesOrigin.trianglesOrigin[k + 17].color.n = 1.6;
 			/*stl.triangles.traverse
 			([](STL::Triangle const& a)
 				{
 					a.print();
 					return true;
-				});*/
+				});
+			model.spheres.data.spheres +=
+			{
+				{
+					{0, 0, 0.4, 0.01},
+					{ 0,0,1 },
+					{ 1,0,0 },
+					{
+						0.8,-1,
+						0,-1,
+						0.1,-1,
+						0,-1,
+						0,
+						1
+					}
+				}
+			};*/
 			model.planes.numChanged = true;
 			model.triangles.numChanged = true;
 			model.spheres.numChanged = true;
@@ -625,7 +643,7 @@ int main()
 	{
 		"RayTracing",
 		{
-			{360,360},
+			{960,520},
 			true, false,
 		}
 	};

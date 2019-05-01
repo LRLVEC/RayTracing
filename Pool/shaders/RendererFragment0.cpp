@@ -670,7 +670,7 @@ vec4 rayTrace(Ray ray)
 					{
 						float nadd1 = 1 / (tempColor.n + 1);
 						tempColor.r *= pow((tempColor.n - 1) * nadd1, 2);
-						tempColor.t *= pow(2 * nadd1, 2) ;
+						tempColor.t *= pow(2 * nadd1, 2) * tempColor.n;
 					}
 					else
 					{
