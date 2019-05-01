@@ -15,72 +15,72 @@
 \author{段元兴}
 \date{\today}
 \begin{document}
-\maketitle
-\thispagestyle{empty}
-\setcounter{page}{1}
-\newpage
-\tableofcontents
-\newpage
-    \section{摘要}
-        作为Computer Graphics的圣杯---光线追踪,是一个十分古老但是热门的算法.
-        接下来将简要的介绍实时光线追踪算法的基本实现.
-    \section{基本原理}
-        \subsection{概述}
-            \indent 真实世界的几何光学模型是光线从光源发出,经过折射,镜面反射,漫反射等方式进
-            入人眼.而现有计算机图形学的基本渲染方法却是光栅化,即利用空间投影变换将各种基本
-            图形元素(如三角形)投影到屏幕坐标然后上色等等.然而这种做法有先天性的巨大缺陷:在
-            实现折射反射及阴影等效果的时候需要利用各种所谓的技巧才能不太精确的模拟真实情况.\\
-            \indent 而模拟实际光线的光线追踪算法突破了这些传统图形学的局限性.
-        \subsection{正反向光线追踪}
-            一般来说光线追踪算法分两种:\\
-            \indent 1.正向光线追踪:完全按照真实世界的几何光学模型,模拟的光线从光源发出,经过
-            折射反射等等作用进入人眼从而被看到.而由于一般只有少量从光源发出的光线被人眼看到,
-            所以这种方法浪费了巨大的计算能力.\\
-            \indent 2.反向光线追踪:利用几何光线的光路可逆性,将原来的光线的方向改变从人眼出发,
-            极大的降低了所需要的光线数量.但是在路径追踪里,通常也需要与正向追踪结合来加快寻找
-            光源的速度.
-        \subsection{物理模型}
-            \indent 光线追踪里最基本的两个模型是光线和物体.人眼投射出光线,而光线在物体表面之
-            间和内部传播,而物体则对其有镜面反射,漫反射,折射和体积吸收等效果.光线和物体的特征
-            主要有几何特征和光学特征.光线的几何特征包括其初始点,方向和与物体碰撞时经过的距离;
-            而物体的几何特征则包括面元位置和表面法向.光线的光学特征有其颜色和占进入人眼光线
-            的比例,物体的光学特征则包括其镜面反射率,漫反射率,透射率,体积吸收率和折射率.\\
-            \indent 光线追踪的主要任务有两个:\\
-            \indent 1.计算光线与物体的碰撞,即找到第一个与光线碰撞的物体.\\
-            \indent 2.计算光线与物体表面的相互作用,包括计算光线的颜色特征变化和几何特征变化.\\
-            \indent 对于任务1,最基本的想法是逐一对所有物体进行相交测试,找到距离最近的交点.不
-            过如果合理利用物体之间的空间关系则可以大大加速这个过程,例如假如物体$a$在物体$b$内
-            部,而光线未与$b$相交,则对$a$的相交测试完全可以省去.而我们又可以加入一些假象的物体,
-            即包围盒,将一些物体包围起来,使得未与包围盒相交的光线不可能与其内的物体相交.还可以
-            对空间进行划分,使得光线背后的物体无需测试.总之有很多可以对测交过程加速的算法.我们
-            这里选取BVH (Bounding volume hierarchy)加速算法\\
-            \indent 对于任务2,直接利用相关公式计算即可.
-        \subsection{在计算机GPU上利用OpenGL实现}
-            \indent 目前光线追踪算法的实现大多是在CPU上实现的,自然是可以利用高级编程语言带来的各种方
-            便的语法.但是由于在这里的模型中光线与光线是无关的,故可以利用GPU的强大的并行性来加
-            速.基本的想法是对于投影平面上的每一个像素点生成一根光线然后交给fragment着色器实现
-            对其的追踪,获取的颜色则直接作为该像素点的颜色.追踪的过程包括:\\
-            \indent 1.从眼睛到投影屏幕之间投射一根光线,寻找第一个交点.若有交点,进行步骤2,否则返回天空盒子的颜色.\\
-            \indent 2.计算当前光线与物体之间的光学相互作用:\\
-            \indent \indent a.如果存在漫反射,计算光源与交点是否有物体遮挡,如果没有则计算光源对交点的光照;\\
-            \indent \indent b.如果存在折射,计算折射光线并将其压栈,计算折射对镜面反射率的影响;\\
-            \indent \indent c.如果存在镜面反射,计算反射光线并将其设为当前光线.\\
-            \indent 3.计算当前光线的第一个交点,若有交点,进行步骤2,否则退栈(若未栈空)或结束追踪(栈空).\\
-            \indent 当然栈深度是有限的,所以在达到栈深的时候即使有折射或反射光线也不能压栈.\\
-            \indent 所以光线追踪实现主要包括:对栈和递归的模拟(由于glsl不支持递归),对包围盒的遍
-            历,相交测试的计算,光学效果的计算.\\
-            \indent 考虑到实现实时最大的问题:性能,自然要对shader程序优化(效果可以非常明显,例如
-            从compute shader移植到 fragment shader之后性能提高了160\%).当然这样下来我们画出来的
-            图片并不是无偏的,由于在漫反射时仅仅计算了对光源的漫反射而未考虑其他物体的影响.这可
-            以通过分布式蒙特卡洛光线追踪解决,但是考虑到性能和后期降噪处理的复杂度,这里略去.所以
-            物体之间的漫反射和焦散效果等等这里是看不到的.
-    \section{理论推导}
+    \maketitle
+    \thispagestyle{empty}
+    \setcounter{page}{1}
+    \newpage
+    \tableofcontents
+    \newpage
+        \section{摘要}
+            作为Computer Graphics的圣杯---光线追踪,是一个十分古老但是热门的算法.
+            接下来将简要的介绍实时光线追踪算法的基本实现.
+        \section{基本原理}
+            \subsection{概述}
+                \indent 真实世界的几何光学模型是光线从光源发出,经过折射,镜面反射,漫反射等方式进
+                入人眼.而现有计算机图形学的基本渲染方法却是光栅化,即利用空间投影变换将各种基本
+                图形元素(如三角形)投影到屏幕坐标然后上色等等.然而这种做法有先天性的巨大缺陷:在
+                实现折射反射及阴影等效果的时候需要利用各种所谓的技巧才能不太精确的模拟真实情况.\\
+                \indent 而模拟实际光线的光线追踪算法突破了这些传统图形学的局限性.
+            \subsection{正反向光线追踪}
+                一般来说光线追踪算法分两种:\\
+                \indent 1.正向光线追踪:完全按照真实世界的几何光学模型,模拟的光线从光源发出,经过
+                折射反射等等作用进入人眼从而被看到.而由于一般只有少量从光源发出的光线被人眼看到,
+                所以这种方法浪费了巨大的计算能力.\\
+                \indent 2.反向光线追踪:利用几何光线的光路可逆性,将原来的光线的方向改变从人眼出发,
+                极大的降低了所需要的光线数量.但是在路径追踪里,通常也需要与正向追踪结合来加快寻找
+                光源的速度.
+            \subsection{物理模型}
+                \indent 光线追踪里最基本的两个模型是光线和物体.人眼投射出光线,而光线在物体表面之
+                间和内部传播,而物体则对其有镜面反射,漫反射,折射和体积吸收等效果.光线和物体的特征
+                主要有几何特征和光学特征.光线的几何特征包括其初始点,方向和与物体碰撞时经过的距离;
+                而物体的几何特征则包括面元位置和表面法向.光线的光学特征有其颜色和占进入人眼光线
+                的比例,物体的光学特征则包括其镜面反射率,漫反射率,透射率,体积吸收率和折射率.\\
+                \indent 光线追踪的主要任务有两个:\\
+                \indent 1.计算光线与物体的碰撞,即找到第一个与光线碰撞的物体.\\
+                \indent 2.计算光线与物体表面的相互作用,包括计算光线的颜色特征变化和几何特征变化.\\
+                \indent 对于任务1,最基本的想法是逐一对所有物体进行相交测试,找到距离最近的交点.不
+                过如果合理利用物体之间的空间关系则可以大大加速这个过程,例如假如物体$a$在物体$b$内
+                部,而光线未与$b$相交,则对$a$的相交测试完全可以省去.而我们又可以加入一些假象的物体,
+                即包围盒,将一些物体包围起来,使得未与包围盒相交的光线不可能与其内的物体相交.还可以
+                对空间进行划分,使得光线背后的物体无需测试.总之有很多可以对测交过程加速的算法.我们
+                这里选取BVH (Bounding volume hierarchy)加速算法\\
+                \indent 对于任务2,直接利用相关公式计算即可.
+            \subsection{在计算机GPU上利用OpenGL实现}
+                \indent 目前光线追踪算法的实现大多是在CPU上实现的,自然是可以利用高级编程语言带来的各种方
+                便的语法.但是由于在这里的模型中光线与光线是无关的,故可以利用GPU的强大的并行性来加
+                速.基本的想法是对于投影平面上的每一个像素点生成一根光线然后交给fragment着色器实现
+                对其的追踪,获取的颜色则直接作为该像素点的颜色.追踪的过程包括:\\
+                \indent 1.从眼睛到投影屏幕之间投射一根光线,寻找第一个交点.若有交点,进行步骤2,否则返回天空盒子的颜色.\\
+                \indent 2.计算当前光线与物体之间的光学相互作用:\\
+                \indent \indent a.如果存在漫反射,计算光源与交点是否有物体遮挡,如果没有则计算光源对交点的光照;\\
+                \indent \indent b.如果存在折射,计算折射光线并将其压栈,计算折射对镜面反射率的影响;\\
+                \indent \indent c.如果存在镜面反射,计算反射光线并将其设为当前光线.\\
+                \indent 3.计算当前光线的第一个交点,若有交点,进行步骤2,否则退栈(若未栈空)或结束追踪(栈空).\\
+                \indent 当然栈深度是有限的,所以在达到栈深的时候即使有折射或反射光线也不能压栈.\\
+                \indent 所以光线追踪实现主要包括:对栈和递归的模拟(由于glsl不支持递归),对包围盒的遍
+                历,相交测试的计算,光学效果的计算.\\
+                \indent 考虑到实现实时最大的问题:性能,自然要对shader程序优化(效果可以非常明显,例如
+                从compute shader移植到 fragment shader之后性能提高了160\%).当然这样下来我们画出来的
+                图片并不是无偏的,由于在漫反射时仅仅计算了对光源的漫反射而未考虑其他物体的影响.这可
+                以通过分布式蒙特卡洛光线追踪解决,但是考虑到性能和后期降噪处理的复杂度,这里略去.所以
+                物体之间的漫反射和焦散效果等等这里是看不到的.
+        \section{理论推导}
         \subsection{基本模型的数学描述}
             由于计算机只认识数,所以我们要将当前的各种物理模型转换成数学语言.这里涉及到基本的矢量计算.
             \subsubsection{颜色模型}
                 虽然自然生活中光的波长是连续分布的,但是在这里采用显示器的描述方式,即用$(R,G,B)$的混合来描述千千万万种个颜色.
                 而一个物体的光学属性则十分复杂,这里仅仅考虑其表面的自发光颜色$g$(glow),表面的反射颜色$r$(reflect),透射
-                颜色$t$(transmission),对光源的漫反射系数$d$(diffuse)和折射率$n_0$.所以用类$Color:\{r,t,g,d,n_0\}$来储存颜色信息.
+                颜色$t$(transmission),对光源的漫反射系数$d$(diffuse)和折射率$n$.所以用类$Color:\{r,t,g,d,n\}$来储存颜色信息.
                 而这些信息有可能随着在几何图元上的位置的不同而变化,因此有必要建立一个纹理坐标,
                 使\includegraphics[width=0.5cm]{./Opengl_Tiny.jpg}能够从纹理数组读取这些信息.
             \subsubsection{光线模型}
@@ -261,7 +261,9 @@
                     \right..
                 \end{equation}
                 法向$\overrightarrow{n_{hit}}$就是$\overrightarrow{n_p}$,纹理坐标$(u,v)$可以由
-                方程\ref{eq:triangleTexcood}得出.
+                方程\ref{eq:triangleTexcood}得出.\\
+                \indent 由此可以看出在少量的预计算下三角形的相交测试可以非常简单.而这些预计算又可以由GPU以并行化
+                的方式快速完成,达到加速的目的.
             \subsubsection{球形}
                 光线若与一个球相交,则该直线到球心的距离小于$R$.而这个距离平方可以表示为
                 $\left|\left(\overrightarrow{c}-\overrightarrow{p_0}\right)\times\overrightarrow{n_0}\right|^2$.
@@ -459,7 +461,9 @@
             \indent 2.光线入射方向$\overrightarrow{n_0}$\\
             \indent 3.光线传播的距离$t$\\
             \indent 4.几何图元的折射率$n$\\
-            \indent 5.几何图元的颜色信息$c$
+            \indent 5.几何图元的颜色信息$c$\\
+            \indent 之后需要据此计算出该光线的颜色$c$,其中包括$c_r$(镜面反射),$c_t$(透射),
+            $c_d$(点光源漫反射)和$c_g$(面元自发光).
             \subsubsection{镜面反射}
                 考虑法向$\overrightarrow{n_0}$的变化:
                 \begin{equation}
@@ -476,21 +480,26 @@
                 \indent 2.有折射,则需要计算该修正.\\
                 \indent 而修正为:
                 \begin{equation}
-                    t'=\frac{\left(1+\frac{\cos{\left(i_1+i_0\right)}}{\cos{\left(i_1-i_0\right)}}^2\right)
-                    \left(\frac{\sin{\left(i_1-i_0\right)}}{\sin{\left(i_1+i_0\right)}}\right)^2}{2}t.
+                    r'=\frac{r}{2}\left[\left(\frac{n\cos{i_0}-\cos{i_1}}{\cos{i_1}+n\cos{i_0}}\right)^2+
+                        \left(\frac{\cos{i_0}-n\cos{i_1}}{n\cos{i_1}+\cos{i_0}}\right)^2\right].
                 \end{equation}
                 注意到当$i_1$和$i_0$都趋于0时,数值计算可能不精确,于是求极限:
                 \begin{equation}
-                    \lim_{i_1,i_0\rightarrow 0}\frac{\left(1+\frac{\cos{\left(i_1+i_0\right)}}{\cos{\left(i_1-i_0\right)}}^2\right)
-                    \left(\frac{\sin{\left(i_1-i_0\right)}}{\sin{\left(i_1+i_0\right)}}\right)^2}{2}=
-                    \left(\frac{n-1}{n+1}\right)^2
+                    \lim_{i_0,i_1\rightarrow 0}\frac{1}{2}\left[\left(\frac{n\cos{i_0}-\cos{i_1}}{\cos{i_1}+n\cos{i_0}}\right)^2+
+                    \left(\frac{\cos{i_0}-n\cos{i_1}}{n\cos{i_1}+\cos{i_0}}\right)^2\right]=
+                    \left(\frac{n-1}{n+1}\right)^2.
+                \end{equation}
+                而我们所需要的$c_r$则可以由拟递归获取的反射光线颜色$c'$得到:
+                \begin{equation}
+                    c_r=r'c'.
                 \end{equation}
             \subsubsection{折射}
-                这里需要考虑$\overrightarrow{n_{hit}}$与$\overrightarrow{n_0}$的方向一致性.由折射定律
+                由折射定律
                 \begin{equation}
                     \sin{i_0}=n\sin{i_1}
                 \end{equation}
-                可以求出$i_1$.经过计算得到:\\
+                可以求出$i_1$.这里需要考虑$\overrightarrow{n_{hit}}$与$\overrightarrow{n_0}$
+                的方向一致性.经过计算得到:\\
                 \indent 1.$\overrightarrow{n_{hit}}\cdot\overrightarrow{n_0}<0$:
                 \begin{equation}
                     \overrightarrow{n_0}'=\frac{\overrightarrow{n_0}-
@@ -514,18 +523,29 @@
                 为保证继续进行相交测试时不会重新与该物体在该点相交,故实际上要将$t$稍微增加$\delta$.\\
                 \indent 计算菲涅尔透射率:
                 \begin{equation}
-                    t'=\frac{\cos{i_1}\cos{i_0}\left(\frac{2n\sin{i_1}}{\sin{\left(i_0+i_1\right)}}\right)^2
-                    \left(1+\frac{1}{\cos^2\left(i_1-i_0\right)}\right)}{2}t.
+                    t'=2t\cos^2{i_0}\left[\frac{1}{\left(\cos{i_1}+n\cos{i_0}\right)^2}+
+                    \frac{1}{\left(n\cos{i_1}+\cos{i_0}\right)^2}\right].
                 \end{equation}
                 同理,在$i_1$和$i_0$都趋于0时,计算极限:
                 \begin{equation}
-                    \lim_{i_1,i_0\rightarrow 0}\frac{\cos{i_1}\cos{i_0}\left(\frac{2n\sin{i_1}}
-                    {\sin{\left(i_0+i_1\right)}}\right)^2\left(1+\frac{1}{\cos^2\left(i_1-i_0\right)}\right)}{2}=
-                    \left(\frac{2n^2}{1+n}\right)^2.
+                    \lim_{i_0,i_1\rightarrow 0}2\cos^2{i_0}\left[\frac{1}{\left(\cos{i_1}+n\cos{i_0}\right)^2}+
+                    \frac{1}{\left(n\cos{i_1}+\cos{i_0}\right)^2}\right]=
+                    \left(\frac{2}{1+n}\right)^2.
+                \end{equation}
+                而我们所需要的$c_t$则可以由拟递归获取的折射光线颜色$c'$得到:
+                \begin{equation}
+                    c_t=t'c'.
                 \end{equation}
             \subsubsection{点光源漫反射}
                 这里采用简化的模型:若交点与点光源之间没有其他图元之间遮挡,则认为可以被光源照到.因此,
                 首先计算出相交位置
                 $\overrightarrow{p_0}'=\overrightarrow{p_0}+\overrightarrow{n_0}\left(t-\delta\right)$
-                ($t$减少$\delta$是因为防止面元后侧的光源干扰)然后对所有光源逐一判断是否有图元遮挡.
+                ($t$减少$\delta$是为防止面元后侧的光源干扰)然后对所有光源逐一判断是否有图元遮挡.若对某个点光
+                源没有遮挡关系,则在该面源处对该点光源可视,于是按点光源光强衰减和照朗伯体模型计算光照强度:
+                \begin{equation}
+                    c_d=c_l\frac{\overrightarrow{r}\cdot\overrightarrow{n_hit}}{\left|\overrightarrow{r}\right|^3}.
+                \end{equation}
+                其中$c_l$是点光源发光强度,$\overrightarrow{r}$是从面源到点光源的位矢.
+            \subsubsection{自发光}
+                这个属于物体固有属性,直接读取就行.一般发光体的自发光强与角度无关.
 \end{document}

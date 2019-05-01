@@ -20,7 +20,7 @@
 \contentsline {subsubsection}{\numberline {3.2.1}平面}{6}{subsubsection.3.2.1}
 \contentsline {subsubsection}{\numberline {3.2.2}三角形}{6}{subsubsection.3.2.2}
 \contentsline {subsubsection}{\numberline {3.2.3}球形}{7}{subsubsection.3.2.3}
-\contentsline {subsubsection}{\numberline {3.2.4}圆盘}{7}{subsubsection.3.2.4}
+\contentsline {subsubsection}{\numberline {3.2.4}圆盘}{8}{subsubsection.3.2.4}
 \contentsline {subsubsection}{\numberline {3.2.5}圆柱}{8}{subsubsection.3.2.5}
 \contentsline {subsubsection}{\numberline {3.2.6}圆锥}{8}{subsubsection.3.2.6}
 \contentsline {subsubsection}{\numberline {3.2.7}包围盒}{9}{subsubsection.3.2.7}
@@ -28,3 +28,4 @@
 \contentsline {subsubsection}{\numberline {3.3.1}镜面反射}{9}{subsubsection.3.3.1}
 \contentsline {subsubsection}{\numberline {3.3.2}折射}{9}{subsubsection.3.3.2}
 \contentsline {subsubsection}{\numberline {3.3.3}点光源漫反射}{10}{subsubsection.3.3.3}
+\contentsline {subsubsection}{\numberline {3.3.4}自发光}{10}{subsubsection.3.3.4}

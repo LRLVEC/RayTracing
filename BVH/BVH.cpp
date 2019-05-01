@@ -232,7 +232,7 @@ namespace OpenGL
 			sm(),
 			sizeChanged(true),
 			frameScale(),
-			transform({ {60.0},{0.4,0.9,0.1},{0.5},{0,0,1},700.0 }),
+			transform({ {60.0},{0.02,0.9,0.01},{0.01},{0,0,1},700.0 }),
 			model({ {ShaderStorageBuffer,0},{1,2},{3},{4},{5},{6},{7},{3},{9} }),
 			frameSizeBuffer(&frameScale),
 			transBuffer(&transform.bufferData),
@@ -257,13 +257,13 @@ namespace OpenGL
 			texture.bindUnit();
 			cube.bindUnit();
 			glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
-			model.circles.data.circles +=
+			/*model.circles.data.circles +=
 			{
 				{
-					{0,0,1,0},
-					{0,0,0},
-					50,
-					{1,0,0},
+					{0, 0, 1, 0},
+					{ 0,0,0 },
+						50,
+					{ 1,0,0 },
 					{
 						0,-1,
 						0,-1,
@@ -271,6 +271,22 @@ namespace OpenGL
 						0,-1,
 						0,
 						1
+					}
+				}
+			};*/
+			model.spheres.data.spheres +=
+			{
+				{
+					{0, 0, 2, 1},
+					{ 0,0,1,0 },
+					{ 1,0,0,0 },
+					{
+						1,-1,
+						1,-1,
+						0,-1,
+						0,-1,
+						{0, 0, 0},
+						1.5
 					}
 				}
 			};
@@ -281,7 +297,7 @@ namespace OpenGL
 					{ 0,0,300 }
 				}
 			};
-			model.addSTL
+			/*model.addSTL
 			(
 				stl,
 				{
@@ -293,7 +309,7 @@ namespace OpenGL
 					1.5
 				},
 				stl.triangles.length
-			);
+			);*/
 			model.planes.numChanged = true;
 			model.triangles.numChanged = true;
 			model.spheres.numChanged = true;

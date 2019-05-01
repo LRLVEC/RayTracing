@@ -473,7 +473,7 @@ namespace OpenGL
 					0,-1,
 					0,-1,
 					0,
-					1.33
+					1.6
 				});
 			unsigned int k(model.triangles.trianglesOrigin.trianglesOrigin.length);
 			model.addSTL
@@ -497,6 +497,7 @@ namespace OpenGL
 				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0].color.d = 0;
 				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0].color.g = 1;
 				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0].color.texG = 0;
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0].color.n = 1.6;
 
 				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0 + 1].uv1 = { 0,1.5 };
 				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0 + 1].uv2 = { 0,0 };
@@ -504,6 +505,7 @@ namespace OpenGL
 				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0 + 1].color.d = 0;
 				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0 + 1].color.g = 1;
 				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0 + 1].color.texG = 0;
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0 + 1].color.n = 1.6;
 			}
 
 			model.triangles.trianglesOrigin.trianglesOrigin[k + 16].uv1 = { 5,0 };
@@ -511,11 +513,13 @@ namespace OpenGL
 			model.triangles.trianglesOrigin.trianglesOrigin[k + 16].uv3 = { 5,5 };
 			model.triangles.trianglesOrigin.trianglesOrigin[k + 16].color.g = 1;
 			model.triangles.trianglesOrigin.trianglesOrigin[k + 16].color.texG = 0;
+			model.triangles.trianglesOrigin.trianglesOrigin[k + 16].color.n = 1.6;
 			model.triangles.trianglesOrigin.trianglesOrigin[k + 17].uv1 = { 0,5 };
 			model.triangles.trianglesOrigin.trianglesOrigin[k + 17].uv2 = { 5,5 };
 			model.triangles.trianglesOrigin.trianglesOrigin[k + 17].uv3 = { 0,0 };
 			model.triangles.trianglesOrigin.trianglesOrigin[k + 17].color.g = 1;
 			model.triangles.trianglesOrigin.trianglesOrigin[k + 17].color.texG = 0;
+			model.triangles.trianglesOrigin.trianglesOrigin[k + 17].color.n = 1.6;
 			/*stl.triangles.traverse
 			([](STL::Triangle const& a)
 				{
@@ -621,7 +625,7 @@ int main()
 	{
 		"RayTracing",
 		{
-			{720,480},
+			{360,360},
 			true, false,
 		}
 	};
