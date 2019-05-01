@@ -5,8 +5,8 @@ layout(local_size_x = 1)in;
 
 layout(std430, binding = 8)buffer DecayOrigin
 {
-	vec3 decayOrigins[originSamples];
-	vec3 decayOrigin;
+	vec4 decayOrigins[originSamples];
+	vec4 decayOrigin;
 };
 
 void main()
@@ -44,5 +44,5 @@ void main()
 			index = c0;
 		}
 	}
-	decayOrigin = decayOrigins[index].xyz;
+	decayOrigin = decayOrigins[index];
 }

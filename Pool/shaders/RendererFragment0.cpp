@@ -168,8 +168,8 @@ layout(std430, binding = 7)buffer PointLights
 };
 layout(std430, binding = 8)buffer DecayOrigin
 {
-	vec3 decayOrigins[originSamples];
-	vec3 decayOrigin;
+	vec4 decayOrigins[originSamples];
+	vec4 decayOrigin;
 };
 layout(std430, binding = 9)buffer BVH
 {
@@ -400,7 +400,7 @@ vec4 rayTrace(Ray ray)
 	vec3 tempN;
 	vec2 tempUV;
 	uvec2 hitObj;
-	vec3 decayNow = decayOrigin;
+	vec3 decayNow = decayOrigin.xyz;
 	for (;;)
 	{
 		ray.t = -1;
@@ -464,11 +464,10 @@ vec4 rayTrace(Ray ray)
 									hitObj = uvec2(geometry, n);
 									tempN = (ray.p0.xyz + ray.t * ray.n - spheres[n].sphere.xyz) / sqrt(spheres[n].sphere.w);
 									float ne1 = dot(tempN, spheres[n].e1);
-									vec3 nxy = normalize(tempN - ne1 * spheres[n].e1);
 									float u =
-										dot(nxy, cross(spheres[n].e1, spheres[n].e2)) >= 0 ?
-										acos(dot(spheres[n].e2, nxy)) / (2 * Pi) :
-										1 - acos(dot(spheres[n].e2, nxy)) / (2 * Pi);
+										dot(tempN, cross(spheres[n].e1, spheres[n].e2)) >= 0 ?
+										acos(dot(spheres[n].e2, tempN) / sqrt(1 - pow(ne1, 2))) / (2 * Pi) :
+										1 - acos(dot(spheres[n].e2, tempN) / sqrt(1 - pow(ne1, 2))) / (2 * Pi);
 									tempUV = vec2(u, 1 - acos(ne1) / Pi);
 								}
 							}
@@ -671,18 +670,18 @@ vec4 rayTrace(Ray ray)
 					{
 						float nadd1 = 1 / (tempColor.n + 1);
 						tempColor.r *= pow((tempColor.n - 1) * nadd1, 2);
-						tempColor.t *= pow(2 * nadd1, 2);
+						tempColor.t *= pow(2 * nadd1, 2) * tempColor.n;
 					}
 					else
 					{
-						float a1 = cosi2 + tempColor.n * abs(cosi1);
-						float a2 = tempColor.n * cosi2 + abs(cosi1);
+						float a1 = tempColor.n * abs(cosi1) + cosi2;
+						float a2 = abs(cosi1) + tempColor.n * cosi2;
 						tempColor.r *=
 							(
-								pow((tempColor.n * abs(cosi1) - cosi2) / a1, 2) +
-								pow((abs(cosi1) - tempColor.n * cosi2) / a2, 2)
+								pow((cosi2 - tempColor.n * abs(cosi1)) / a1, 2) +
+								pow((tempColor.n * cosi2 - abs(cosi1)) / a2, 2)
 								) / 2;
-						tempColor.t *= 2 * pow(cosi1, 2) * (1 / pow(a1, 2) + 1 / pow(a2, 2));
+						tempColor.t *= 2 * cosi2 * (1 / pow(a1, 2) + 1 / pow(a2, 2)) * tempColor.n * abs(cosi1);
 					}
 					if (any(greaterThanEqual(tempColor.t, vec3(minColor))))
 					{
@@ -723,7 +722,7 @@ vec4 rayTrace(Ray ray)
 			}
 		}
 		if (sp < 0)
-			return vec4(answer, 1);
+			return vec4(answer / decayOrigin.w, 1);
 		else
 		{
 			depth = stack[sp].depth;
@@ -734,7 +733,7 @@ vec4 rayTrace(Ray ray)
 			--sp;
 		}
 	}
-	return vec4(answer, 1);
+	return vec4(answer / decayOrigin.w, 1);
 }
 
 void main()

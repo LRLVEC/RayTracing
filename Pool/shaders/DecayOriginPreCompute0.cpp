@@ -127,8 +127,8 @@ layout(std430, binding = 6)buffer Cones
 };
 layout(std430, binding = 8)buffer DecayOrigin
 {
-	vec3 decayOrigins[originSamples];
-	vec3 decayOrigin;
+	vec4 decayOrigins[originSamples];
+	vec4 decayOrigin;
 };
 layout(std430, binding = 9)buffer BVH
 {
@@ -185,16 +185,18 @@ void main()
 	ray.n = normalize
 	(vec3
 	(
-		random(r0.xy + vec2(gl_GlobalInvocationID.x & 1)),
-		random(r0.yz + vec2((gl_GlobalInvocationID.x & 2) / 2)),
-		random(r0.zx + vec2((gl_GlobalInvocationID.x & 4) / 4))
+		0.1 * random(r0.xy + vec2(gl_GlobalInvocationID.x & 1)),
+		0.1 * random(r0.yz + vec2((gl_GlobalInvocationID.x & 2) / 2)),
+		1//abs(random(r0.zx + vec2((gl_GlobalInvocationID.x & 4) / 4)))
 	));
 	vec3 decayTemp = vec3(0);
+	float nTemp = 1;
 	while (true)
 	{
 		float t = -1;
 		uint n = 0;
 		vec3 decayNow = vec3(0);
+		float nNow;
 		ray.t = -1;
 		uint now = 0;
 		uint bvhStack = 0;
@@ -231,7 +233,9 @@ void main()
 								if (triangleTest(uv))
 								{
 									ray.t = tt;
-									decayNow = triangles[n].color.decayFactor * sign(dot(ray.n, triangles[n].plane.xyz));
+									float dn = dot(ray.n, triangles[n].plane.xyz);
+									decayNow = triangles[n].color.decayFactor * sign(dn);
+									nNow = dn > 0?triangles[n].color.n : 1 / triangles[n].color.n;
 								}
 							}
 							break;
@@ -250,7 +254,9 @@ void main()
 								if (tt > 0 && (tt < ray.t || ray.t < 0))
 								{
 									ray.t = tt;
-									decayNow = spheres[n].color.decayFactor * sign(dot(ray.n, (ray.p0.xyz + ray.t * ray.n - spheres[n].sphere.xyz) / sqrt(spheres[n].sphere.w)));
+									float dn = dot(ray.n, (ray.p0.xyz + ray.t * ray.n - spheres[n].sphere.xyz) / sqrt(spheres[n].sphere.w));
+									decayNow = spheres[n].color.decayFactor * sign(dn);
+									nNow = dn > 0?spheres[n].color.n : 1 / spheres[n].color.n;
 								}
 							}
 							break;
@@ -264,7 +270,9 @@ void main()
 								if (dot(d, d) <= circles[n].sphere.w)
 								{
 									ray.t = tt;
-									decayNow = circles[n].color.decayFactor * sign(dot(ray.n, circles[n].plane.xyz));
+									float dn = dot(ray.n, circles[n].plane.xyz);
+									decayNow = circles[n].color.decayFactor * sign(dn);
+									nNow = dn > 0?circles[n].color.n : 1 / circles[n].color.n;
 								}
 							}
 							break;
@@ -305,7 +313,9 @@ void main()
 									if (tt > 0 && (tt < ray.t || ray.t < 0))
 									{
 										ray.t = tt;
-										decayNow = cylinders[n].color.decayFactor * sign(dot(ray.n, normalize(d + ray.n * ray.t - cylinders[n].n * v)));
+										float dn = dot(ray.n, normalize(d + ray.n * ray.t - cylinders[n].n * v));
+										decayNow = cylinders[n].color.decayFactor * sign(dn);
+										nNow = dn > 0?cylinders[n].color.n : 1 / cylinders[n].color.n;
 									}
 								}
 							}
@@ -348,7 +358,9 @@ void main()
 								if (tt > 0 && (tt < ray.t || ray.t < 0))
 								{
 									ray.t = tt;
-									decayNow = cones[n].color.decayFactor * sign(dot(ray.n, normalize(d + ray.n * ray.t - cones[n].n * sqrt(r2 / cones[n].c2))));
+									float dn = dot(ray.n, normalize(d + ray.n * ray.t - cones[n].n * sqrt(r2 / cones[n].c2)));
+									decayNow = cones[n].color.decayFactor * sign(dn);
+									nNow = dn > 0?cones[n].color.n : 1 / cones[n].color.n;
 								}
 							}
 							break;
@@ -395,12 +407,13 @@ void main()
 		}
 		if (ray.t < 0)
 		{
-			decayOrigins[gl_GlobalInvocationID.x] = decayTemp;
+			decayOrigins[gl_GlobalInvocationID.x] = vec4(decayTemp, nTemp);
 			return;
 		}
 		else
 		{
 			decayTemp += decayNow;
+			nTemp *= nNow;
 			ray.p0 += vec4(ray.n * (ray.t + offset), 0);
 		}
 	}
