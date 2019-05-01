@@ -105,7 +105,7 @@ namespace OpenGL
 								(
 									{
 										attribs->para.z0 + attribs->para.dzMax *
-										cos(8 * (pow(c1 - cX,2) + pow(c0 - cY,2)) / (cX * cX + cY * cY)) / 2,
+										sin(4 * c1 / cX) / 2,
 										0,0
 									}
 						);
