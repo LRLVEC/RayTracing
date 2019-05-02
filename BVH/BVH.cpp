@@ -232,7 +232,7 @@ namespace OpenGL
 			sm(),
 			sizeChanged(true),
 			frameScale(),
-			transform({ {60.0},{0.4,0.9,0.1},{0.5},{0,0,1},700.0 }),
+			transform({ {60.0},{0.02,0.9,0.01},{0.01},{0,0,1},700.0 }),
 			model({ {ShaderStorageBuffer,0},{1,2},{3},{4},{5},{6},{7},{3},{9} }),
 			frameSizeBuffer(&frameScale),
 			transBuffer(&transform.bufferData),
@@ -242,7 +242,7 @@ namespace OpenGL
 			decayOriginStorage(&decayOriginBuffer, ShaderStorageBuffer, 8),
 			testBMP("resources\\Haja1.bmp"),
 			cubeData("resources\\room\\"),
-			//stl(sm.folder.find("resources/安妮女王躺椅.stl").readSTL()),
+			stl(sm.folder.find("resources/安妮女王躺椅.stl").readSTL()),
 			texture(&testBMP, 1),
 			cube(&cubeData, 2, RGBA32f, 1, cubeData.bmp[0].header.width, cubeData.bmp[0].header.height),
 			textureConfig(&texture, Texture2DArray, RGBA32f, 1, testBMP.bmp.header.width, testBMP.bmp.header.height, 1),
@@ -257,14 +257,47 @@ namespace OpenGL
 			texture.bindUnit();
 			cube.bindUnit();
 			glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
-			/*model.pointLights.data.pointLights +=
+			/*model.circles.data.circles +=
+			{
+				{
+					{0, 0, 1, 0},
+					{ 0,0,0 },
+						50,
+					{ 1,0,0 },
+					{
+						0,-1,
+						0,-1,
+						1,-1,
+						0,-1,
+						0,
+						1
+					}
+				}
+			};*/
+			model.spheres.data.spheres +=
+			{
+				{
+					{0, 0, 2, 1},
+					{ 0,0,1,0 },
+					{ 1,0,0,0 },
+					{
+						1,-1,
+						1,-1,
+						0,-1,
+						0,-1,
+						{0, 0, 0},
+						1.5
+					}
+				}
+			};
+			model.pointLights.data.pointLights +=
 			{
 				{
 					{4000, 4000, 4000},
-					{ 0,-300,0 }
-				},
-			};*/
-			model.addSTL
+					{ 0,0,300 }
+				}
+			};
+			/*model.addSTL
 			(
 				stl,
 				{
@@ -272,11 +305,11 @@ namespace OpenGL
 					1,-1,
 					0,-1,
 					0,-1,
-					{ -0.03,0,-0.03 },
-					1.33
+					{0, 0, -0.1},
+					1.5
 				},
 				stl.triangles.length
-			);
+			);*/
 			model.planes.numChanged = true;
 			model.triangles.numChanged = true;
 			model.spheres.numChanged = true;
