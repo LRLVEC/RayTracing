@@ -419,10 +419,13 @@ namespace OpenGL
 		BufferConfig frameSizeUniform;
 		BufferConfig transUniform;
 		BufferConfig decayOriginStorage;
-		BMPData testBMP;
+		BMPData poolBMP;
+		BMPData wallBMP;
+		BMPData ceilingBMP;
+		BMPData floorBMP;
 		BMPCubeData cubeData;
 		STL stl;
-		Texture texture;
+		Texture textures;
 		TextureCube cube;
 		TextureConfig<TextureStorage3D>textureConfig;
 		TracerInit tracerInit;
@@ -442,28 +445,37 @@ namespace OpenGL
 			frameSizeUniform(&frameSizeBuffer, UniformBuffer, 0),
 			transUniform(&transBuffer, UniformBuffer, 1),
 			decayOriginStorage(&decayOriginBuffer, ShaderStorageBuffer, 8),
-			testBMP("resources/pool.bmp"),
+			poolBMP("resources/pool.bmp"),
+			wallBMP("resources/brick.bmp"),
+			ceilingBMP("resources/ceiling.bmp"),
+			floorBMP("resources/floor.bmp"),
 			cubeData("resources/room/"),
 			stl(sm.folder.find("resources/pool.stl").readSTL()),
-			texture(&testBMP, 1),
+			textures(&poolBMP, 1),
 			cube(&cubeData, 2, RGBA32f, 1, cubeData.bmp[0].header.width, cubeData.bmp[0].header.height),
-			textureConfig(&texture, Texture2DArray, RGBA32f, 1, testBMP.bmp.header.width, testBMP.bmp.header.height, 1),
+			textureConfig(&textures, Texture2DArray, RGBA32f, 1, poolBMP.bmp.header.width, poolBMP.bmp.header.height, 4),
 			tracerInit(&sm, &frameScale, &model, &transform),
 			renderer(&sm),
 			waterSim(&sm, { 4,10 }, { 0.002,0.05,8,8,6,6,0.4,(1.0 - 0.01) / (8 * 6 - 1),0.1 }, 150)
 		{
-			textureConfig.dataRefresh(0, TextureInputBGRInt, TextureInputUByte, 0, 0, 0, testBMP.bmp.header.width, testBMP.bmp.header.height, 1);
-			cube.dataInit(0, TextureInputBGRInt, TextureInputUByte);
+			textureConfig.dataRefresh(0, TextureInputBGRInt, TextureInputUByte, 0, 0, 0, poolBMP.bmp.header.width, poolBMP.bmp.header.height, 1);
+			textures.data = &wallBMP;
+			textureConfig.dataRefresh(0, TextureInputBGRInt, TextureInputUByte, 0, 0, 1, wallBMP.bmp.header.width, wallBMP.bmp.header.height, 1);
+			textures.data = &ceilingBMP;
+			textureConfig.dataRefresh(0, TextureInputBGRInt, TextureInputUByte, 0, 0, 2, ceilingBMP.bmp.header.width, ceilingBMP.bmp.header.height, 1);
+			textures.data = &floorBMP;
+			textureConfig.dataRefresh(0, TextureInputBGRInt, TextureInputUByte, 0, 0, 3, floorBMP.bmp.header.width, floorBMP.bmp.header.height, 1);
 
+			cube.dataInit(0, TextureInputBGRInt, TextureInputUByte);
 			renderer.use();
-			texture.bindUnit();
+			textures.bindUnit();
 			cube.bindUnit();
 			glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 			model.pointLights.data.pointLights +=
 			{
 				{
-					{0.1, 0.1, 0.1},
-					{ 0,0,2.2 }
+					{0.15, 0.15, 0.15},
+					{ 0,0,2.6 }
 				}
 			};
 			waterSim.initModel(model, -0.5 + 0.005, -0.5 + 0.005,
@@ -507,28 +519,73 @@ namespace OpenGL
 				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0 + 1].color.texG = 0;
 				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0 + 1].color.n = 1.33;
 			}
+			for (int c0(8); c0 < 16; ++c0)
+			{
+				model.triangles.trianglesOrigin.trianglesOrigin[k + c0].color.d = 1;
+				model.triangles.trianglesOrigin.trianglesOrigin[k + c0].color.g = 0;
+				model.triangles.trianglesOrigin.trianglesOrigin[k + c0].color.texD = 3;
+				model.triangles.trianglesOrigin.trianglesOrigin[k + c0].color.n = 1;
+			}
 
-			model.triangles.trianglesOrigin.trianglesOrigin[k + 16].uv1 = { 5,0 };
-			model.triangles.trianglesOrigin.trianglesOrigin[k + 16].uv2 = { 0,0 };
-			model.triangles.trianglesOrigin.trianglesOrigin[k + 16].uv3 = { 5,5 };
-			model.triangles.trianglesOrigin.trianglesOrigin[k + 16].color.g = 1;
-			model.triangles.trianglesOrigin.trianglesOrigin[k + 16].color.texG = 0;
-			model.triangles.trianglesOrigin.trianglesOrigin[k + 16].color.decayFactor = -1;
-			model.triangles.trianglesOrigin.trianglesOrigin[k + 16].color.n = 1.33;
-			model.triangles.trianglesOrigin.trianglesOrigin[k + 17].uv1 = { 0,5 };
-			model.triangles.trianglesOrigin.trianglesOrigin[k + 17].uv2 = { 5,5 };
-			model.triangles.trianglesOrigin.trianglesOrigin[k + 17].uv3 = { 0,0 };
-			model.triangles.trianglesOrigin.trianglesOrigin[k + 17].color.g = 1;
-			model.triangles.trianglesOrigin.trianglesOrigin[k + 17].color.texG = 0;
-			model.triangles.trianglesOrigin.trianglesOrigin[k + 17].color.decayFactor = -1;
-			model.triangles.trianglesOrigin.trianglesOrigin[k + 17].color.n = 1.33;
-			/*stl.triangles.traverse
+			{
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 16].uv1 = { 5,0 };
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 16].uv2 = { 0,0 };
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 16].uv3 = { 5,5 };
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 16].color.g = 1;
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 16].color.texG = 0;
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 16].color.decayFactor = -1;
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 16].color.n = 1.33;
+
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 17].uv1 = { 0,5 };
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 17].uv2 = { 5,5 };
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 17].uv3 = { 0,0 };
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 17].color.g = 1;
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 17].color.texG = 0;
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 17].color.decayFactor = -1;
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 17].color.n = 1.33;
+			}
+			for (int c0(9); c0 < 13; ++c0)
+			{
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0].uv1 = { 1,0 };
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0].uv2 = { 1,1 };
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0].uv3 = { 0,0 };
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0].color.d = 1;
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0].color.g = 0;
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0].color.texD = 1;
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0].color.n = 1;
+
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0 + 1].uv1 = { 0,1 };
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0 + 1].uv2 = { 0,0 };
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0 + 1].uv3 = { 1,1 };
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0 + 1].color.d = 1;
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0 + 1].color.g = 0;
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0 + 1].color.texD = 1;
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0 + 1].color.n = 1;
+			}
+			{
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 26].uv1 = { 1,1 };
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 26].uv2 = { 0,0 };
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 26].uv3 = { 1,0 };
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 26].color.d = 1;
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 26].color.g = 0;
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 26].color.texD = 2;
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 26].color.n = 1;
+
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 27].uv1 = { 1,1 };
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 27].uv2 = { 0,1 };
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 27].uv3 = { 0,0 };
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 27].color.d = 1;
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 27].color.g = 0;
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 27].color.texD = 2;
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 27].color.n = 1;
+			}
+			stl.triangles.traverse
 			([](STL::Triangle const& a)
 				{
 					a.print();
 					return true;
 				});
-			model.spheres.data.spheres +=
+			/*model.spheres.data.spheres +=
 			{
 				{
 					{0, 0, 0.4, 0.01},
@@ -650,7 +707,7 @@ int main()
 	Window::WindowManager wm(winPara);
 	OpenGL::RayTrace test;
 	wm.init(0, &test);
-	glfwSwapInterval(0);
+	glfwSwapInterval(1);
 	FPS fps;
 	fps.refresh();
 	while (!wm.close())
