@@ -434,7 +434,7 @@ namespace OpenGL
 			sm(),
 			sizeChanged(true),
 			frameScale(),
-			transform({ {60.0},{0.001,0.9,0.0001},{0.001},{0,0,1},700.0 }),
+			transform({ {60.0},{0.002,0.9,0.001},{0.03},{0,0,1},700.0 }),
 			model({ {ShaderStorageBuffer,0},{1,2},{3},{4},{5},{6},{7},{3},{9} }),
 			frameSizeBuffer(&frameScale),
 			transBuffer(&transform.bufferData),
