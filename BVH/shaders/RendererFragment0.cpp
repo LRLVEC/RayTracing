@@ -1,5 +1,5 @@
 #version 450 core
-#define RayTraceDepth 8
+#define RayTraceDepth 10
 #define Pi 3.14159265359
 #define offset 0.005
 #define minColor 0.01
@@ -645,6 +645,8 @@ vec4 rayTrace(Ray ray)
 		}
 		if (tempColor.texG >= 0)
 			tempColor.g *= texture(texSmp, vec3(tempUV, tempColor.texG)).xyz;
+		if (tempColor.texG == -2)
+			tempColor.g *= (uint(20 * tempUV.x) + uint(20 * tempUV.y)) % 2;
 		if (ray.t < 0)
 		{
 			tempColor.g = texture(cubeSmp, ray.n).xyz;
@@ -708,6 +710,8 @@ vec4 rayTrace(Ray ray)
 				{
 					if (tempColor.texD >= 0)
 						tempColor.d *= texture(texSmp, vec3(tempUV, tempColor.texD)).xyz;
+					if (tempColor.texD == -2)
+						tempColor.d *= (uint(20 * tempUV.x) + uint(20 * tempUV.y)) % 2;
 					answer += max(-20 * sign(dot(ray.n, tempN)) * dot(tempN, dn) / tt, 0) * pointLights[n].color * tempColor.d * ratioNow;
 				}
 			}

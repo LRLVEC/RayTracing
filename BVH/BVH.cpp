@@ -232,7 +232,7 @@ namespace OpenGL
 			sm(),
 			sizeChanged(true),
 			frameScale(),
-			transform({ {60.0},{0.02,0.9,0.01},{0.01},{0,0,1},700.0 }),
+			transform({ {60.0},{0.09,0.9,0.01},{0.15},{0,0,30},700.0 }),
 			model({ {ShaderStorageBuffer,0},{1,2},{3},{4},{5},{6},{7},{3},{9} }),
 			frameSizeBuffer(&frameScale),
 			transBuffer(&transform.bufferData),
@@ -257,27 +257,27 @@ namespace OpenGL
 			texture.bindUnit();
 			cube.bindUnit();
 			glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
-			/*model.circles.data.circles +=
+			model.circles.data.circles +=
 			{
 				{
 					{0, 0, 1, 0},
 					{ 0,0,0 },
-						50,
+					1000,
 					{ 1,0,0 },
 					{
 						0,-1,
 						0,-1,
-						1,-1,
-						0,-1,
+						1,-2,
+						0.2,-2,
 						0,
 						1
 					}
 				}
-			};*/
+			};
 			model.spheres.data.spheres +=
 			{
 				{
-					{0, 0, 2, 1},
+					{0, 0, 10, 16},
 					{ 0,0,1,0 },
 					{ 1,0,0,0 },
 					{
@@ -285,8 +285,56 @@ namespace OpenGL
 						1,-1,
 						0,-1,
 						0,-1,
-						{0, 0, 0},
+						{-0.15, -0.15, 0},
 						1.5
+					}
+				}
+			};
+			model.spheres.data.spheres +=
+			{
+				{
+					{0, 0, 10, 16*0.95*0.95},
+					{ 0,0,1,0 },
+					{ 1,0,0,0 },
+					{
+						1,-1,
+						1,-1,
+						0,-1,
+						0,-1,
+						{0.15, 0.15, 0},
+						1/1.5
+					}
+				}
+			};
+			model.spheres.data.spheres +=
+			{
+				{
+					{10, 0, 10, 16},
+					{ 0,0,1,0 },
+					{ 1,0,0,0 },
+					{
+						0.7,-1,
+						0,-1,
+						0,-1,
+						0,-1,
+						0,
+						1
+					}
+				}
+			};
+			model.spheres.data.spheres +=
+			{
+				{
+					{20, 0, 10, 16},
+					{ 0,0,1,0 },
+					{ 1,0,0,0 },
+					{
+						0,-1,
+						0,-1,
+						1,-1,
+						0,-1,
+						0,
+						1
 					}
 				}
 			};
@@ -403,7 +451,7 @@ int main()
 	OpenGL::OpenGLInit init(4, 5);
 	Window::Window::Data winPara
 	{
-		"RayTracing",
+		"BVH",
 		{
 			{480,480},
 			true, false,
@@ -412,7 +460,7 @@ int main()
 	Window::WindowManager wm(winPara);
 	OpenGL::RayTrace test;
 	wm.init(0, &test);
-	glfwSwapInterval(0);
+	glfwSwapInterval(1);
 	FPS fps;
 	fps.refresh();
 	while (!wm.close())
