@@ -696,8 +696,8 @@ namespace OpenGL
 					1,-1,
 					0,-1,
 					0,-1,
-					{0, 0, 0.03},
-					1.0/1.5
+					{0, 0, 0.1},
+					1.0/1.3
 				},
 				threet2.triangles.length
 			);
