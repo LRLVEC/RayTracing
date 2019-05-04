@@ -288,7 +288,7 @@ namespace OpenGL
 						0,-1,
 						0,-1,
 						1,-2,
-						0.2,-2,
+						0.1,-1,
 						0,
 						1
 					}
@@ -373,7 +373,7 @@ namespace OpenGL
 					1,-1,
 					0,-1,
 					0,-1,
-					{0, 0, -0.1},
+					{0, 0, -0.03},
 					1.5
 				},
 				box1.triangles.length
@@ -395,12 +395,12 @@ namespace OpenGL
 			(
 				box3,
 				{
-					1,-1,
-					1,-1,
 					0,-1,
 					0,-1,
-					{0, 0, -0.1},
-					1.5
+					1,-1,
+					0,-1,
+					0,
+					1
 				},
 				box3.triangles.length
 			);
@@ -412,7 +412,7 @@ namespace OpenGL
 					1,-1,
 					0,-1,
 					0,-1,
-					{0, 0, -0.1},
+					{0, 0, -0.03},
 					1.5
 				},
 				boxt1.triangles.length
@@ -425,7 +425,7 @@ namespace OpenGL
 					1,-1,
 					0,-1,
 					0,-1,
-					{0, 0, 0.1},
+					{0, 0, 0.03},
 					1.0/1.5
 				},
 				boxt2.triangles.length
@@ -443,6 +443,25 @@ namespace OpenGL
 				},
 				mirror.triangles.length
 			);
+			model.addCylinder
+			(
+				{
+					{-15,35,1},
+					1,
+					{0,0,1},
+					2,
+					{1,0,0},
+					{
+						1,-1,
+						1,-1,
+						0,-1,
+						0,-1,
+						{0, 0, -0.1},
+						1.5
+					}
+				}
+			);
+
 			model.addSTL
 			(
 				three1,
@@ -451,7 +470,7 @@ namespace OpenGL
 					1,-1,
 					0,-1,
 					0,-1,
-					{0, 0, -0.1},
+					{0, 0, -0.03},
 					1.5
 				},
 				three1.triangles.length
@@ -473,12 +492,12 @@ namespace OpenGL
 			(
 				three3,
 				{
-					1,-1,
-					1,-1,
 					0,-1,
 					0,-1,
-					{0, 0, -0.1},
-					1.5
+					1,-1,
+					0,-1,
+					0,
+					1
 				},
 				three3.triangles.length
 			);
@@ -503,7 +522,7 @@ namespace OpenGL
 					1,-1,
 					0,-1,
 					0,-1,
-					{0, 0, 0.1},
+					{0, 0, 0.03},
 					1.0/1.5
 				},
 				threet2.triangles.length
