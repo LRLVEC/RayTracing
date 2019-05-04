@@ -219,7 +219,15 @@ namespace OpenGL
 		BufferConfig decayOriginStorage;
 		BMPData testBMP;
 		BMPCubeData cubeData;
-		STL stl;
+		STL box1;
+		STL box2;
+		STL box3;
+		STL boxt;
+		STL mirror;
+		STL three1;
+		STL three2;
+		STL three3;
+		STL threet;
 		Texture texture;
 		TextureCube cube;
 		TextureConfig<TextureStorage3D>textureConfig;
@@ -242,7 +250,15 @@ namespace OpenGL
 			decayOriginStorage(&decayOriginBuffer, ShaderStorageBuffer, 8),
 			testBMP("resources\\Haja1.bmp"),
 			cubeData("resources\\room\\"),
-			stl(sm.folder.find("resources/°²ÄÝÅ®ÍõÌÉÒÎ.stl").readSTL()),
+			box1(sm.folder.find("resources/box/box1.stl").readSTL()),
+			box2(sm.folder.find("resources/box/box2.stl").readSTL()),
+			box3(sm.folder.find("resources/box/box3.stl").readSTL()),
+			boxt(sm.folder.find("resources/box/boxtransparent.stl").readSTL()),
+			mirror(sm.folder.find("resources/mirror.stl").readSTL()),
+			three1(sm.folder.find("resources/three/three1.stl").readSTL()),
+			three2(sm.folder.find("resources/three/three2.stl").readSTL()),
+			three3(sm.folder.find("resources/three/three3.stl").readSTL()),
+			threet(sm.folder.find("resources/three/three transparent.stl").readSTL()),
 			texture(&testBMP, 1),
 			cube(&cubeData, 2, RGBA32f, 1, cubeData.bmp[0].header.width, cubeData.bmp[0].header.height),
 			textureConfig(&texture, Texture2DArray, RGBA32f, 1, testBMP.bmp.header.width, testBMP.bmp.header.height, 1),
@@ -262,7 +278,7 @@ namespace OpenGL
 				{
 					{0, 0, 1, 0},
 					{ 0,0,0 },
-					1000,
+					5000,
 					{ 1,0,0 },
 					{
 						0,-1,
@@ -345,9 +361,9 @@ namespace OpenGL
 					{ 0,0,300 }
 				}
 			};
-			/*model.addSTL
+			model.addSTL
 			(
-				stl,
+				box1,
 				{
 					1,-1,
 					1,-1,
@@ -356,8 +372,112 @@ namespace OpenGL
 					{0, 0, -0.1},
 					1.5
 				},
-				stl.triangles.length
-			);*/
+				box1.triangles.length
+			);
+			model.addSTL
+			(
+				box2,
+				{
+					0.7,-1,
+					0,-1,
+					0,-1,
+					0,-1,
+					0,
+					1
+				},
+				box2.triangles.length
+			);
+			model.addSTL
+			(
+				box3,
+				{
+					1,-1,
+					1,-1,
+					0,-1,
+					0,-1,
+					{0, 0, -0.1},
+					1.5
+				},
+				box3.triangles.length
+			);
+			model.addSTL
+			(
+				boxt,
+				{
+					1,-1,
+					1,-1,
+					0,-1,
+					0,-1,
+					{0, 0, -0.1},
+					1.5
+				},
+				boxt.triangles.length
+			);
+			model.addSTL
+			(
+				mirror,
+				{
+					0.7,-1,
+					0,-1,
+					0,-1,
+					0,-1,
+					0,
+					1
+				},
+				mirror.triangles.length
+			);
+			model.addSTL
+			(
+				three1,
+				{
+					1,-1,
+					1,-1,
+					0,-1,
+					0,-1,
+					{0, 0, -0.1},
+					1.5
+				},
+				three1.triangles.length
+			);
+			model.addSTL
+			(
+				three2,
+				{
+					0.7,-1,
+					0,-1,
+					0,-1,
+					0,-1,
+					0,
+					1
+				},
+				three2.triangles.length
+			);
+			model.addSTL
+			(
+				three3,
+				{
+					1,-1,
+					1,-1,
+					0,-1,
+					0,-1,
+					{0, 0, -0.1},
+					1.5
+				},
+				three3.triangles.length
+			);
+			model.addSTL
+			(
+				threet,
+				{
+					1,-1,
+					1,-1,
+					0,-1,
+					0,-1,
+					{0, 0, -0.1},
+					1.5
+				},
+				threet.triangles.length
+			);
 			model.planes.numChanged = true;
 			model.triangles.numChanged = true;
 			model.spheres.numChanged = true;
@@ -467,6 +587,7 @@ int main()
 	{
 		wm.pullEvents();
 		wm.render();
+		glFinish();
 		wm.swapBuffers();
 		fps.refresh();
 		fps.printFPS(1);

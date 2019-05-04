@@ -448,7 +448,7 @@ namespace OpenGL
 		BMPData ceilingBMP;
 		BMPData floorBMP;
 		BMPCubeData cubeData;
-		STL stl;
+		STL threePyramid;
 		Texture textures;
 		TextureCube cube;
 		TextureConfig<TextureStorage3D>textureConfig;
@@ -475,7 +475,7 @@ namespace OpenGL
 			ceilingBMP("resources/ceiling.bmp"),
 			floorBMP("resources/floor.bmp"),
 			cubeData("resources/room/"),
-			stl(sm.folder.find("resources/pool.stl").readSTL()),
+			threePyramid(sm.folder.find("resources/pool.stl").readSTL()),
 			textures(&poolBMP, 1),
 			cube(&cubeData, 2, RGBA32f, 1, cubeData.bmp[0].header.width, cubeData.bmp[0].header.height),
 			textureConfig(&textures, Texture2DArray, RGBA32f, 1, poolBMP.bmp.header.width, poolBMP.bmp.header.height, 4),
@@ -515,7 +515,7 @@ namespace OpenGL
 			unsigned int k(model.triangles.trianglesOrigin.trianglesOrigin.length);
 			model.addSTL
 			(
-				stl,
+				threePyramid,
 				{
 					0,-1,
 					0,-1,
@@ -524,7 +524,7 @@ namespace OpenGL
 					0,//{ -0.03,0,-0.03 },
 					1
 				},
-				stl.triangles.length
+				threePyramid.triangles.length
 			);
 			for (int c0(0); c0 < 4; ++c0)
 			{
