@@ -242,7 +242,7 @@ namespace OpenGL
 			decayOriginStorage(&decayOriginBuffer, ShaderStorageBuffer, 8),
 			testBMP("resources\\Haja1.bmp"),
 			cubeData("resources\\room\\"),
-			stl(sm.folder.find("resources/box1.stl").readSTL()),
+			stl(sm.folder.find("resources/Stanford_bunny_3.stl").readSTL()),
 			texture(&testBMP, 1),
 			cube(&cubeData, 2, RGBA32f, 1, cubeData.bmp[0].header.width, cubeData.bmp[0].header.height),
 			textureConfig(&texture, Texture2DArray, RGBA32f, 1, testBMP.bmp.header.width, testBMP.bmp.header.height, 1),
@@ -267,14 +267,14 @@ namespace OpenGL
 					{
 						0,-1,
 						0,-1,
-						1,-2,
-						0.2,-2,
+						1,-1,
+						0,-1,
 						0,
 						1
 					}
 				}
 			};
-			model.spheres.data.spheres +=
+			/*model.spheres.data.spheres +=
 			{
 				{
 					{0, 0, 10, 16},
@@ -337,7 +337,7 @@ namespace OpenGL
 						1
 					}
 				}
-			};
+			};*/
 			model.pointLights.data.pointLights +=
 			{
 				{
@@ -453,7 +453,7 @@ int main()
 	{
 		"BVH",
 		{
-			{800,800},
+			{100,100},
 			true, false,
 		}
 	};
