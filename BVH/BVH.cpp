@@ -222,12 +222,14 @@ namespace OpenGL
 		STL box1;
 		STL box2;
 		STL box3;
-		STL boxt;
+		STL boxt1;
+		STL boxt2;
 		STL mirror;
 		STL three1;
 		STL three2;
 		STL three3;
-		STL threet;
+		STL threet1;
+		STL threet2;
 		Texture texture;
 		TextureCube cube;
 		TextureConfig<TextureStorage3D>textureConfig;
@@ -253,12 +255,14 @@ namespace OpenGL
 			box1(sm.folder.find("resources/box/box1.stl").readSTL()),
 			box2(sm.folder.find("resources/box/box2.stl").readSTL()),
 			box3(sm.folder.find("resources/box/box3.stl").readSTL()),
-			boxt(sm.folder.find("resources/box/boxtransparent.stl").readSTL()),
+			boxt1(sm.folder.find("resources/box/boxtransparent1.stl").readSTL()),
+			boxt2(sm.folder.find("resources/box/boxtransparent2.stl").readSTL()),
 			mirror(sm.folder.find("resources/mirror.stl").readSTL()),
 			three1(sm.folder.find("resources/three/three1.stl").readSTL()),
 			three2(sm.folder.find("resources/three/three2.stl").readSTL()),
 			three3(sm.folder.find("resources/three/three3.stl").readSTL()),
-			threet(sm.folder.find("resources/three/three transparent.stl").readSTL()),
+			threet1(sm.folder.find("resources/three/three transparent1.stl").readSTL()),
+			threet2(sm.folder.find("resources/three/three transparent2.stl").readSTL()),
 			texture(&testBMP, 1),
 			cube(&cubeData, 2, RGBA32f, 1, cubeData.bmp[0].header.width, cubeData.bmp[0].header.height),
 			textureConfig(&texture, Texture2DArray, RGBA32f, 1, testBMP.bmp.header.width, testBMP.bmp.header.height, 1),
@@ -402,7 +406,7 @@ namespace OpenGL
 			);
 			model.addSTL
 			(
-				boxt,
+				boxt1,
 				{
 					1,-1,
 					1,-1,
@@ -411,7 +415,20 @@ namespace OpenGL
 					{0, 0, -0.1},
 					1.5
 				},
-				boxt.triangles.length
+				boxt1.triangles.length
+			);
+			model.addSTL
+			(
+				boxt2,
+				{
+					1,-1,
+					1,-1,
+					0,-1,
+					0,-1,
+					{0, 0, 0.1},
+					1.0/1.5
+				},
+				boxt2.triangles.length
 			);
 			model.addSTL
 			(
@@ -467,7 +484,7 @@ namespace OpenGL
 			);
 			model.addSTL
 			(
-				threet,
+				threet1,
 				{
 					1,-1,
 					1,-1,
@@ -476,7 +493,20 @@ namespace OpenGL
 					{0, 0, -0.1},
 					1.5
 				},
-				threet.triangles.length
+				threet1.triangles.length
+			);
+			model.addSTL
+			(
+				threet2,
+				{
+					1,-1,
+					1,-1,
+					0,-1,
+					0,-1,
+					{0, 0, 0.1},
+					1.0/1.5
+				},
+				threet2.triangles.length
 			);
 			model.planes.numChanged = true;
 			model.triangles.numChanged = true;
