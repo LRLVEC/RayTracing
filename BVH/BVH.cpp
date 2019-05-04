@@ -219,7 +219,17 @@ namespace OpenGL
 		BufferConfig decayOriginStorage;
 		BMPData testBMP;
 		BMPCubeData cubeData;
-		STL stl;
+		STL box1;
+		STL box2;
+		STL box3;
+		STL boxt1;
+		STL boxt2;
+		STL mirror;
+		STL three1;
+		STL three2;
+		STL three3;
+		STL threet1;
+		STL threet2;
 		Texture texture;
 		TextureCube cube;
 		TextureConfig<TextureStorage3D>textureConfig;
@@ -242,7 +252,17 @@ namespace OpenGL
 			decayOriginStorage(&decayOriginBuffer, ShaderStorageBuffer, 8),
 			testBMP("resources\\Haja1.bmp"),
 			cubeData("resources\\room\\"),
-			stl(sm.folder.find("resources/°²ÄÝÅ®ÍõÌÉÒÎ.stl").readSTL()),
+			box1(sm.folder.find("resources/box/box1.stl").readSTL()),
+			box2(sm.folder.find("resources/box/box2.stl").readSTL()),
+			box3(sm.folder.find("resources/box/box3.stl").readSTL()),
+			boxt1(sm.folder.find("resources/box/boxtransparent1.stl").readSTL()),
+			boxt2(sm.folder.find("resources/box/boxtransparent2.stl").readSTL()),
+			mirror(sm.folder.find("resources/mirror.stl").readSTL()),
+			three1(sm.folder.find("resources/three/three1.stl").readSTL()),
+			three2(sm.folder.find("resources/three/three2.stl").readSTL()),
+			three3(sm.folder.find("resources/three/three3.stl").readSTL()),
+			threet1(sm.folder.find("resources/three/three transparent1.stl").readSTL()),
+			threet2(sm.folder.find("resources/three/three transparent2.stl").readSTL()),
 			texture(&testBMP, 1),
 			cube(&cubeData, 2, RGBA32f, 1, cubeData.bmp[0].header.width, cubeData.bmp[0].header.height),
 			textureConfig(&texture, Texture2DArray, RGBA32f, 1, testBMP.bmp.header.width, testBMP.bmp.header.height, 1),
@@ -262,13 +282,13 @@ namespace OpenGL
 				{
 					{0, 0, 1, 0},
 					{ 0,0,0 },
-					1000,
+					5000,
 					{ 1,0,0 },
 					{
 						0,-1,
 						0,-1,
 						1,-2,
-						0.2,-2,
+						0.1,-1,
 						0,
 						1
 					}
@@ -288,10 +308,7 @@ namespace OpenGL
 						{-0.15, -0.15, 0},
 						1.5
 					}
-				}
-			};
-			model.spheres.data.spheres +=
-			{
+				},
 				{
 					{0, 0, 10, 16*0.95*0.95},
 					{ 0,0,1,0 },
@@ -304,10 +321,7 @@ namespace OpenGL
 						{0.15, 0.15, 0},
 						1/1.5
 					}
-				}
-			};
-			model.spheres.data.spheres +=
-			{
+				},
 				{
 					{10, 0, 10, 16},
 					{ 0,0,1,0 },
@@ -320,10 +334,7 @@ namespace OpenGL
 						0,
 						1
 					}
-				}
-			};
-			model.spheres.data.spheres +=
-			{
+				},
 				{
 					{20, 0, 10, 16},
 					{ 0,0,1,0 },
@@ -336,6 +347,19 @@ namespace OpenGL
 						0,
 						1
 					}
+				},
+				{
+					{30, 0, 10, 16},
+					{ 0,0,1,0 },
+					{ 1,0,0,0 },
+					{
+						1,-1,
+						1,-1,
+						0,-1,
+						0,-1,
+						{-0.15, -0.15, 0},
+						1.5
+					}
 				}
 			};
 			model.pointLights.data.pointLights +=
@@ -343,21 +367,340 @@ namespace OpenGL
 				{
 					{4000, 4000, 4000},
 					{ 0,0,300 }
-				}
+				},
+				{
+					{10, 10, 10},
+					{ -10,20,20 }
+				},
+				{
+					{10, 10, 10},
+					{ 30,20,20 }
+				},
 			};
-			/*model.addSTL
+			model.addSTL
 			(
-				stl,
+				box1,
+				{
+					1,-1,
+					1,-1,
+					0,-1,
+					0,-1,
+					{0, 0, -0.03},
+					1.5
+				},
+				box1.triangles.length
+			);
+			model.addSTL
+			(
+				box2,
+				{
+					0.7,-1,
+					0,-1,
+					0,-1,
+					0,-1,
+					0,
+					1
+				},
+				box2.triangles.length
+			);
+			model.addSTL
+			(
+				box3,
+				{
+					0,-1,
+					0,-1,
+					1,-1,
+					0,-1,
+					0,
+					1
+				},
+				box3.triangles.length
+			);
+			model.addSTL
+			(
+				boxt1,
+				{
+					1,-1,
+					1,-1,
+					0,-1,
+					0,-1,
+					{0, 0, -0.03},
+					1.5
+				},
+				boxt1.triangles.length
+			);
+			model.addSTL
+			(
+				boxt2,
+				{
+					1,-1,
+					1,-1,
+					0,-1,
+					0,-1,
+					{0, 0, 0.03},
+					1.0/1.5
+				},
+				boxt2.triangles.length
+			);
+			model.addSTL
+			(
+				mirror,
+				{
+					0.7,-1,
+					0,-1,
+					0,-1,
+					0,-1,
+					0,
+					1
+				},
+				mirror.triangles.length
+			);
+			model.addCylinder
+			(
+				{
+					{-15,35,1},
+					1,
+					{0,0,1},
+					2,
+					{1,0,0},
+					{
+						1,-1,
+						1,-1,
+						0,-1,
+						0,-1,
+						{0, 0, -0.1},
+						1.5
+					}
+				}
+			);
+			model.addCylinder
+			(
+				{
+					{-15,37.5,1},
+					1,
+					{0,0,1},
+					2,
+					{1,0,0},
+					{
+						0.7,-1,
+						0,-1,
+						0,-1,
+						0,-1,
+						0,
+						1
+					}
+				}
+			);
+			model.addCylinder
+			(
+				{
+					{-15,32.5,1},
+					1,
+					{0,0,1},
+					2,
+					{1,0,0},
+					{
+						0,-1,
+						0,-1,
+						1,-1,
+						0,-1,
+						0,
+						1
+					}
+				}
+			);
+			model.addCylinder
+			(
+				{
+					{-15,30,1},
+					1,
+					{0,0,1},
+					2,
+					{1,0,0},
+					{
+						1,-1,
+						1,-1,
+						0,-1,
+						0,-1,
+						{0, 0, -0.01},
+						1.5
+					}
+				}
+			);
+			model.addCylinder
+			(
+				{
+					{-15,30,1.1},
+					1*0.95*0.95,
+					{0,0,1},
+					1.9,
+					{1,0,0},
+					{
+						1,-1,
+						1,-1,
+						0,-1,
+						0,-1,
+						{0, 0, 0.01},
+						1/1.5
+					}
+				}
+			);
+			model.addCone
+			(
+				{
+					{-7,35,7},
+					0.8,
+					{0,0,-1},
+					4,
+					{1,0,0},
+					{
+						1,-1,
+						1,-1,
+						0,-1,
+						0,-1,
+						{-0.2, 0, -0.2},
+						1.5
+					}
+				}
+			);
+			model.addCone
+			(
+				{
+					{-7,37,7},
+					0.8,
+					{0,0,-1},
+					4,
+					{1,0,0},
+					{
+						0.7,-1,
+						0,-1,
+						0,-1,
+						0,-1,
+						0,
+						1
+					}
+				}
+			);
+			model.addCone
+			(
+				{
+					{-7,33,7},
+					0.8,
+					{0,0,-1},
+					4,
+					{1,0,0},
+					{
+						0,-1,
+						0,-1,
+						1,-1,
+						0,-1,
+						0,
+						1
+					}
+				}
+			);
+			model.addCone
+			(
+				{
+					{-7,31,7},
+					0.8,
+					{0,0,-1},
+					4,
+					{1,0,0},
+					{
+						1,-1,
+						1,-1,
+						0,-1,
+						0,-1,
+						{-0.2, 0, -0.2},
+						1.5
+					}
+				}
+			);
+			model.addCone
+			(
+				{
+					{-7,31,7-0.1},
+					0.8,
+					{0,0,-1},
+					4-0.5,
+					{1,0,0},
+					{
+						1,-1,
+						1,-1,
+						0,-1,
+						0,-1,
+						{0.2, 0, 0.2},
+						1/1.5
+					}
+				}
+			);
+
+			model.addSTL
+			(
+				three1,
+				{
+					1,-1,
+					1,-1,
+					0,-1,
+					0,-1,
+					{0, 0, -0.03},
+					1.5
+				},
+				three1.triangles.length
+			);
+			model.addSTL
+			(
+				three2,
+				{
+					0.7,-1,
+					0,-1,
+					0,-1,
+					0,-1,
+					0,
+					1
+				},
+				three2.triangles.length
+			);
+			model.addSTL
+			(
+				three3,
+				{
+					0,-1,
+					0,-1,
+					1,-1,
+					0,-1,
+					0,
+					1
+				},
+				three3.triangles.length
+			);
+			model.addSTL
+			(
+				threet1,
 				{
 					1,-1,
 					1,-1,
 					0,-1,
 					0,-1,
 					{0, 0, -0.1},
-					1.5
+					1.3
 				},
-				stl.triangles.length
-			);*/
+				threet1.triangles.length
+			);
+			model.addSTL
+			(
+				threet2,
+				{
+					1,-1,
+					1,-1,
+					0,-1,
+					0,-1,
+					{0, 0, 0.03},
+					1.0/1.5
+				},
+				threet2.triangles.length
+			);
 			model.planes.numChanged = true;
 			model.triangles.numChanged = true;
 			model.spheres.numChanged = true;
@@ -453,23 +796,30 @@ int main()
 	{
 		"BVH",
 		{
-			{480,480},
+			{720,480},
 			true, false,
 		}
 	};
 	Window::WindowManager wm(winPara);
 	OpenGL::RayTrace test;
 	wm.init(0, &test);
-	glfwSwapInterval(1);
+	glfwSwapInterval(0);
 	FPS fps;
 	fps.refresh();
+	::printf("FPS:\n");
+	int n(0);
 	while (!wm.close())
 	{
 		wm.pullEvents();
 		wm.render();
+		glFinish();
 		wm.swapBuffers();
 		fps.refresh();
-		fps.printFPS(1);
+		if (++n == 10)
+		{
+			::printf("\r%.2lf    ", fps.fps);
+			n = 0;
+		}
 	}
 	return 0;
 }
