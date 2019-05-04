@@ -242,7 +242,7 @@ namespace OpenGL
 			decayOriginStorage(&decayOriginBuffer, ShaderStorageBuffer, 8),
 			testBMP("resources\\Haja1.bmp"),
 			cubeData("resources\\room\\"),
-			stl(sm.folder.find("resources/°²ÄÝÅ®ÍõÌÉÒÎ.stl").readSTL()),
+			stl(sm.folder.find("resources/box1.stl").readSTL()),
 			texture(&testBMP, 1),
 			cube(&cubeData, 2, RGBA32f, 1, cubeData.bmp[0].header.width, cubeData.bmp[0].header.height),
 			textureConfig(&texture, Texture2DArray, RGBA32f, 1, testBMP.bmp.header.width, testBMP.bmp.header.height, 1),
@@ -262,7 +262,7 @@ namespace OpenGL
 				{
 					{0, 0, 1, 0},
 					{ 0,0,0 },
-					1000,
+					7000,
 					{ 1,0,0 },
 					{
 						0,-1,
@@ -345,7 +345,7 @@ namespace OpenGL
 					{ 0,0,300 }
 				}
 			};
-			/*model.addSTL
+			model.addSTL
 			(
 				stl,
 				{
@@ -354,10 +354,10 @@ namespace OpenGL
 					0,-1,
 					0,-1,
 					{0, 0, -0.1},
-					1.5
+					1.3
 				},
 				stl.triangles.length
-			);*/
+			);
 			model.planes.numChanged = true;
 			model.triangles.numChanged = true;
 			model.spheres.numChanged = true;
@@ -453,7 +453,7 @@ int main()
 	{
 		"BVH",
 		{
-			{480,480},
+			{800,800},
 			true, false,
 		}
 	};

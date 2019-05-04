@@ -65,7 +65,7 @@ namespace OpenGL
 			Renderer(SourceManager* _sourceManage)
 				:
 				Program(_sourceManage, "Triangle", Vector<VertexAttrib*>{&positions}),
-				model(_sourceManage->folder.find("resources/Stanford_bunny_simplified.stl").readSTL()),
+				model(_sourceManage->folder.find("resources/dragon.stl").readSTL()),
 
 				modelPostions(&model),
 				modelNormals(&model),
@@ -232,8 +232,8 @@ int main()
 		wm.pullEvents();
 		wm.render();
 		wm.swapBuffers();
-		//fps.refresh();
-		//fps.printFPS(1);
+		fps.refresh();
+		fps.printFPS(1);
 	}
 	return 0;
 }

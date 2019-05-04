@@ -18,8 +18,8 @@ int main()
 		}
 	};
 	Window::WindowManager wm(winParameters);
-	OpenGL::NBody test(40);
-	wm.init(0, &test);
+	OpenGL::NBody nBody(25);
+	wm.init(0, &nBody);
 	glfwSwapInterval(0);
 	FPS fps;
 	fps.refresh();
