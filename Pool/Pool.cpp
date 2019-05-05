@@ -540,10 +540,10 @@ namespace OpenGL
 					0,-1,
 					0,-1,
 					-1,
-					1.5
+					1.33
 				});
 			unsigned int k(model.triangles.trianglesOrigin.trianglesOrigin.length);
-			float glow = 0.6;
+			float glow = 1;
 			model.addSTL
 			(
 				threePyramid,
