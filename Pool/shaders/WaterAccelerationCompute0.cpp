@@ -7,6 +7,8 @@ struct Water
 	float v;
 	float a;
 	float blank;
+	vec3 n;
+	float blank1;
 };
 
 layout(std140, binding = 4)uniform WaterParameters

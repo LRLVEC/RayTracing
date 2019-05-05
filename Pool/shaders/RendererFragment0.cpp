@@ -65,6 +65,8 @@ struct TriangleGPU
 	vec2 uv1;
 	vec2 uv2;
 	vec2 uv3;
+	vec2 blank;
+	ivec4 nIndices;
 	Color color;
 };
 struct Sphere
@@ -114,6 +116,16 @@ struct Stack
 	vec3 decayFactor;
 };
 
+
+struct Water
+{
+	float z;
+	float v;
+	float a;
+	float blank;
+	vec3 n;
+	float blank1;
+};
 
 layout(std140, binding = 0)uniform Size
 {
@@ -175,6 +187,11 @@ layout(std430, binding = 9)buffer BVH
 {
 	BVHNode bvh[];
 };
+layout(std430, binding = 10)buffer Waters
+{
+	Water water[];
+};
+
 
 
 Ray rayAlloctor()
@@ -440,7 +457,12 @@ vec4 rayTrace(Ray ray)
 								{
 									ray.t = tt;
 									hitObj = uvec2(geometry, n);
-									tempN = triangles[n].plane.xyz;
+									if (triangles[n].nIndices.x < 0)
+										tempN = triangles[n].plane.xyz;
+									else
+										tempN = normalize((1 - uv.x - uv.y) * water[triangles[n].nIndices.x].n +
+											uv.x * water[triangles[n].nIndices.y].n +
+											uv.y * water[triangles[n].nIndices.z].n);
 									tempUV = (1 - uv.x - uv.y) * triangles[n].uv1 + uv.x * triangles[n].uv2 + uv.y * triangles[n].uv3;
 								}
 							}

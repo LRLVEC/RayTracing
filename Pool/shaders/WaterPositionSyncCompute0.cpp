@@ -7,6 +7,8 @@ struct Water
 	float v;
 	float a;
 	float blank;
+	vec3 n;
+	float blank1;
 };
 struct Color
 {
@@ -29,7 +31,8 @@ struct Triangle
 	vec2 uv1;
 	vec2 uv2;
 	vec2 uv3;
-	bool changed;
+	vec2 blank;
+	ivec4 nIndices;
 	Color color;
 };
 layout(std140, binding = 4)uniform WaterParameters

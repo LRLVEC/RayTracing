@@ -22,6 +22,8 @@ struct Triangle
 	vec2 uv1;
 	vec2 uv2;
 	vec2 uv3;
+	vec2 blank;
+	ivec4 nIndices;
 	Color color;
 };
 struct TriangleGPU
@@ -33,6 +35,8 @@ struct TriangleGPU
 	vec2 uv1;
 	vec2 uv2;
 	vec2 uv3;
+	vec2 blank;
+	ivec4 nIndices;
 	Color color;
 };
 layout(std140, binding = 3)uniform GeometryNum
@@ -56,10 +60,7 @@ void main()
 {
 	if (gl_GlobalInvocationID.x < triangleNum)
 	{
-		triangles[gl_GlobalInvocationID.x].color =
-			trianglesOrigin[gl_GlobalInvocationID.x].color;
-		triangles[gl_GlobalInvocationID.x].p1 =
-			trianglesOrigin[gl_GlobalInvocationID.x].p1;
+		triangles[gl_GlobalInvocationID.x].p1 = trianglesOrigin[gl_GlobalInvocationID.x].p1;
 		vec3 e1 =
 			trianglesOrigin[gl_GlobalInvocationID.x].p2 -
 			trianglesOrigin[gl_GlobalInvocationID.x].p1;
@@ -77,5 +78,7 @@ void main()
 		triangles[gl_GlobalInvocationID.x].uv1 = trianglesOrigin[gl_GlobalInvocationID.x].uv1;
 		triangles[gl_GlobalInvocationID.x].uv2 = trianglesOrigin[gl_GlobalInvocationID.x].uv2;
 		triangles[gl_GlobalInvocationID.x].uv3 = trianglesOrigin[gl_GlobalInvocationID.x].uv3;
+		triangles[gl_GlobalInvocationID.x].nIndices = trianglesOrigin[gl_GlobalInvocationID.x].nIndices;
+		triangles[gl_GlobalInvocationID.x].color = trianglesOrigin[gl_GlobalInvocationID.x].color;
 	}
 }

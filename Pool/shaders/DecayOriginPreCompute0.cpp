@@ -51,6 +51,8 @@ struct TriangleGPU
 	vec2 uv1;
 	vec2 uv2;
 	vec2 uv3;
+	vec2 blank;
+	ivec4 nIndices;
 	Color color;
 };
 struct Sphere

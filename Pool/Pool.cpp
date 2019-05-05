@@ -87,6 +87,7 @@ namespace OpenGL
 						float v;
 						float a;
 						float blank;
+						Math::vec4<float> n;
 					};
 					Vector<WaterPoint>waterPoints;
 
@@ -107,7 +108,10 @@ namespace OpenGL
 										attribs->para.z0 + attribs->para.dzMax * 0.5f *// (1 - float(pow(c1 - cX,2) + pow(c0 - cY,2)) / (cX * cX)),
 										sinf(2 * Math::Pi * c1 / cX) * sinf(2 * Math::Pi * c0 / cY),
 									//cosf(Math::Pi + 4 * (pow(c1 - cX,2) + pow(c0 - cY,2)) / ((cX * cX + cY * cY))),
-									0,0
+									0,
+									0,
+									0,
+									0
 									}
 						);
 					}
@@ -203,11 +207,31 @@ namespace OpenGL
 					glDispatchCompute(attribs->para.groupNumX, attribs->para.groupNumY, 1);
 				}
 			};
+			struct NormanCalc :Program
+			{
+				Water::WaterAttribs* attribs;
+				NormanCalc(SourceManager* _sm, Water::WaterAttribs* _attribs)
+					:
+					Program(_sm, "WaterNormal"),
+					attribs(_attribs)
+				{
+					init();
+				}
+				virtual void initBufferData()override
+				{
+				}
+				virtual void run()override
+				{
+					glDispatchCompute(attribs->para.groupNumX, attribs->para.groupNumY, 1);
+				}
+			};
 			Water water;
 			AccelerationCalc accelerationCalc;
 			PositionCalc positionCalc;
 			PositionSync positionSync;
+			NormanCalc normalCalc;
 			unsigned int n;
+			bool normalUpToDate;
 
 			WaterSimulation(SourceManager* _sm, Water::Info const& _info, Water::WaterAttribs::Parameters const& _para, unsigned int _n)
 				:
@@ -215,7 +239,9 @@ namespace OpenGL
 				accelerationCalc(_sm, &water.attribs),
 				positionCalc(_sm, &water.attribs),
 				positionSync(_sm, &water.attribs),
-				n(_n)
+				normalCalc(_sm, &water.attribs),
+				n(_n),
+				normalUpToDate(false)
 			{
 			}
 			virtual void initBufferData()override
@@ -232,6 +258,7 @@ namespace OpenGL
 				}
 				positionSync.use();
 				positionSync.run();
+				normalUpToDate = false;
 			}
 			void dataInit()
 			{
@@ -240,9 +267,10 @@ namespace OpenGL
 			void initModel(RayTracing::Model& _model, float x0, float y0, RayTracing::Model::Color color)
 			{
 				Vector<RayTracing::Model::Triangles::TriangleOriginData::TriangleOrigin>temp;
+				int nx(water.attribs.para.groupNumX * water.attribs.para.groupSizeX);
 				for (int c0(0); c0 < water.attribs.para.groupNumY * water.attribs.para.groupSizeY - 1; ++c0)
 				{
-					for (int c1(0); c1 < water.attribs.para.groupNumX * water.attribs.para.groupSizeX - 1; ++c1)
+					for (int c1(0); c1 < nx - 1; ++c1)
 						temp.pushBack
 						({
 							{
@@ -263,6 +291,7 @@ namespace OpenGL
 								}
 							},
 							0,0,0,
+							{c1 + c0 * nx,c1 + 1 + c0 * nx,c1 + (c0 + 1) * nx},
 							color
 							});
 					for (int c1(0); c1 < water.attribs.para.groupNumX * water.attribs.para.groupSizeX - 1; ++c1)
@@ -286,6 +315,7 @@ namespace OpenGL
 								}
 							},
 							0,0,0,
+							{c1 + 1 + (c0 + 1) * nx,c1 + (c0 + 1) * nx,c1 + 1 + c0 * nx},
 							color
 							});
 				}
@@ -651,8 +681,11 @@ namespace OpenGL
 		}
 		virtual void run() override
 		{
-			if (!paused)waterSim.run();
-			tracerInit.trianglePre.model->triangles.GPUUpToDate = false;
+			if (!paused)
+			{
+				waterSim.run();
+				tracerInit.trianglePre.model->triangles.GPUUpToDate = false;
+			}
 			if (sizeChanged)
 			{
 				glViewport(0, 0, frameScale.scale.data[0], frameScale.scale.data[1]);
@@ -665,7 +698,14 @@ namespace OpenGL
 				transUniform.refreshData();
 				transform.updated = false;
 			}
+			glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);//如果不加就会出现水面撕裂-.-
 			tracerInit.run();
+			if (!waterSim.normalUpToDate)
+			{
+				waterSim.normalCalc.use();
+				waterSim.normalCalc.run();
+				waterSim.normalUpToDate = true;
+			}
 			glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 			renderer.use();
 			renderer.run();
