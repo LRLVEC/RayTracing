@@ -260,10 +260,17 @@
                         \end{array}
                     \right..
                 \end{equation}
+                \indent 由此可以看出在少量的预计算下三角形的相交测试可以非常简单.而这些预计算又可以由GPU以并行化
+                的方式快速完成,达到加速的目的.\\
                 法向$\overrightarrow{n_{hit}}$就是$\overrightarrow{n_p}$,纹理坐标$(u,v)$可以由
                 方程\ref{eq:triangleTexcood}得出.\\
-                \indent 由此可以看出在少量的预计算下三角形的相交测试可以非常简单.而这些预计算又可以由GPU以并行化
-                的方式快速完成,达到加速的目的.
+                \indent 考虑到由三角形构成的立体物体表面看起来十分的不光滑,一般会采用一种叫法向插值的技术使
+                交点处的法向不是固定为三角形所在平面的法向而是取决于三个顶点法向的插值,即法向插值.故有:
+                \begin{equation}
+                    \overrightarrow{n_{hit}}=u'\overrightarrow{n_1}+v'\overrightarrow{n_2}+(1-u'-v')\overrightarrow{n_0},
+                \end{equation}
+                其中$\overrightarrow{n_0}$,$\overrightarrow{n_1}$,$\overrightarrow{n_2}$分别是三个顶点的法向,一般可以由
+                包含该顶点的三角形法向平均计算得到.
             \subsubsection{球形}
                 光线若与一个球相交,则该直线到球心的距离小于$R$.而这个距离平方可以表示为
                 $\left|\left(\overrightarrow{c}-\overrightarrow{p_0}\right)\times\overrightarrow{n_0}\right|^2$.
@@ -524,12 +531,12 @@
                 为保证继续进行相交测试时不会重新与该物体在该点相交,故实际上要将$t$稍微增加$\delta$.\\
                 \indent 计算菲涅尔透射率:
                 \begin{equation}
-                    t'=2nt\cos^2{i_0}\cos^2{i_1}\left[\frac{1}{\left(n\cos{i_0}+\cos{i_1}\right)^2}+
+                    t'=2nt\cos{i_0}\cos{i_1}\left[\frac{1}{\left(n\cos{i_0}+\cos{i_1}\right)^2}+
                     \frac{1}{\left(\cos{i_0}+n\cos{i_1}\right)^2}\right].
                 \end{equation}
                 同理,在$i_1$和$i_0$都趋于0时,计算极限:
                 \begin{equation}
-                    \lim_{i_0,i_1\rightarrow 0}2nt\cos^2{i_0}\cos^2{i_1}\left[\frac{1}{\left(n\cos{i_0}+\cos{i_1}\right)^2}+
+                    \lim_{i_0,i_1\rightarrow 0}2nt\cos{i_0}\cos{i_1}\left[\frac{1}{\left(n\cos{i_0}+\cos{i_1}\right)^2}+
                     \frac{1}{\left(\cos{i_0}+n\cos{i_1}\right)^2}\right]=
                     n\left(\frac{2}{1+n}\right)^2.
                 \end{equation}

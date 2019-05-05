@@ -492,7 +492,7 @@ namespace OpenGL
 			sizeChanged(true),
 			paused(true),
 			frameScale(),
-			transform({ {60.0},{0.002,0.9,0.001},{0.03},{0,0,1},700.0 }),
+			transform({ {60.0},{0.002,0.9,0.001},{0.01},{0,0,1},700.0 }),
 			model({ {ShaderStorageBuffer,0},{1,2},{3},{4},{5},{6},{7},{3},{9} }),
 			frameSizeBuffer(&frameScale),
 			transBuffer(&transform.bufferData),
@@ -529,7 +529,7 @@ namespace OpenGL
 			model.pointLights.data.pointLights +=
 			{
 				{
-					{0.15, 0.15, 0.15},
+					{0.25, 0.25, 0.25},
 					{ 0,0,2.6 }
 				}
 			};
@@ -540,9 +540,10 @@ namespace OpenGL
 					0,-1,
 					0,-1,
 					-1,
-					1.33
+					1.5
 				});
 			unsigned int k(model.triangles.trianglesOrigin.trianglesOrigin.length);
+			float glow = 0.6;
 			model.addSTL
 			(
 				threePyramid,
@@ -562,7 +563,7 @@ namespace OpenGL
 				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0].uv2 = { 5,1.5 };
 				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0].uv3 = { 0,0 };
 				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0].color.d = 0;
-				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0].color.g = 1;
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0].color.g = glow;
 				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0].color.texG = 0;
 				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0].color.n = 1.33;
 
@@ -570,7 +571,7 @@ namespace OpenGL
 				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0 + 1].uv2 = { 0,0 };
 				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0 + 1].uv3 = { 5,1.5 };
 				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0 + 1].color.d = 0;
-				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0 + 1].color.g = 1;
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0 + 1].color.g = glow;
 				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0 + 1].color.texG = 0;
 				model.triangles.trianglesOrigin.trianglesOrigin[k + 2 * c0 + 1].color.n = 1.33;
 			}
@@ -586,7 +587,7 @@ namespace OpenGL
 				model.triangles.trianglesOrigin.trianglesOrigin[k + 16].uv1 = { 5,0 };
 				model.triangles.trianglesOrigin.trianglesOrigin[k + 16].uv2 = { 0,0 };
 				model.triangles.trianglesOrigin.trianglesOrigin[k + 16].uv3 = { 5,5 };
-				model.triangles.trianglesOrigin.trianglesOrigin[k + 16].color.g = 1;
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 16].color.g = glow;
 				model.triangles.trianglesOrigin.trianglesOrigin[k + 16].color.texG = 0;
 				model.triangles.trianglesOrigin.trianglesOrigin[k + 16].color.decayFactor = -1;
 				model.triangles.trianglesOrigin.trianglesOrigin[k + 16].color.n = 1.33;
@@ -594,7 +595,7 @@ namespace OpenGL
 				model.triangles.trianglesOrigin.trianglesOrigin[k + 17].uv1 = { 0,5 };
 				model.triangles.trianglesOrigin.trianglesOrigin[k + 17].uv2 = { 5,5 };
 				model.triangles.trianglesOrigin.trianglesOrigin[k + 17].uv3 = { 0,0 };
-				model.triangles.trianglesOrigin.trianglesOrigin[k + 17].color.g = 1;
+				model.triangles.trianglesOrigin.trianglesOrigin[k + 17].color.g = glow;
 				model.triangles.trianglesOrigin.trianglesOrigin[k + 17].color.texG = 0;
 				model.triangles.trianglesOrigin.trianglesOrigin[k + 17].color.decayFactor = -1;
 				model.triangles.trianglesOrigin.trianglesOrigin[k + 17].color.n = 1.33;
@@ -773,7 +774,7 @@ int main()
 	Window::WindowManager wm(winPara);
 	OpenGL::RayTrace test;
 	wm.init(0, &test);
-	glfwSwapInterval(1);
+	glfwSwapInterval(0);
 	FPS fps;
 	fps.refresh();
 	::printf("FPS:\n");
